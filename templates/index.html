@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cindy - AI 영어 선생님</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #FF69B4;
+            --primary-light: #FFB6C1;
+            --secondary-color: #87CEEB;
+            --accent-color: #98FB98;
+            --bg-dark: #1a1a1a;
+            --bg-medium: #2a2a2a;
+            --bg-light: #f7f7f8;
+            --text-dark: #333;
+            --text-light: #666;
+            --text-white: #fff;
+            --border-color: #e5e5e5;
+            --hover-color: #f5f5f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-light);
+            height: 100vh;
+            display: flex;
+        }
+
+        /* 사이드바 스타일 */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 16px 12px;
+            border-bottom: 1px solid var(--border-color);
+            background: white;
+        }
+
+        .new-chat-button {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .new-chat-button:hover {
+            background: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        /* 학습 설정 */
+        .learning-settings {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            background: #fafafa;
+        }
+
+        .setting-group {
+            margin-bottom: 12px;
+        }
+
+        .setting-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .setting-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .setting-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .quick-actions {
+            padding: 8px 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .quick-button {
+            flex: 1;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .quick-button:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* 학습 주제 버튼 스타일 */
+        .topic-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .topic-button {
+            padding: 10px 12px;
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .topic-button:hover {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe4f1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 105, 180, 0.2);
+        }
+
+        .topic-button:active {
+            transform: translateY(0);
+        }
+
+        /* 대화 목록 */
+        .conversation-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
+        .conversation-item {
+            margin: 2px 8px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .conversation-item:hover {
+            background: var(--hover-color);
+        }
+
+        .conversation-item.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+        }
+
+        .conversation-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .conversation-preview {
+            font-size: 12px;
+            color: var(--text-light);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+
+        .conversation-item.active .conversation-preview {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .conversation-time {
+            font-size: 11px;
+            color: var(--text-light);
+            position: absolute;
+            top: 12px;
+            right: 16px;
+        }
+
+        .conversation-item.active .conversation-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* 하단 컨트롤 */
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            background: white;
+        }
+
+        .footer-button {
+            width: 100%;
+            padding: 8px 12px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-button:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .footer-button.danger:hover {
+            border-color: #ff4757;
+            color: #ff4757;
+        }
+
+        /* 메인 채팅 영역 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: white;
+        }
+
+        .message {
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            color: white;
+        }
+
+        .ai-avatar {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+        }
+
+        .message-content {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .user-message .message-content {
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            color: white;
+            margin-left: auto;
+            max-width: 70%;
+        }
+
+        .ai-message .message-content {
+            background: #f1f3f4;
+            color: var(--text-dark);
+            max-width: 80%;
+        }
+
+        .typing-indicator {
+            background: #f1f3f4;
+            color: var(--text-light);
+            font-style: italic;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        /* 입력 영역 */
+        .input-container {
+            background: white;
+            border-top: 1px solid var(--border-color);
+            padding: 16px 24px;
+        }
+
+        .image-upload-area {
+            background: #f8f9fa;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .image-upload-area:hover,
+        .image-upload-area.dragover {
+            border-color: var(--primary-color);
+            background: #fff0f5;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+        }
+
+        #image-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .file-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .file-button:hover {
+            background: var(--primary-light);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        #user-input {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 12px 20px;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            min-height: 48px;
+            max-height: 120px;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        #user-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        #send-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        #send-button:hover {
+            background: var(--primary-light);
+            transform: scale(1.05);
+        }
+
+        #send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .image-preview {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .preview-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        /* 상태 알림 */
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-indicator.show {
+            opacity: 1;
+        }
+
+        .status-indicator.error {
+            background: #ff4757;
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 13px;
+        }
+
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                max-width: 280px;
+                position: fixed;
+                left: -280px;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .chat-messages {
+                padding: 16px;
+            }
+
+            .input-container {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <button class="new-chat-button" onclick="startNewChat()">
+                <span>➕</span>
+                새 영어 학습 시작
+            </button>
+        </div>
+
+        <div class="learning-settings">
+            <div class="setting-group">
+                <label class="setting-label">📚 미국 초등 ESL 커리큘럼</label>
+                <div class="topic-buttons">
+                    <button class="topic-button" onclick="learnTopic('인사와 자기소개 배우고 싶어')">👋 인사말</button>
+                    <button class="topic-button" onclick="learnTopic('숫자 세는 방법 알려줘')">🔢 숫자</button>
+                    <button class="topic-button" onclick="learnTopic('색깔 영어로 알려줘')">🎨 색깔</button>
+                    <button class="topic-button" onclick="learnTopic('가족 영어로 뭐야?')">👨‍👩‍👧‍👦 가족</button>
+                    <button class="topic-button" onclick="learnTopic('동물 이름 영어로 알려줘')">🐶 동물</button>
+                    <button class="topic-button" onclick="learnTopic('음식 이름 영어로 알려줘')">🍎 음식</button>
+                    <button class="topic-button" onclick="learnTopic('날씨 영어로 말하는 법 알려줘')">☀️ 날씨</button>
+                    <button class="topic-button" onclick="learnTopic('신체 부위 영어로 알려줘')">👁️ 신체</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="conversation-list" id="conversation-list">
+            <div class="empty-state">
+                아직 저장된 대화가 없습니다.<br>
+                Cindy와 영어 학습을 시작해보세요!
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="footer-button" onclick="refreshSessions()">
+                <span>🔄</span>
+                목록 새로고침
+            </button>
+            <button class="footer-button danger" onclick="clearAllHistory()">
+                <span>🗑️</span>
+                모든 기록 삭제
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="chat-header">
+            <div class="chat-title">
+                <span>👩‍🏫</span>
+                Cindy - AI 영어 선생님
+            </div>
+            <div class="level-badge" id="level-badge">초등</div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <div class="message ai-message">
+                <div class="message-avatar ai-avatar">👩‍🏫</div>
+                <div class="message-content">
+                    <strong>Hello! I'm Cindy, your English teacher!</strong><br>
+                    안녕하세요! 저는 영어 선생님 Cindy예요!<br><br>
+
+                    <strong>What grade are you in?</strong><br>
+                    몇 학년이에요? 초1부터 초6 중에 알려주세요!<br><br>
+
+                    학년에 맞춰서 재미있게 영어를 가르쳐드릴게요 😊
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="image-upload-area" id="image-upload-area">
+                <div class="file-input-wrapper">
+                    <input type="file" id="image-input" accept="image/*" multiple>
+                    <button class="file-button" onclick="document.getElementById('image-input').click()">
+                        📸 사진 선택
+                    </button>
+                </div>
+                <div style="flex: 1; font-size: 13px; color: #666;">
+                    영어 공부에 도움이 되는 사진을 올려보세요!
+                </div>
+                <div id="image-preview" class="image-preview"></div>
+            </div>
+
+            <div class="input-row">
+                <textarea id="user-input" placeholder="영어로 대화해 보세요! Type in English or Korean!" rows="1"></textarea>
+                <button id="send-button" onclick="sendMessage()">
+                    ➤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-indicator" id="status-indicator"></div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const levelSelect = document.getElementById('level-select');
+        const activitySelect = document.getElementById('activity-select');
+        const levelBadge = document.getElementById('level-badge');
+        const statusIndicator = document.getElementById('status-indicator');
+        const imageInput = document.getElementById('image-input');
+        const imageUploadArea = document.getElementById('image-upload-area');
+        const imagePreview = document.getElementById('image-preview');
+        const conversationList = document.getElementById('conversation-list');
+
+        let selectedFiles = [];
+        let currentLevel = 'elementary';
+        let currentActivity = 'conversation';
+
+        // 레벨/활동 변경 이벤트
+        levelSelect.addEventListener('change', function () {
+            currentLevel = this.value;
+            const levelText = this.options[this.selectedIndex].text.split(' ')[0];
+            levelBadge.textContent = levelText;
+            showStatus(`학습 레벨이 ${levelText}로 변경되었습니다!`);
+        });
+
+        activitySelect.addEventListener('change', function () {
+            currentActivity = this.value;
+            const activityText = this.options[this.selectedIndex].text;
+            showStatus(`학습 활동: ${activityText}`);
+        });
+
+        // 입력 관련 이벤트
+        userInput.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // 이미지 관련 이벤트
+        imageInput.addEventListener('change', function (e) {
+            handleImageSelection(e.target.files);
+        });
+
+        imageUploadArea.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        imageUploadArea.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        imageUploadArea.addEventListener('drop', function (e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            handleImageSelection(e.dataTransfer.files);
+        });
+
+        function handleImageSelection(files) {
+            selectedFiles = Array.from(files);
+            updateImagePreview();
+        }
+
+        function updateImagePreview() {
+            imagePreview.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.className = 'preview-image';
+                    img.onclick = () => removeImage(index);
+                    img.title = '클릭하여 제거';
+                    imagePreview.appendChild(img);
+                }
+            });
+        }
+
+        function removeImage(index) {
+            selectedFiles.splice(index, 1);
+            updateImagePreview();
+        }
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = `message-avatar ${isUser ? 'user-avatar' : 'ai-avatar'}`;
+            avatar.textContent = isUser ? '👤' : '👩‍🏫';
+
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.innerHTML = content.replace(/\n/g, '<br>');
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ai-message';
+            typingDiv.id = 'typing-indicator';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar ai-avatar';
+            avatar.textContent = '👩‍🏫';
+
+            const content = document.createElement('div');
+            content.className = 'message-content typing-indicator';
+            content.textContent = 'Cindy가 생각하고 있어요...';
+
+            typingDiv.appendChild(avatar);
+            typingDiv.appendChild(content);
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        function showStatus(message, isError = false) {
+            statusIndicator.textContent = message;
+            statusIndicator.className = `status-indicator show ${isError ? 'error' : ''}`;
+            setTimeout(() => {
+                statusIndicator.classList.remove('show');
+            }, 3000);
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message && selectedFiles.length === 0) return;
+
+            if (message) addMessage(message, true);
+            if (selectedFiles.length > 0) {
+                selectedFiles.forEach(file => {
+                    addMessage(`📸 사진: ${file.name}`, true);
+                });
+            }
+
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            sendButton.disabled = true;
+            showTyping();
+
+            try {
+                const formData = new FormData();
+                formData.append('message', message);
+                formData.append('level', currentLevel);
+                formData.append('activity_type', currentActivity);
+
+                selectedFiles.forEach(file => {
+                    formData.append('files', file);
+                });
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                hideTyping();
+
+                if (data.error) {
+                    addMessage(data.error);
+                } else {
+                    addMessage(data.response);
+                    refreshSessions(); // 새 메시지 후 세션 목록 업데이트
+                }
+
+            } catch (error) {
+                hideTyping();
+                addMessage('죄송해요! 다시 시도해주세요.');
+                showStatus('오류가 발생했어요. 다시 시도해주세요!', true);
+            } finally {
+                sendButton.disabled = false;
+                selectedFiles = [];
+                updateImagePreview();
+                userInput.focus();
+            }
+        }
+
+        // 세션 관리 함수들
+        async function refreshSessions() {
+            try {
+                const response = await fetch('/sessions');
+                const sessions = await response.json();
+                displaySessions(sessions);
+            } catch (error) {
+                console.error('세션 로딩 오류:', error);
+            }
+        }
+
+        function displaySessions(sessions) {
+            conversationList.innerHTML = '';
+
+            if (Object.keys(sessions).length === 0) {
+                conversationList.innerHTML = '<div class="empty-state">아직 저장된 대화가 없습니다.<br>Cindy와 영어 학습을 시작해보세요!</div>';
+                return;
+            }
+
+            Object.entries(sessions).forEach(([date, info]) => {
+                const item = document.createElement('div');
+                item.className = 'conversation-item';
+                item.onclick = () => loadSession(date, item);
+
+                const time = info.last_time || '';
+                const title = formatDate(date);
+                const preview = info.first_message || '새로운 대화';
+
+                item.innerHTML = `
+                    <div class="conversation-time">${time}</div>
+                    <div class="conversation-title">${title}</div>
+                    <div class="conversation-preview">${preview}</div>
+                `;
+
+                conversationList.appendChild(item);
+            });
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (dateStr === today.toISOString().split('T')[0]) {
+                return '오늘';
+            } else if (dateStr === yesterday.toISOString().split('T')[0]) {
+                return '어제';
+            } else {
+                return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+            }
+        }
+
+        async function loadSession(date, element) {
+            try {
+                document.querySelectorAll('.conversation-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                element.classList.add('active');
+
+                const response = await fetch(`/sessions/${date}`);
+                const sessionData = await response.json();
+
+                chatMessages.innerHTML = '';
+                addMessage(`${formatDate(date)} 대화를 불러왔어요!`);
+
+                sessionData.forEach(chat => {
+                    if (chat.file_info) {
+                        addMessage(`📸 사진: ${chat.file_info.filename}`, true);
+                        addMessage(chat.ai);
+                    } else {
+                        addMessage(chat.user, true);
+                        addMessage(chat.ai);
+                    }
+                });
+
+            } catch (error) {
+                console.error('세션 로딩 오류:', error);
+            }
+        }
+
+        async function startNewChat() {
+            document.querySelectorAll('.conversation-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            chatMessages.innerHTML = '';
+            addMessage(`<strong>Hello! I'm Cindy, your English teacher!</strong><br>
+                안녕하세요! 저는 영어 선생님 Cindy예요!<br><br>
+                <strong>What grade are you in?</strong><br>
+                몇 학년이에요? 초1부터 초6 중에 알려주세요!<br><br>
+                학년에 맞춰서 재미있게 영어를 가르쳐드릴게요 😊`);
+
+            try {
+                await fetch('/new-session', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                showStatus('새로운 영어 학습이 시작되었습니다!');
+                setTimeout(refreshSessions, 500);
+            } catch (error) {
+                console.error('새 세션 생성 오류:', error);
+            }
+
+            userInput.focus();
+        }
+
+        async function clearAllHistory() {
+            if (!confirm('정말로 모든 대화 기록을 삭제하시겠습니까?')) return;
+
+            try {
+                await fetch('/clear', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                startNewChat();
+                refreshSessions();
+                showStatus('모든 대화 기록이 삭제되었습니다.');
+            } catch (error) {
+                console.error('기록 삭제 오류:', error);
+                showStatus('기록 삭제에 실패했습니다.', true);
+            }
+        }
+
+        async function getVocabQuiz() {
+            showTyping();
+            try {
+                const response = await fetch('/vocab-quiz');
+                const data = await response.json();
+                hideTyping();
+                addMessage(data.quiz);
+                showStatus('단어 퀴즈를 준비했어요!');
+            } catch (error) {
+                hideTyping();
+                addMessage('퀴즈를 준비하는 중 오류가 발생했어요.');
+            }
+        }
+
+        async function getDailyPhrase() {
+            showTyping();
+            try {
+                const response = await fetch('/daily-phrase');
+                const data = await response.json();
+                hideTyping();
+                addMessage(data.daily_phrase);
+                showStatus('오늘의 영어 표현을 준비했어요!');
+            } catch (error) {
+                hideTyping();
+                addMessage('오늘의 표현을 준비하는 중 오류가 발생했어요.');
+            }
+        }
+
+        // 학습 주제 버튼 클릭 함수
+        function learnTopic(topic) {
+            userInput.value = topic;
+            sendMessage();
+            showStatus('학습 주제: ' + topic.replace(' 배우고 싶어', '').replace(' 알려줘', '').replace('?', '').replace(' 뭐야', ''));
+        }
+
+        // 페이지 로드 시 실행
+        window.addEventListener('load', () => {
+            userInput.focus();
+            refreshSessions();
+            showStatus('Cindy와 함께 영어 공부를 시작해요!');
+        });
+    </script>
+</body>
+
+</html>

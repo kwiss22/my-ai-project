@@ -1,0 +1,12 @@
+# .gcloudignore
+
+__pycache__/
+*.pyc
+.venv
+venv/
+.env
+
+# 로컬 데이터 및 테스트 파일 제외
+*.json
+test_*.py
+uploads/

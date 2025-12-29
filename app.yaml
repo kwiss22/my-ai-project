@@ -1,0 +1,4 @@
+# app.yaml
+
+runtime: python311
+entrypoint: gunicorn -b :$PORT chatbot:app
