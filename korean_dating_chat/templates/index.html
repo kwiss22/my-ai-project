@@ -1,0 +1,4488 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Dating Chat 💕 한국인 AI와 카톡하며 한국어 배우기</title>
+
+    <!-- SEO -->
+    <meta name="description" content="한국인 남자친구·여자친구와 카카오톡 스타일로 채팅하며 자연스럽게 한국어를 배워보세요! AI 데이팅 챗봇 K-Dating Chat">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3C1E1E">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="K-Date">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+    <meta name="keywords" content="한국어 배우기, Korean learning, K-Dating, AI chatbot, learn Korean, 한국어 공부, Korean boyfriend, Korean girlfriend">
+
+    <!-- Open Graph (카카오톡 / 인스타 / 페이스북 공유) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kdating-chat-515513943326.asia-northeast3.run.app/">
+    <meta property="og:title" content="K-Dating Chat 💕 한국인 AI와 카톡하며 한국어 배우기">
+    <meta property="og:description" content="한국인 남자친구·여자친구와 카카오톡 스타일로 채팅! 자연스럽게 한국어를 배우는 AI 데이팅 챗봇">
+    <meta property="og:image" content="https://kdating-chat-515513943326.asia-northeast3.run.app/static/jiwoo_profile.png">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="K-Dating Chat">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="K-Dating Chat 💕 한국인 AI와 카톡하며 한국어 배우기">
+    <meta name="twitter:description" content="한국인 남자친구·여자친구와 카카오톡 스타일로 채팅! 자연스럽게 한국어를 배우는 AI 데이팅 챗봇">
+    <meta name="twitter:image" content="https://kdating-chat-515513943326.asia-northeast3.run.app/static/jiwoo_profile.png">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHL89SXPSY"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-EHL89SXPSY');</script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --kakao-yellow: #FEE500;
+            --kakao-brown: #3C1E1E;
+            --bg-gray: #B2C7D9;
+            --bubble-me: #FEE500;
+            --bubble-other: #FFFFFF;
+            --text-dark: #000000;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: var(--bg-gray);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        /* 캐릭터 선택 화면 */
+        .character-selection {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .character-selection h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: var(--kakao-brown);
+        }
+
+        .character-selection p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .character-cards {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 920px;
+            margin: 0 auto;
+        }
+
+        .character-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 24px 18px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            color: white;
+            width: 180px;
+            position: relative;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        .character-card.jiwoo {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .character-card.hyunwoo {
+            background: linear-gradient(135deg, #e53935 0%, #c471ed 100%);
+        }
+
+        /* 화랑 HWARANG 5인 - 오방색 기반 */
+        .character-card.taeo {
+            /* 황색, 중앙, 리더 */
+            background: linear-gradient(135deg, #f5c518 0%, #d4a017 100%);
+        }
+        .character-card.leo {
+            /* 백색, 서쪽, 비주얼 */
+            background: linear-gradient(135deg, #e8e8e8 0%, #9e9e9e 100%);
+            color: #222;
+        }
+        .character-card.jihoon {
+            /* 흑색, 북쪽, 래퍼 */
+            background: linear-gradient(135deg, #2a2a2a 0%, #4a4a4a 100%);
+        }
+        .character-card.juno {
+            /* 청색, 동쪽, 막내 */
+            background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+        }
+
+        .character-card .hwarang-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.25);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            letter-spacing: 0.5px;
+        }
+        .character-card.leo .hwarang-badge { background: rgba(0,0,0,0.35); }
+
+        .character-avatar {
+            font-size: 80px;
+            margin-bottom: 15px;
+        }
+
+        .character-avatar img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .character-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .character-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* 채팅 화면 */
+        .chat-container {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            height: 90vh;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-container.active {
+            display: flex;
+        }
+
+        /* 헤더 (카톡 스타일) */
+        .chat-header {
+            background: var(--kakao-brown);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-avatar {
+            font-size: 32px;
+        }
+
+        .header-avatar img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .header-info h2 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .header-info p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* 바텀시트 네비게이션 메뉴 */
+        .nav-sheet-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 300;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .nav-sheet-overlay.show { display: flex; }
+        .nav-sheet {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 500px;
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+            animation: sheetUp 0.28s ease;
+        }
+        .nav-sheet-handle {
+            width: 36px; height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 12px auto 8px;
+        }
+        .nav-sheet-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 24px;
+            font-size: 15px;
+            color: #222;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            transition: background 0.15s;
+        }
+        .nav-sheet-item:hover { background: #f7f7f7; }
+        .nav-sheet-item .nav-icon {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .nav-sheet-item .nav-label { font-weight: 500; }
+        .nav-sheet-item .nav-desc { font-size: 12px; color: #999; margin-top: 1px; }
+        .nav-sheet-divider { height: 1px; background: #f0f0f0; margin: 4px 0; }
+        .nav-sheet-item.danger .nav-label { color: #e53935; }
+        .nav-sheet-cancel {
+            padding: 14px;
+            text-align: center;
+            font-size: 15px;
+            color: #666;
+            cursor: pointer;
+            border-top: 8px solid #f5f5f5;
+            background: white;
+        }
+
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .header-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-btn.icon-btn {
+            padding: 7px 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 메시지 영역 (카톡 스타일) */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg-gray);
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+        }
+
+        .message.ai .message-content {
+            background: var(--bubble-other);
+            color: var(--text-dark);
+            border-top-left-radius: 5px;
+        }
+
+        .message.user .message-content {
+            background: var(--bubble-me);
+            color: var(--text-dark);
+            border-top-right-radius: 5px;
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+        }
+
+        .read-status {
+            font-size: 10px;
+            color: #FEE500;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .read-status.read {
+            color: #aaa;
+            font-weight: 400;
+        }
+
+        /* 온라인 상태 점 */
+        .online-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: #4CAF50;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* 헤더 타이핑 점 */
+        .typing-dot-sm {
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background: #999;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typingBounce 1.2s infinite;
+        }
+        .typing-dot-sm:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot-sm:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* 채팅 내 클릭 링크 (커피 버튼 등) */
+        .chat-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #ff9a56, #ff6b6b);
+            color: #fff !important;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .chat-link:hover {
+            opacity: 0.85;
+        }
+
+        /* 번역 버튼 */
+        .translate-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 5px;
+            padding: 0;
+        }
+
+        .translate-btn:hover {
+            text-decoration: underline;
+        }
+
+        .translation {
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+            border-left: 3px solid #667eea;
+        }
+
+        /* 입력 영역 */
+        .input-area {
+            background: white;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-area input:focus {
+            border-color: var(--kakao-yellow);
+        }
+
+        .send-btn {
+            background: var(--kakao-yellow);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Mobile responsive tweaks */
+        @media (max-width: 600px) {
+            body {
+                align-items: stretch;
+            }
+
+            .character-selection {
+                width: 100%;
+                margin: 0 12px;
+                padding: 24px 18px 32px;
+            }
+
+            .character-cards {
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .character-card {
+                width: 100%;
+                padding: 22px 16px;
+            }
+
+            .chat-container {
+                max-width: 100%;
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .chat-header {
+                padding: 12px 16px;
+            }
+
+            .header-info h2 {
+                font-size: 15px;
+            }
+
+            .header-info p {
+                font-size: 11px;
+            }
+
+            .messages {
+                padding: 16px;
+                padding-bottom: 220px;
+            }
+
+            .input-area {
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .input-area input {
+                font-size: 16px;
+            }
+
+            .send-btn {
+                padding: 12px 16px;
+            }
+        }
+
+        /* 온보딩 화면 */
+        .onboarding-screen {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 36px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 460px;
+            width: 100%;
+        }
+
+        .onboarding-screen h1 {
+            font-size: 26px;
+            margin-bottom: 8px;
+            color: var(--kakao-brown);
+        }
+
+        .onboarding-screen .subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        .onboarding-step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 28px;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: background 0.3s;
+        }
+
+        .step-dot.active {
+            background: #f093fb;
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .onboarding-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .onboarding-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 24px;
+        }
+
+        .onboarding-input:focus {
+            border-color: #f093fb;
+        }
+
+        .level-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .level-btn {
+            flex: 1;
+            padding: 14px 8px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.2s;
+            line-height: 1.4;
+        }
+
+        .level-btn:hover {
+            border-color: #f093fb;
+            color: #f093fb;
+        }
+
+        .level-btn.selected {
+            border-color: #f093fb;
+            background: linear-gradient(135deg, #f093fb22, #f5576c11);
+            color: #c0306a;
+        }
+
+        .interest-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .interest-btn {
+            padding: 14px 12px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .interest-btn:hover {
+            border-color: #f093fb;
+        }
+
+        .interest-btn.selected {
+            border-color: #f093fb;
+            background: linear-gradient(135deg, #f093fb22, #f5576c11);
+            color: #c0306a;
+        }
+
+        .onboarding-next-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .onboarding-next-btn:hover {
+            opacity: 0.9;
+        }
+
+        .onboarding-next-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* 언어 토글 버튼 */
+        .lang-toggle {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 20px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .lang-btn {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: #999;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: white;
+            color: #333;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        @media (max-width: 600px) {
+            .onboarding-screen {
+                margin: 0 12px;
+                padding: 28px 20px;
+            }
+            .level-options {
+                flex-direction: column;
+            }
+        }
+
+        /* =====================
+           단어 칩 (vocab chips)
+        ===================== */
+        .vocab-section {
+            margin-top: 10px;
+        }
+        .vocab-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.06);
+            margin: 0 0 6px 0;
+        }
+        .vocab-hint {
+            font-size: 11px;
+            line-height: 1.2;
+            color: #9aa0a6;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .vocab-chips-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .vocab-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px 4px 8px;
+            border: 1.5px solid #f093fb;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #c0306a;
+            background: white;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s, box-shadow 0.18s;
+            white-space: nowrap;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            font-family: inherit;
+        }
+        .vocab-chip:hover { background: #fff0fc; }
+        .vocab-chip:active { transform: scale(0.94); }
+        .vocab-chip.saved {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            border-color: #c0306a;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(240, 147, 251, 0.35);
+        }
+        .vocab-chip.saved .chip-meaning { color: #ffe6f5; }
+
+        /* State icon: '+' when default, '✓' when saved */
+        .chip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 800;
+            line-height: 1;
+            background: #fce4f4;
+            color: #c0306a;
+            transition: background 0.18s, color 0.18s, transform 0.18s;
+        }
+        .vocab-chip.saved .chip-icon {
+            background: #ffffff;
+            color: #c0306a;
+            transform: rotate(0deg);
+        }
+
+        .vocab-chip.bump { animation: chip-bump 0.32s ease; }
+        @keyframes chip-bump {
+            0%   { transform: scale(1); }
+            35%  { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+        .vocab-chip .chip-meaning {
+            font-weight: 400;
+            color: #888;
+            font-size: 11px;
+        }
+
+        /* =====================
+           Toast (tap feedback)
+        ===================== */
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 92px;
+            transform: translateX(-50%) translateY(16px);
+            background: rgba(40, 20, 50, 0.92);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 22px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 10000;
+            max-width: 80%;
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* =====================
+           문법 힌트 줄
+        ===================== */
+        .grammar-hint {
+            display: block;
+            margin-top: 8px;
+            padding: 6px 10px;
+            background: #e8f4ff;
+            border-left: 3px solid #667eea;
+            border-radius: 0 8px 8px 0;
+            font-size: 12px;
+            color: #3a5ea8;
+            line-height: 1.5;
+        }
+
+        /* =====================
+           오버레이 모달 공통
+        ===================== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 200;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-sheet {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: sheetUp 0.28s ease;
+        }
+        @keyframes sheetUp {
+            from { transform: translateY(100%); }
+            to   { transform: translateY(0); }
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .modal-header h3 { font-size: 17px; color: #333; margin: 0; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #999;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+        }
+        .modal-body {
+            overflow-y: auto;
+            padding: 16px 20px;
+            flex: 1;
+        }
+
+        /* 단어장 탭 */
+        .vocab-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 16px;
+        }
+        .vocab-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #aaa;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .vocab-tab.active { color: #f093fb; border-bottom-color: #f093fb; }
+
+        /* 단어 목록 */
+        .vocab-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .vocab-list-item:last-child { border-bottom: none; }
+        .vocab-word { font-size: 18px; font-weight: 700; color: #333; }
+        .vocab-romanization { font-size: 12px; color: #999; margin-top: 2px; }
+        .vocab-meaning-text { font-size: 13px; color: #666; margin-top: 2px; }
+        .vocab-delete-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #ddd;
+            cursor: pointer;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        .vocab-delete-btn:hover { color: #f5576c; }
+        .vocab-empty {
+            text-align: center;
+            color: #bbb;
+            font-size: 14px;
+            padding: 40px 0;
+        }
+
+        /* 퀴즈 */
+        .quiz-card {
+            background: linear-gradient(135deg, #f093fb11, #f5576c08);
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .quiz-question-word {
+            font-size: 36px;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        .quiz-question-roma {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+        .quiz-choices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .quiz-choice {
+            padding: 12px 8px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .quiz-choice:hover:not(:disabled) { border-color: #f093fb; color: #c0306a; }
+        .quiz-choice.correct { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
+        .quiz-choice.wrong { border-color: #f44336; background: #ffebee; color: #c62828; }
+        .quiz-score {
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+            margin-top: 8px;
+        }
+        .quiz-next-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 16px;
+            display: none;
+        }
+        .quiz-finish {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .quiz-finish-score {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 설정 모달 */
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label { font-size: 15px; font-weight: 600; color: #333; }
+        .settings-desc { font-size: 12px; color: #999; margin-top: 2px; }
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input { display: none; }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: #ccc;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .toggle-slider:before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            left: 3px;
+            top: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-switch input:checked + .toggle-slider { background: #f093fb; }
+        .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
+
+        /* 히스토리 모달 */
+        .history-session-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid #f5f5f5;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .history-session-item:last-child { border-bottom: none; }
+        .history-session-item:hover { background: #fafafa; margin: 0 -20px; padding: 14px 20px; border-radius: 8px; }
+        .history-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .history-session-info { flex: 1; min-width: 0; }
+        .history-session-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+        .history-session-name { font-size: 14px; font-weight: 700; color: #333; }
+        .history-session-time { font-size: 11px; color: #aaa; }
+        .history-session-preview {
+            font-size: 12px;
+            color: #888;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .history-session-badge {
+            background: #f093fb;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        /* 히스토리 뷰 (대화 읽기 모드) */
+        .history-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+        .history-view.active { display: flex; }
+        .history-view-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+        .history-back-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #667eea;
+            padding: 0;
+            line-height: 1;
+        }
+        .history-view-title { font-size: 15px; font-weight: 700; color: #333; }
+        .history-view-subtitle { font-size: 12px; color: #aaa; }
+        .history-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            background: var(--bg-gray);
+        }
+        .history-msg {
+            display: flex;
+            margin-bottom: 12px;
+        }
+        .history-msg.user { flex-direction: row-reverse; }
+        .history-msg-bubble {
+            max-width: 72%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .history-msg.ai .history-msg-bubble {
+            background: white;
+            color: #222;
+            border-top-left-radius: 5px;
+        }
+        .history-msg.user .history-msg-bubble {
+            background: var(--kakao-yellow);
+            color: #222;
+            border-top-right-radius: 5px;
+        }
+        .history-msg-time {
+            font-size: 10px;
+            color: #888;
+            align-self: flex-end;
+            margin: 0 5px 4px;
+        }
+        .history-empty {
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+            padding: 60px 0;
+        }
+
+        /* Buy Me a Coffee floating button */
+        .bmc-floating {
+            position: fixed;
+            right: 16px;
+            bottom: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            pointer-events: none;
+        }
+
+        .bmc-tooltip {
+            background: #fff7cc;
+            color: #3c1e1e;
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            border: 1px solid #f6d365;
+            pointer-events: auto;
+        }
+
+        .bmc-button {
+            pointer-events: auto;
+        }
+
+        .bmc-button img {
+            width: 170px;
+            max-width: 44vw;
+            height: auto;
+            display: block;
+        }
+
+        .bmc-floating.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        @media (max-width: 600px) {
+            .bmc-floating {
+                bottom: 150px; /* keep clear of input area on mobile */
+                right: 12px;
+            }
+            .bmc-button img {
+                width: 130px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .messages {
+                padding-bottom: 240px;
+            }
+            .bmc-tooltip {
+                font-size: 11px;
+                padding: 5px 8px;
+            }
+        }
+
+        /* KakaoTalk-style character stickers */
+        .sticker-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+            margin: 6px 0;
+        }
+
+        .sticker-bubble {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 160px;
+            height: 160px;
+            border-radius: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            animation: stickerBounce 0.4s ease;
+        }
+
+        .sticker-emoji {
+            font-size: 68px;
+            line-height: 1.1;
+        }
+
+        .sticker-img {
+            width: 160px;
+            height: 160px;
+            object-fit: contain;
+            border-radius: 12px;
+            animation: stickerBounce 0.4s ease;
+        }
+
+        .sticker-caption {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        @keyframes stickerBounce {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Sticker Picker */
+        .sticker-picker-wrapper {
+            position: relative;
+        }
+
+        .sticker-picker-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #f5f5f5;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .sticker-picker-btn:hover {
+            background: #e8e8e8;
+            transform: scale(1.1);
+        }
+
+        .sticker-picker-btn.active {
+            background: var(--kakao-yellow);
+        }
+
+        .sticker-picker-panel {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            width: 280px;
+            max-height: 240px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            overflow-y: auto;
+            z-index: 100;
+            padding: 12px;
+            animation: stickerPanelSlideUp 0.25s ease;
+        }
+
+        .sticker-picker-panel.show {
+            display: block;
+        }
+
+        @keyframes stickerPanelSlideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sticker-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .sticker-picker-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.15s;
+            border: none;
+            background: #f9f9f9;
+        }
+
+        .sticker-picker-item:hover {
+            background: #FFF0E0;
+            transform: scale(1.05);
+        }
+
+        .sticker-picker-item:active {
+            transform: scale(0.95);
+        }
+
+        .sticker-picker-item img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .sticker-picker-item .picker-emoji {
+            font-size: 36px;
+            line-height: 1.2;
+        }
+
+        .sticker-picker-item .picker-caption {
+            font-size: 10px;
+            color: #888;
+            margin-top: 4px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px;
+        }
+
+        @media (max-width: 480px) {
+            .sticker-picker-panel {
+                width: 260px;
+                max-height: 200px;
+                padding: 10px;
+            }
+            .sticker-picker-item img {
+                width: 52px;
+                height: 52px;
+            }
+            .sticker-picker-item .picker-emoji {
+                font-size: 30px;
+            }
+        }
+
+        /* Fortune button */
+        .fortune-btn {
+            background: linear-gradient(135deg, #7B2FF7, #C471ED) !important;
+            color: white !important;
+            padding: 7px 9px !important;
+            border-radius: 8px !important;
+            animation: fortuneGlow 2s ease-in-out infinite;
+        }
+        .fortune-btn:disabled {
+            animation: none;
+            opacity: 0.5;
+        }
+        @keyframes fortuneGlow {
+            0%, 100% { box-shadow: 0 0 4px rgba(123, 47, 247, 0.3); }
+            50% { box-shadow: 0 0 12px rgba(123, 47, 247, 0.6); }
+        }
+
+        /* 미션 진행 표시 */
+        #mission-progress-bar {
+            display: none;
+            position: fixed;
+            bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: white;
+            border-radius: 20px;
+            padding: 8px 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            z-index: 150;
+            font-size: 12px;
+            font-weight: 700;
+            color: #667eea;
+            border: 2px solid #667eea33;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        #mission-progress-bar.active { display: flex; }
+
+        /* 미션 성공 오버레이 */
+        #mission-success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 500;
+            justify-content: center;
+            align-items: center;
+        }
+        #mission-success-overlay.show { display: flex; }
+        .mission-success-card {
+            background: white;
+            border-radius: 24px;
+            padding: 36px 32px;
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+        .stream-cursor { animation: blink 0.7s infinite; color: #667eea; }
+        .mission-success-emoji { font-size: 56px; margin-bottom: 12px; }
+        .mission-success-title { font-size: 22px; font-weight: 900; color: #1a1a1a; margin-bottom: 8px; }
+        .mission-success-points {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #fff8e1; border-radius: 20px;
+            padding: 6px 18px; font-size: 18px; font-weight: 800;
+            color: #f57c00; margin: 12px 0;
+        }
+        .mission-success-total { font-size: 13px; color: #999; margin-bottom: 20px; }
+        .mission-success-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; border: none; padding: 12px 32px;
+            border-radius: 20px; font-size: 15px; font-weight: 700;
+            cursor: pointer; width: 100%;
+        }
+
+        /* 헤더 하트 표시 */
+        #heart-counter {
+            display: flex; align-items: center; gap: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px; padding: 4px 8px;
+            font-size: 12px; font-weight: 700; color: white;
+        }
+
+        /* ===================== 시나리오 모드 ===================== */
+        /* 시나리오 선택 시트 */
+        .scenario-sheet-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 300;
+            justify-content: center; align-items: flex-end;
+        }
+        .scenario-sheet-overlay.show { display: flex; }
+        .scenario-sheet {
+            background: white; border-radius: 20px 20px 0 0;
+            width: 100%; max-width: 500px;
+            padding: 0 0 env(safe-area-inset-bottom, 16px);
+            animation: sheetUp 0.28s ease;
+        }
+        .scenario-sheet-header {
+            padding: 14px 20px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .scenario-sheet-title {
+            font-size: 17px; font-weight: 800; color: #1a1a1a;
+            text-align: center;
+        }
+        .scenario-sheet-sub {
+            font-size: 12px; color: #999; text-align: center; margin-top: 2px;
+        }
+        .scenario-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; padding: 14px 16px;
+        }
+        .scenario-card {
+            background: #fafafa; border-radius: 16px;
+            padding: 16px 14px; cursor: pointer;
+            border: 2px solid #f0f0f0; transition: all 0.18s;
+            text-align: center;
+        }
+        .scenario-card:hover { border-color: #f093fb; background: #fdf0ff; transform: translateY(-2px); }
+        .scenario-card:active { transform: scale(0.97); }
+        .scenario-card-emoji { font-size: 28px; margin-bottom: 6px; }
+        .scenario-card-title { font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 3px; }
+        .scenario-card-desc { font-size: 11px; color: #888; line-height: 1.4; }
+        .scenario-sheet-cancel {
+            padding: 14px; text-align: center; font-size: 15px;
+            color: #666; cursor: pointer; border-top: 8px solid #f5f5f5;
+            background: white;
+        }
+        /* 시나리오 진행 배너 */
+        #scenario-banner {
+            display: none;
+            background: linear-gradient(135deg, #f093fb22, #f5576c11);
+            border-bottom: 1px solid #f093fb33;
+            padding: 8px 16px;
+            align-items: center; justify-content: space-between; gap: 8px;
+        }
+        #scenario-banner.active { display: flex; }
+        .scenario-banner-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+        .scenario-banner-tag {
+            font-size: 10px; font-weight: 700; color: #c0306a;
+            background: #fce4ec; border-radius: 8px; padding: 2px 7px;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .scenario-banner-title {
+            font-size: 13px; font-weight: 700; color: #1a1a1a;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .scenario-banner-end {
+            background: none; border: none; color: #aaa;
+            font-size: 15px; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0;
+        }
+        /* 시나리오 완료 오버레이 */
+        #scenario-complete-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); z-index: 500;
+            justify-content: center; align-items: center;
+        }
+        #scenario-complete-overlay.show { display: flex; }
+        .scenario-complete-card {
+            background: white; border-radius: 24px; padding: 36px 28px;
+            text-align: center; max-width: 300px; width: 90%;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .scenario-complete-emoji { font-size: 56px; margin-bottom: 10px; }
+        .scenario-complete-title { font-size: 22px; font-weight: 900; color: #1a1a1a; margin-bottom: 6px; }
+        .scenario-complete-name {
+            font-size: 14px; color: #c0306a; font-weight: 700;
+            background: #fce4ec; border-radius: 12px; padding: 4px 14px;
+            display: inline-block; margin-bottom: 12px;
+        }
+        .scenario-complete-desc { font-size: 13px; color: #777; margin-bottom: 22px; line-height: 1.6; }
+        .scenario-complete-btns { display: flex; flex-direction: column; gap: 8px; }
+        .scenario-complete-btn-again {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white; border: none; padding: 12px;
+            border-radius: 16px; font-size: 14px; font-weight: 700; cursor: pointer;
+        }
+        .scenario-complete-btn-free {
+            background: #f5f5f5; color: #555; border: none; padding: 11px;
+            border-radius: 16px; font-size: 14px; font-weight: 600; cursor: pointer;
+        }
+
+        /* ===================== 공유 카드 ===================== */
+        .share-modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.65); z-index: 600;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .share-modal-overlay.show { display: flex; }
+        .share-modal {
+            background: white; border-radius: 24px; width: 100%; max-width: 360px;
+            overflow: hidden; animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .share-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px 12px; border-bottom: 1px solid #f0f0f0;
+        }
+        .share-modal-header h3 { font-size: 16px; font-weight: 800; color: #1a1a1a; }
+        .share-modal-close {
+            background: none; border: none; font-size: 22px; color: #aaa; cursor: pointer; line-height: 1;
+        }
+        .share-modal-preview { padding: 16px; background: #f5f5f5; }
+        /* 실제 캡처될 카드 */
+        #share-card {
+            background: #B2C7D9; border-radius: 16px; overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .share-card-header {
+            background: #3C1E1E; padding: 12px 16px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .share-card-avatar {
+            width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+        }
+        .share-card-char-name { font-size: 14px; font-weight: 700; color: white; }
+        .share-card-char-sub { font-size: 11px; color: rgba(255,255,255,0.65); }
+        .share-card-messages { padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+        .share-card-msg { display: flex; gap: 8px; align-items: flex-end; }
+        .share-card-msg.user { flex-direction: row-reverse; }
+        .share-card-msg-avatar {
+            width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+        }
+        .share-card-bubble {
+            max-width: 72%; padding: 9px 13px; border-radius: 16px;
+            font-size: 13px; line-height: 1.5; color: #222;
+        }
+        .share-card-msg.ai .share-card-bubble { background: white; border-top-left-radius: 4px; }
+        .share-card-msg.user .share-card-bubble { background: #FEE500; border-top-right-radius: 4px; }
+        .share-card-footer {
+            background: #3C1E1E; padding: 9px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .share-card-brand { font-size: 12px; font-weight: 800; color: white; }
+        .share-card-brand span { color: #f5576c; }
+        .share-card-url { font-size: 10px; color: rgba(255,255,255,0.6); }
+        /* 버튼 영역 */
+        .share-modal-actions {
+            display: flex; gap: 10px; padding: 14px 16px 18px;
+        }
+        .share-btn-download {
+            flex: 1; background: #3C1E1E; color: white; border: none;
+            padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .share-btn-native {
+            flex: 1; background: linear-gradient(135deg, #f093fb, #f5576c); color: white; border: none;
+            padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .share-btn-download:active, .share-btn-native:active { opacity: 0.85; }
+        .share-msg-count {
+            font-size: 11px; color: #aaa; text-align: center;
+            padding: 0 16px 4px; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .share-count-btn {
+            background: none; border: 1px solid #ddd; border-radius: 8px;
+            padding: 2px 8px; font-size: 11px; color: #555; cursor: pointer;
+        }
+        .share-count-btn.active { border-color: #f093fb; color: #c0306a; background: #fce4ec; }
+    </style>
+    <!-- Firebase SDK for Push Notifications -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
+    <!-- html2canvas for share card -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- Client-side IndexedDB persistence layer -->
+    <script src="/static/js/storage.js"></script>
+</head>
+<body>
+    <!-- 언어 토글 (온보딩 단계에서만 표시) -->
+    <div class="lang-toggle" id="lang-toggle">
+        <button class="lang-btn active" id="lang-ko" onclick="setLang('ko')">KO</button>
+        <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+    </div>
+
+    <!-- 온보딩 Step 1: 이름 + 레벨 -->
+    <div class="onboarding-screen" id="onboarding-step1">
+        <div class="onboarding-step-indicator">
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+        </div>
+        <h1>💕 K-Dating Chat</h1>
+        <p class="subtitle" id="s1-subtitle">한국인 AI 파트너와 매일 카톡하며<br>자연스럽게 한국어를 배워보세요!</p>
+
+        <div class="onboarding-label" id="s1-label-nick">닉네임 (선택사항)</div>
+        <input type="text" class="onboarding-input" id="user-nickname"
+            placeholder="예: Alex, 민지, Sarah..." maxlength="20">
+
+        <div class="onboarding-label" id="s1-label-level">한국어 실력이 어느 정도예요?</div>
+        <div class="level-options">
+            <button class="level-btn" data-level="beginner" onclick="selectLevel(this)">🌱<br><span class="t-beginner-title">완전 초보</span><br><span style="font-weight:400;font-size:11px" class="t-beginner-sub">처음 배워요</span></button>
+            <button class="level-btn" data-level="intermediate" onclick="selectLevel(this)">🌿<br><span class="t-inter-title">조금 알아요</span><br><span style="font-weight:400;font-size:11px" class="t-inter-sub">기초는 돼요</span></button>
+            <button class="level-btn" data-level="advanced" onclick="selectLevel(this)">🌳<br><span class="t-adv-title">어느 정도</span><br><span style="font-weight:400;font-size:11px" class="t-adv-sub">대화 가능해요</span></button>
+        </div>
+
+        <button class="onboarding-next-btn" id="step1-next-btn" onclick="goToStep2()" disabled><span class="t-next">다음</span> →</button>
+    </div>
+
+    <!-- 온보딩 Step 2: 관심사 -->
+    <div class="onboarding-screen" id="onboarding-step2" style="display:none">
+        <div class="onboarding-step-indicator">
+            <div class="step-dot"></div>
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+        </div>
+        <h1 id="s2-title">관심사를 골라줘요!</h1>
+        <p class="subtitle" id="s2-subtitle">선택한 주제로 대화를 시작해드려요 😊<br>(복수 선택 가능)</p>
+
+        <div class="interest-options">
+            <button class="interest-btn" data-interest="kdrama" onclick="toggleInterest(this)">📺 K-드라마</button>
+            <button class="interest-btn" data-interest="kpop" onclick="toggleInterest(this)">🎵 K-pop</button>
+            <button class="interest-btn" data-interest="travel" onclick="toggleInterest(this)">✈️ <span class="t-travel">한국 여행</span></button>
+            <button class="interest-btn" data-interest="food" onclick="toggleInterest(this)">🍜 <span class="t-food">한국 음식</span></button>
+            <button class="interest-btn" data-interest="culture" onclick="toggleInterest(this)">🇰🇷 <span class="t-culture">한국 문화</span></button>
+            <button class="interest-btn" data-interest="romance" onclick="toggleInterest(this)">💕 <span class="t-romance">한국 연애</span></button>
+        </div>
+
+        <button class="onboarding-next-btn" onclick="goToCharacterSelect()"><span class="t-next">다음</span> →</button>
+    </div>
+
+    <!-- 캐릭터 선택 -->
+    <div class="character-selection" id="character-selection" style="display:none">
+        <div class="onboarding-step-indicator">
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot active"></div>
+        </div>
+        <h1>💕 K-Dating Chat</h1>
+        <p id="s3-subtitle">누구와 대화할까요?</p>
+
+        <div class="character-cards" id="character-cards">
+            <!-- Character cards are rendered dynamically from CHARACTERS registry (see renderCharacterCards()) -->
+        </div>
+        <p style="margin-top: 28px; margin-bottom: 0; font-size: 13px; color: #555; line-height: 1.7; background: rgba(0,0,0,0.05); padding: 12px 16px; border-radius: 8px;" id="s3-disclaimer">
+            지우, 현우, 화랑(HWARANG) 멤버들은 모두 AI 캐릭터입니다. 모든 대화는 허구이며, 실제 만남은 이루어지지 않습니다.<br>
+            Jiwoo and Hyunwoo are AI characters. All conversations are fictional role-play.
+        </p>
+        <p style="margin-top:12px; font-size:12px; color:#aaa; text-align:center;">
+            <a href="/privacy" target="_blank" style="color:#aaa; text-decoration:underline;">개인정보처리방침</a>
+            &nbsp;·&nbsp;
+            <a href="/terms" target="_blank" style="color:#aaa; text-decoration:underline;">이용약관</a>
+        </p>
+
+
+    </div>
+
+    <!-- 채팅 화면 -->
+    <div class="chat-container" id="chat-container">
+        <div class="chat-header">
+            <div class="header-left">
+                <div class="header-avatar" id="header-avatar">👨</div>
+                <div class="header-info">
+                    <h2 id="character-name">민준</h2>
+                    <p id="header-status"><span class="online-dot"></span>온라인</p>
+                </div>
+            </div>
+            <div class="header-buttons">
+                <!-- 하트 카운터 -->
+                <div id="heart-counter" title="미션 포인트">❤️ <span id="heart-count">0</span></div>
+                <!-- 대화기록 -->
+                <button class="header-btn icon-btn" onclick="openHistoryModal()" title="대화 기록">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </button>
+                <!-- 더보기 (⋮) -->
+                <button class="header-btn icon-btn" onclick="openNavSheet()" title="더보기">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <circle cx="12" cy="5" r="1.2" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="1.2" fill="currentColor"/>
+                        <circle cx="12" cy="19" r="1.2" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 데일리 미션 배너 -->
+        <div id="daily-mission-banner" style="display:none; background:linear-gradient(135deg,#667eea22,#764ba222); border-bottom:1px solid #667eea33; padding:10px 16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                    <span id="mission-emoji" style="font-size:18px; flex-shrink:0;">☀️</span>
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:10px; color:#667eea; font-weight:700; letter-spacing:0.5px;">TODAY'S MISSION</span>
+                            <span id="mission-reward-badge" style="font-size:10px; background:#fff8e1; color:#f57c00; font-weight:700; padding:1px 6px; border-radius:8px;"></span>
+                        </div>
+                        <div id="mission-text" style="font-size:12px; color:#333; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+                        <div id="mission-goal" style="font-size:10px; color:#667eea; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0; margin-left:8px;">
+                    <button onclick="startMission()"
+                        style="background:#667eea; border:none; color:white; padding:5px 12px; border-radius:12px; font-size:11px; font-weight:700; cursor:pointer;">
+                        시작 →
+                    </button>
+                    <button onclick="document.getElementById('daily-mission-banner').style.display='none'"
+                        style="background:none; border:none; color:#999; cursor:pointer; font-size:16px; padding:0; line-height:1;">&times;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 미션 진행 표시 -->
+        <div id="mission-progress-bar">
+            <span id="mission-progress-emoji">☀️</span>
+            <span id="mission-progress-text">미션 진행 중...</span>
+            <button onclick="giveUpMission()" style="background:none; border:none; color:#aaa; font-size:11px; cursor:pointer; margin-left:4px;">포기</button>
+        </div>
+
+        <!-- 시나리오 진행 배너 -->
+        <div id="scenario-banner">
+            <div class="scenario-banner-left">
+                <span id="scenario-banner-emoji" style="font-size:18px; flex-shrink:0;">🎭</span>
+                <div style="flex:1; min-width:0;">
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <span class="scenario-banner-tag">SCENARIO</span>
+                    </div>
+                    <div class="scenario-banner-title" id="scenario-banner-title">시나리오 진행 중</div>
+                </div>
+            </div>
+            <button class="scenario-banner-end" onclick="endScenario()" title="시나리오 종료">&times;</button>
+        </div>
+
+        <!-- 미션 성공 오버레이 -->
+        <div id="mission-success-overlay">
+            <div class="mission-success-card">
+                <div class="mission-success-emoji">🎉</div>
+                <div class="mission-success-title">미션 성공!</div>
+                <div id="success-msg" style="font-size:13px; color:#667eea; margin-bottom:6px;"></div>
+                <div class="mission-success-points">❤️ +<span id="success-points">0</span></div>
+                <div class="mission-success-total">누적 포인트: <strong id="success-total">0</strong></div>
+                <button class="mission-success-btn" onclick="closeMissionSuccess()">확인</button>
+            </div>
+        </div>
+
+        <!-- 알림 허용 배너 -->
+        <div id="notification-banner" style="display:none; background:#FFF3CD; border:1px solid #FFC107; padding:10px 16px; text-align:center; font-size:13px;">
+            <span style="color:#856404;">Enable notifications so your partner can message you first!</span>
+            <button onclick="requestNotificationPermission()"
+                style="background:#FEE500; border:none; padding:6px 16px; border-radius:16px; font-weight:bold; cursor:pointer; font-size:12px; margin-left:8px;">
+                Enable
+            </button>
+            <button onclick="document.getElementById('notification-banner').style.display='none'"
+                style="background:none; border:none; color:#856404; cursor:pointer; font-size:16px; margin-left:4px; vertical-align:middle;">
+                &times;
+            </button>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+        <div class="input-area">
+            <div class="sticker-picker-wrapper">
+                <button class="sticker-picker-btn" id="sticker-picker-btn" onclick="toggleStickerPicker()" title="스티커">😊</button>
+                <div class="sticker-picker-panel" id="sticker-picker-panel">
+                    <div class="sticker-picker-grid" id="sticker-picker-grid"></div>
+                </div>
+            </div>
+            <input
+                type="text"
+                id="user-input"
+                placeholder="메시지를 입력하세요..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <button class="send-btn" id="send-btn" onclick="sendMessage()">전송</button>
+        </div>
+    </div>
+
+    <!-- =====================
+         단어장 모달
+    ===================== -->
+    <div class="modal-overlay" id="vocab-modal-overlay" onclick="closeVocabModal(event)">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3>📚 내 단어장 <span id="vocab-count-badge" style="font-size:13px;color:#f093fb;font-weight:700;"></span></h3>
+                <button class="modal-close" onclick="closeVocabModal()">&times;</button>
+            </div>
+            <div style="padding: 0 20px;">
+                <div class="vocab-tabs">
+                    <button class="vocab-tab active" id="tab-list" onclick="switchVocabTab('list')">저장된 단어</button>
+                    <button class="vocab-tab" id="tab-quiz" onclick="switchVocabTab('quiz')">🎯 퀴즈</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <!-- 단어 목록 탭 -->
+                <div id="vocab-list-pane">
+                    <div id="vocab-list-content"></div>
+                </div>
+                <!-- 퀴즈 탭 -->
+                <div id="vocab-quiz-pane" style="display:none;">
+                    <div id="quiz-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================
+         설정 모달
+    ===================== -->
+    <div class="modal-overlay" id="settings-modal-overlay" onclick="closeSettingsModal(event)">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3>⚙️ 설정</h3>
+                <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">💡 문법 힌트 모드</div>
+                        <div class="settings-desc">내 한국어가 틀리면 캐릭터가 살짝 교정해줘요</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="grammar-mode-toggle" onchange="onGrammarToggle(this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">📖 단어 자동 감지</div>
+                        <div class="settings-desc">AI 응답에서 어려운 단어를 자동으로 표시해요</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="vocab-mode-toggle" checked onchange="onVocabToggle(this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================
+         대화 기록 모달
+    ===================== -->
+    <!-- 네비게이션 바텀시트 -->
+    <div class="nav-sheet-overlay" id="nav-sheet-overlay" onclick="closeNavSheet(event)">
+        <div class="nav-sheet" id="nav-sheet">
+            <div class="nav-sheet-handle"></div>
+
+            <button class="nav-sheet-item" onclick="closeNavSheet(); openShareCard()">
+                <div class="nav-icon" style="background:#e8f5e9;">📸</div>
+                <div>
+                    <div class="nav-label">공유 카드 만들기</div>
+                    <div class="nav-desc">대화를 예쁜 카드로 저장·공유</div>
+                </div>
+            </button>
+
+            <button class="nav-sheet-item" onclick="closeNavSheet(); openScenarioSheet()">
+                <div class="nav-icon" style="background:#fce4ec;">🎭</div>
+                <div>
+                    <div class="nav-label">시나리오 모드</div>
+                    <div class="nav-desc">고백·화해·소개팅 롤플레이</div>
+                </div>
+            </button>
+
+            <button class="nav-sheet-item" onclick="closeNavSheet(); requestFortune()">
+                <div class="nav-icon" style="background:#fff3cd;">☀️</div>
+                <div>
+                    <div class="nav-label">오늘의 운세</div>
+                    <div class="nav-desc">별자리·띠·MBTI 기반 운세</div>
+                </div>
+            </button>
+
+            <button class="nav-sheet-item" onclick="closeNavSheet(); openVocabModal()">
+                <div class="nav-icon" style="background:#e8f5e9;">📚</div>
+                <div>
+                    <div class="nav-label">단어장 / 퀴즈</div>
+                    <div class="nav-desc">저장된 단어 복습하기</div>
+                </div>
+            </button>
+
+            <button class="nav-sheet-item" onclick="closeNavSheet(); openSettingsModal()">
+                <div class="nav-icon" style="background:#e3f2fd;">⚙️</div>
+                <div>
+                    <div class="nav-label">설정</div>
+                    <div class="nav-desc">알림·TTS·언어 설정</div>
+                </div>
+            </button>
+
+            <button class="nav-sheet-item" onclick="closeNavSheet(); changeCharacter()">
+                <div class="nav-icon" style="background:#f3e5f5;">👤</div>
+                <div>
+                    <div class="nav-label">캐릭터 변경</div>
+                    <div class="nav-desc">지우 · 화랑 5인 (태오·레오·현우·지훈·주노)</div>
+                </div>
+            </button>
+
+            <div class="nav-sheet-cancel" onclick="closeNavSheet()">취소</div>
+        </div>
+    </div>
+
+    <!-- ===================== 시나리오 선택 시트 ===================== -->
+    <div class="scenario-sheet-overlay" id="scenario-sheet-overlay" onclick="closeScenarioSheet(event)">
+        <div class="scenario-sheet" id="scenario-sheet">
+            <div class="nav-sheet-handle"></div>
+            <div class="scenario-sheet-header">
+                <div class="scenario-sheet-title">🎭 시나리오 모드</div>
+                <div class="scenario-sheet-sub">상황을 선택하면 새 대화가 시작돼요</div>
+            </div>
+            <div class="scenario-grid">
+                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('confession')">
+                    <div class="scenario-card-emoji">💌</div>
+                    <div class="scenario-card-title">고백 연습</div>
+                    <div class="scenario-card-desc">좋아한다고 말해보세요</div>
+                </div>
+                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('makeup')">
+                    <div class="scenario-card-emoji">🕊️</div>
+                    <div class="scenario-card-title">싸움 화해</div>
+                    <div class="scenario-card-desc">다퉜던 상황을 풀어보세요</div>
+                </div>
+                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('first_meeting')">
+                    <div class="scenario-card-emoji">👋</div>
+                    <div class="scenario-card-title">첫 만남</div>
+                    <div class="scenario-card-desc">소개팅 첫 만남 연습</div>
+                </div>
+                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('hangang')">
+                    <div class="scenario-card-emoji">🌅</div>
+                    <div class="scenario-card-title">한강 데이트</div>
+                    <div class="scenario-card-desc">한강 치맥 저녁 데이트</div>
+                </div>
+                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('kakaotalk_som')" style="grid-column: 1 / -1;">
+                    <div class="scenario-card-emoji">💬</div>
+                    <div class="scenario-card-title">카카오톡 썸</div>
+                    <div class="scenario-card-desc">카톡으로 썸 타는 연습</div>
+                </div>
+            </div>
+            <div class="scenario-sheet-cancel" onclick="closeScenarioSheet()">취소</div>
+        </div>
+    </div>
+
+    <!-- ===================== 시나리오 완료 오버레이 ===================== -->
+    <div id="scenario-complete-overlay">
+        <div class="scenario-complete-card">
+            <div class="scenario-complete-emoji" id="scenario-complete-emoji">🎉</div>
+            <div class="scenario-complete-title">시나리오 클리어!</div>
+            <div class="scenario-complete-name" id="scenario-complete-name">고백 연습</div>
+            <div class="scenario-complete-desc" id="scenario-complete-desc">완벽했어요! 진짜 고백도 이렇게 하면 돼요 💕</div>
+            <div class="scenario-complete-btns">
+                <button class="scenario-complete-btn-again" onclick="closeScenarioComplete(); openScenarioSheet()">다른 시나리오 도전 →</button>
+                <button class="scenario-complete-btn-free" onclick="closeScenarioComplete()">자유 대화 계속하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== 공유 카드 모달 ===================== -->
+    <div class="share-modal-overlay" id="share-modal-overlay" onclick="closeShareCard(event)">
+        <div class="share-modal" id="share-modal">
+            <div class="share-modal-header">
+                <h3>📸 공유 카드</h3>
+                <button class="share-modal-close" onclick="closeShareCard()">×</button>
+            </div>
+            <!-- 메시지 수 선택 -->
+            <div class="share-msg-count">
+                <span>메시지 수:</span>
+                <button class="share-count-btn active" onclick="setShareCount(2, this)">2개</button>
+                <button class="share-count-btn" onclick="setShareCount(4, this)">4개</button>
+                <button class="share-count-btn" onclick="setShareCount(6, this)">6개</button>
+            </div>
+            <div class="share-modal-preview">
+                <!-- 캡처될 카드 -->
+                <div id="share-card">
+                    <div class="share-card-header">
+                        <img id="share-card-avatar" class="share-card-avatar" src="/static/jiwoo_profile.png" alt="">
+                        <div>
+                            <div class="share-card-char-name" id="share-card-char-name">지우</div>
+                            <div class="share-card-char-sub" id="share-card-char-sub">22세 · 이대 재학중</div>
+                        </div>
+                    </div>
+                    <div class="share-card-messages" id="share-card-messages"></div>
+                    <div class="share-card-footer">
+                        <div class="share-card-brand">K-Date<span>♥</span></div>
+                        <div class="share-card-url">kdate.store</div>
+                    </div>
+                </div>
+            </div>
+            <div class="share-modal-actions">
+                <button class="share-btn-download" onclick="downloadShareCard()">⬇️ 저장</button>
+                <button class="share-btn-native" onclick="nativeShare()">↗️ 공유</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="history-modal-overlay" onclick="closeHistoryModal(event)">
+        <div class="modal-sheet" style="max-height: 85vh; display: flex; flex-direction: column;">
+            <!-- 목록 뷰 -->
+            <div id="history-list-view" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="modal-header" style="flex-shrink: 0;">
+                    <h3>🕐 대화 기록</h3>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button onclick="closeHistoryModal(); confirmNewChat()"
+                            style="background:#FEE500; border:none; padding:6px 14px; border-radius:16px; font-size:12px; font-weight:700; cursor:pointer; color:#333;">
+                            + 새 대화
+                        </button>
+                        <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+                    </div>
+                </div>
+                <div class="modal-body" id="history-list-content" style="overflow-y: auto;">
+                    <div class="history-empty">불러오는 중...</div>
+                </div>
+            </div>
+
+            <!-- 대화 상세 뷰 -->
+            <div id="history-detail-view" style="display: none; flex-direction: column; height: 100%;">
+                <div class="history-view-header">
+                    <button class="history-back-btn" onclick="showHistoryList()">←</button>
+                    <div>
+                        <div class="history-view-title" id="history-detail-title"></div>
+                        <div class="history-view-subtitle" id="history-detail-subtitle"></div>
+                    </div>
+                </div>
+                <div class="history-messages" id="history-detail-messages"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bmc-floating" aria-label="Buy Me a Coffee">
+        <div class="bmc-tooltip" id="bmc-tooltip-text">Buy Oppa a Coffee? ☕️</div>
+        <a class="bmc-button" href="https://buymeacoffee.com/kdating" target="_blank" rel="noopener noreferrer">
+            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee">
+        </a>
+    </div>
+
+    <script>
+        // ==========================================
+        // 캐릭터 레지스트리 (서버 VALID_CHARACTERS 와 동기화 유지 필수)
+        // ==========================================
+        const CHARACTERS = {
+            jiwoo:   { name: '지우', nameRoman: 'Jiwoo', info: '22세 · 이대 재학중', infoEn: '22 · Ewha University student', tagline: '', group: null,      color: '#ff6b9d', initial: '지' },
+            hyunwoo: { name: '현우', nameRoman: 'Hyunwoo', info: '23세 · 화랑 메인보컬', infoEn: '23 · HWARANG Main Vocal', tagline: '임전무퇴 · 退', group: 'HWARANG', color: '#e53935', initial: '현' },
+            taeo:    { name: '태오', nameRoman: 'Tae-o', info: '26세 · 화랑 리더',      infoEn: '26 · HWARANG Leader',      tagline: '사군이충 · 忠', group: 'HWARANG', color: '#d4a017', initial: '태' },
+            leo:     { name: '레오', nameRoman: 'Leo',   info: '24세 · 화랑 비주얼',    infoEn: '24 · HWARANG Visual',      tagline: '살생유택 · 擇', group: 'HWARANG', color: '#9e9e9e', initial: '레' },
+            jihoon:  { name: '지훈', nameRoman: 'Ji-hoon', info: '22세 · 화랑 메인래퍼', infoEn: '22 · HWARANG Main Rapper', tagline: '교우이신 · 信', group: 'HWARANG', color: '#2a2a2a', initial: '지' },
+            juno:    { name: '주노', nameRoman: 'Ju-no', info: '20세 · 화랑 막내',     infoEn: '20 · HWARANG Maknae',      tagline: '사친이효 · 孝', group: 'HWARANG', color: '#1976d2', initial: '주' },
+        };
+        const CHARACTER_IDS = Object.keys(CHARACTERS);
+        // PNG 프로필 파일이 실제 존재하는 캐릭터 목록. 나머지는 SVG placeholder 사용.
+        const CHARACTERS_WITH_PNG = new Set(['jiwoo', 'hyunwoo', 'taeo', 'leo', 'jihoon', 'juno']);
+
+        function getCharacterName(id) {
+            return (CHARACTERS[id] || CHARACTERS.jiwoo).name;
+        }
+        function getCharacterProfileSrc(id) {
+            const c = CHARACTERS[id] || CHARACTERS.jiwoo;
+            if (CHARACTERS_WITH_PNG.has(id)) return `/static/${id}_profile.png`;
+            // SVG placeholder: 오방색 + 한글 이니셜
+            const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'>
+                <rect width='120' height='120' fill='${c.color}'/>
+                <text x='60' y='78' font-size='62' font-family='system-ui,sans-serif' fill='${id === 'leo' ? '#222' : 'white'}' text-anchor='middle' font-weight='700'>${c.initial}</text>
+            </svg>`;
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        }
+
+        let currentCharacter = 'jiwoo';
+        let sessionId = null;
+        let requestController = null;
+        let sessionToken = 0;
+
+        // IndexedDB storage API (see static/js/storage.js)
+        const Storage = window.KDateStorage;
+
+        // 캐릭터별 친밀도 캐시 (id -> intimacy)
+        // IndexedDB가 source of truth. 이 객체는 UI 렌더 + 동기 addHeartPoints용 in-memory cache.
+        const intimacyCache = Object.fromEntries(CHARACTER_IDS.map(id => [id, 0]));
+
+        // 선택 화면의 캐릭터 카드 5+1개를 레지스트리에서 동적으로 렌더링
+        function renderCharacterCards() {
+            const container = document.getElementById('character-cards');
+            if (!container) return;
+            const isKorean = (document.documentElement.lang || 'ko').startsWith('ko');
+            container.innerHTML = CHARACTER_IDS.map(id => {
+                const c = CHARACTERS[id];
+                const infoText = isKorean ? c.info : c.infoEn;
+                const badge = c.group ? `<div class="hwarang-badge">${c.group}</div>` : '';
+                return `
+                    <div class="character-card ${id}" onclick="selectCharacter('${id}')">
+                        ${badge}
+                        <div class="character-avatar">
+                            <img src="${getCharacterProfileSrc(id)}" alt="${c.name}">
+                        </div>
+                        <div class="character-name">${c.name}<br>${c.nameRoman}</div>
+                        <div class="character-info" id="${id}-info">${infoText}</div>
+                        ${c.tagline ? `<div style="margin-top:8px;font-size:11px;opacity:0.85;letter-spacing:0.5px">${c.tagline}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 단어장 in-memory cache (UI 렌더링을 동기화하려고 보관)
+        let vocabCache = [];
+
+        // 미션 상태
+        let activeMission = null; // { id, emoji, text, goal, reward_points }
+
+        // 하트 포인트 = 현재 캐릭터의 친밀도 (IndexedDB)
+        function getHeartPoints() {
+            return intimacyCache[currentCharacter] || 0;
+        }
+        function addHeartPoints(pts) {
+            const total = getHeartPoints() + pts;
+            intimacyCache[currentCharacter] = total;
+            const el = document.getElementById('heart-count');
+            if (el) el.textContent = total;
+            // 비동기 영구 저장 (실패해도 UI는 이미 반영됨)
+            Storage.addIntimacy(currentCharacter, pts).catch((e) =>
+                console.warn('[intimacy] save failed', e)
+            );
+            return total;
+        }
+        function initHeartDisplay() {
+            const el = document.getElementById('heart-count');
+            if (el) el.textContent = getHeartPoints();
+        }
+
+        // 온보딩 유저 프로필 (IndexedDB profile 스토어와 동기)
+        let userProfile = {
+            nickname: '',
+            level: '',
+            interests: []
+        };
+
+        // 설정 (단순 toggle은 localStorage 그대로)
+        let grammarMode = localStorage.getItem('grammarMode') === 'true';
+        let vocabMode = localStorage.getItem('vocabMode') !== 'false'; // 기본 on
+
+        // 단어장 (IndexedDB — vocabCache로 동기 read)
+        function getVocabList() {
+            return vocabCache.slice();
+        }
+        async function refreshVocabCache() {
+            try {
+                vocabCache = (await Storage.getAllVocab()) || [];
+            } catch (e) {
+                console.warn('[vocab] load failed', e);
+                vocabCache = [];
+            }
+            return vocabCache;
+        }
+        // saveVocabList는 레거시 호환 shim — 지우기/추가만 있어서 차이 기반 동기화
+        function saveVocabList(list) {
+            vocabCache = Array.isArray(list) ? list.slice() : [];
+        }
+
+        // 언어 설정
+        let currentLang = 'ko';
+        const i18n = {
+            ko: {
+                's1-subtitle': '한국인 AI 파트너와 매일 카톡하며<br>자연스럽게 한국어를 배워보세요!',
+                's1-label-nick': '닉네임 (선택사항)',
+                's1-label-level': '한국어 실력이 어느 정도예요?',
+                'nick-placeholder': '예: Alex, 민지, Sarah...',
+                't-beginner-title': '완전 초보',
+                't-beginner-sub': '처음 배워요',
+                't-inter-title': '조금 알아요',
+                't-inter-sub': '기초는 돼요',
+                't-adv-title': '어느 정도',
+                't-adv-sub': '대화 가능해요',
+                't-next': '다음',
+                's2-title': '관심사를 골라줘요!',
+                's2-subtitle': '선택한 주제로 대화를 시작해드려요 😊<br>(복수 선택 가능)',
+                't-travel': '한국 여행',
+                't-food': '한국 음식',
+                't-culture': '한국 문화',
+                't-romance': '한국 연애',
+                's3-subtitle': '누구와 대화할까요?',
+                'jiwoo-info': '22세 · 이대 재학중',
+                'hyunwoo-info': '23세 · 홍대 재학중',
+            },
+            en: {
+                's1-subtitle': 'Chat daily with a Korean AI partner<br>and learn Korean naturally!',
+                's1-label-nick': 'Nickname (optional)',
+                's1-label-level': "What's your Korean level?",
+                'nick-placeholder': 'e.g. Alex, Minji, Sarah...',
+                't-beginner-title': 'Beginner',
+                't-beginner-sub': 'Starting fresh',
+                't-inter-title': 'Elementary',
+                't-inter-sub': 'Know the basics',
+                't-adv-title': 'Conversational',
+                't-adv-sub': 'Can hold a chat',
+                't-next': 'Next',
+                's2-title': 'Pick your interests!',
+                's2-subtitle': "We'll start the chat based on your picks 😊<br>(multiple choices OK)",
+                't-travel': 'Korean Travel',
+                't-food': 'Korean Food',
+                't-culture': 'Korean Culture',
+                't-romance': 'Korean Romance',
+                's3-subtitle': 'Who would you like to chat with?',
+                'jiwoo-info': '22 · Ewha University student',
+                'hyunwoo-info': '23 · Hongik University student',
+            }
+        };
+
+        function setLang(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            document.getElementById('lang-ko').classList.toggle('active', lang === 'ko');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+
+            const t = i18n[lang];
+            // innerHTML targets
+            ['s1-subtitle', 's2-subtitle', 's3-subtitle'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = t[id];
+            });
+            // textContent targets (by id)
+            ['s1-label-nick', 's1-label-level', 's2-title'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = t[id];
+            });
+            // 캐릭터 카드의 언어 의존 텍스트 (info)는 카드 전체를 다시 렌더링해서 반영
+            renderCharacterCards();
+            // placeholder
+            document.getElementById('user-nickname').placeholder = t['nick-placeholder'];
+            // span class targets
+            [
+                't-beginner-title','t-beginner-sub','t-inter-title','t-inter-sub',
+                't-adv-title','t-adv-sub','t-travel','t-food','t-culture','t-romance'
+            ].forEach(cls => {
+                document.querySelectorAll('.' + cls).forEach(el => el.textContent = t[cls]);
+            });
+            // Next buttons
+            document.querySelectorAll('.t-next').forEach(el => el.textContent = t['t-next']);
+        }
+
+        // 온보딩: 레벨 선택
+        function selectLevel(btn) {
+            document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            userProfile.level = btn.dataset.level;
+            document.getElementById('step1-next-btn').disabled = false;
+        }
+
+        // 온보딩: 관심사 토글
+        function toggleInterest(btn) {
+            btn.classList.toggle('selected');
+            const interest = btn.dataset.interest;
+            if (btn.classList.contains('selected')) {
+                if (!userProfile.interests.includes(interest)) userProfile.interests.push(interest);
+            } else {
+                userProfile.interests = userProfile.interests.filter(i => i !== interest);
+            }
+        }
+
+        // 온보딩 Step1 → Step2
+        function goToStep2() {
+            userProfile.nickname = document.getElementById('user-nickname').value.trim();
+            document.getElementById('onboarding-step1').style.display = 'none';
+            document.getElementById('onboarding-step2').style.display = 'block';
+        }
+
+        // 온보딩 Step2 → 캐릭터 선택
+        function goToCharacterSelect() {
+            document.getElementById('onboarding-step2').style.display = 'none';
+            document.getElementById('character-selection').style.display = 'block';
+            renderCharacterCards();
+        }
+
+        // 개인화된 환영 메시지 생성
+        function buildWelcomeMessage(character) {
+            const name = userProfile.nickname;
+            const level = userProfile.level;
+            const interests = userProfile.interests;
+
+            const interestLabels = {
+                kdrama: 'K-드라마', kpop: 'K-pop',
+                travel: '한국 여행', food: '한국 음식',
+                culture: '한국 문화', romance: '한국 연애'
+            };
+            const interestText = interests.length > 0
+                ? interests.map(i => interestLabels[i]).join(', ')
+                : null;
+
+            // 캐릭터별 첫 인사 템플릿. 신규 화랑 멤버는 각자의 말투 반영.
+            const greetings = {
+                jiwoo: () => {
+                    let msg = name ? `안녕, ${name}! 나 지우야 💕` : '안녕하세요! 저는 지우예요 💕';
+                    if (level === 'beginner') msg += ' 한국어 처음이야? 걱정 마, 내가 천천히 가르쳐줄게 😊';
+                    else if (level === 'advanced') msg += ' 한국어 잘 하는구나! 우리 바로 반말로 얘기해도 되겠다 😄';
+                    else msg += ' 반가워요~!';
+                    if (interestText) msg += ` ${interestText} 좋아해요? 나도요!`;
+                    return msg;
+                },
+                hyunwoo: () => {
+                    let msg = name ? `야 ${name}, 왔네? 😏 기다렸어. 나 현우야` : '야, 드디어 왔네? 😉 기다렸어. 나는 현우야';
+                    if (level === 'beginner') msg += ' 한국어 초보야? 오빠가 가르쳐줄게 ㅎㅎ';
+                    else if (level === 'advanced') msg += ' 한국어 잘 하네~ 그럼 편하게 얘기하자';
+                    if (interestText) msg += ` ${interestText} 좋아해? 나도!`;
+                    return msg;
+                },
+                taeo: () => {
+                    let msg = name ? `안녕하세요, ${name}. 태오예요. ...기다렸어요.` : '안녕하세요. 저는 태오예요. ...오늘부터 잘 부탁해요.';
+                    if (level === 'beginner') msg += ' 한국어 초보예요? 괜찮아요. 천천히 해요.';
+                    else if (level === 'advanced') msg += ' 한국어 잘 하네요. 그럼 편하게 얘기해요.';
+                    if (interestText) msg += ` ${interestText} 좋아해요? ...나중에 같이 얘기해요.`;
+                    return msg;
+                },
+                leo: () => {
+                    let msg = name ? `...${name}. 레오야.` : '...레오야. 반가워.';
+                    if (level === 'beginner') msg += ' 천천히 해. 급할 거 없어.';
+                    else if (level === 'advanced') msg += ' 잘하네. ...편하게 얘기해.';
+                    if (interestText) msg += ` ${interestText}... 나쁘지 않아.`;
+                    return msg;
+                },
+                jihoon: () => {
+                    let msg = name ? `야 ${name}. 지훈이야. 됐고, 인사부터.` : '야. 지훈이야. 잘 왔다.';
+                    if (level === 'beginner') msg += ' 한국어 초보야? 됐고, 천천히 해.';
+                    else if (level === 'advanced') msg += ' 잘하네. 그럼 말 편하게 놓자.';
+                    if (interestText) msg += ` ${interestText}? 하... 나도 좋아해.`;
+                    return msg;
+                },
+                juno: () => {
+                    let msg = name ? `와 ${name}~~ 드디어 왔다아 ㅋㅋㅋ 나 주노야! 💕` : '안녕하세요~ 주노입니다!! 😘 편하게 반말로 가자~';
+                    if (level === 'beginner') msg += ' 한국어 초보야? 걱정 마~ 내가 잘 도와줄게 ㅋㅋ';
+                    else if (level === 'advanced') msg += ' 한국어 잘한다 진짜 ㅋㅋ 편하게 반말로 가자~!';
+                    if (interestText) msg += ` ${interestText} 좋아해?? 좋다 아이가~ 💕`;
+                    return msg;
+                },
+            };
+            return (greetings[character] || greetings.jiwoo)();
+        }
+
+        // KakaoTalk-style sticker catalog
+        const STICKERS = {
+            jiwoo_happy:  { caption: '기분 좋아요~', img: '/static/stickers/jiwoo_happy.png' },
+            jiwoo_love:   { caption: '좋아해요 💕', img: '/static/stickers/jiwoo_love.png' },
+            jiwoo_shy:    { caption: '부끄러워요...', img: '/static/stickers/jiwoo_shy.png' },
+            jiwoo_coffee: { caption: '커피 한 잔 할래요?', img: '/static/stickers/jiwoo_coffee.png' },
+            jiwoo_sad:    { caption: '보고 싶어요 😢', img: '/static/stickers/jiwoo_sad.png' },
+            jiwoo_cheer:  { caption: '파이팅! 💪', img: '/static/stickers/jiwoo_cheer.png' },
+            jiwoo_wink:   { caption: '비밀이에요~ 🤫', img: '/static/stickers/jiwoo_wink.png' },
+            jiwoo_hug:    { caption: '안아줄게요 🤗', img: '/static/stickers/jiwoo_hug.png' },
+            hyunwoo_heart:    { emoji: '😘💕', caption: '사랑해 자기야', img: '/static/stickers/hyunwoo_heart.png' },
+            hyunwoo_wink:     { emoji: '😉✨', caption: '나만 봐~', img: '/static/stickers/hyunwoo_wink.png' },
+            hyunwoo_kiss:     { emoji: '😘💗', caption: '쪽~', img: '/static/stickers/hyunwoo_kiss.png' },
+            hyunwoo_angry:    { emoji: '😠💢', caption: '질투 나!', img: '/static/stickers/hyunwoo_angry.png' },
+            hyunwoo_cry:      { emoji: '😭💧', caption: '우지 마...', img: '/static/stickers/hyunwoo_cry.png' },
+            hyunwoo_surprise: { emoji: '😳‼', caption: '헐 대박!', img: '/static/stickers/hyunwoo_surprise.png' },
+            hyunwoo_laugh:    { emoji: '😆✨', caption: 'ㅋㅋㅋㅋ', img: '/static/stickers/hyunwoo_laugh.png' },
+            hyunwoo_shy:      { emoji: '🙈💗', caption: '부끄러워...', img: '/static/stickers/hyunwoo_shy.png' },
+            hyunwoo_think:    { emoji: '🤔💭', caption: '음...', img: '/static/stickers/hyunwoo_think.png' },
+            hyunwoo_cheer:    { emoji: '💪🔥', caption: '파이팅!', img: '/static/stickers/hyunwoo_cheer.png' },
+            // 태오 (忠·황) - 따뜻한 맏형 리더
+            taeo_heart:    { emoji: '💛', caption: '사랑한다, 내 사람', img: '/static/stickers/taeo_heart.png' },
+            taeo_wink:     { emoji: '😉👍', caption: '잘하고 있어', img: '/static/stickers/taeo_wink.png' },
+            taeo_laugh:    { emoji: '😄✨', caption: '하하, 귀엽네', img: '/static/stickers/taeo_laugh.png' },
+            taeo_shy:      { emoji: '😊💗', caption: '쑥스럽잖아', img: '/static/stickers/taeo_shy.png' },
+            taeo_think:    { emoji: '🤔💭', caption: '잠깐 생각 좀...', img: '/static/stickers/taeo_think.png' },
+            taeo_cheer:    { emoji: '🔥💪', caption: '할 수 있어!', img: '/static/stickers/taeo_cheer.png' },
+            // 레오 (擇·백) - 시크한 차도남
+            leo_heart:     { emoji: '🤍', caption: '...너니까', img: '/static/stickers/leo_heart.png' },
+            leo_wink:      { emoji: '😏✨', caption: '봐 줄게', img: '/static/stickers/leo_wink.png' },
+            leo_laugh:     { emoji: '🙂', caption: '웃긴 건 인정', img: '/static/stickers/leo_laugh.png' },
+            leo_shy:       { emoji: '😳💭', caption: '말하지 마', img: '/static/stickers/leo_shy.png' },
+            leo_think:     { emoji: '🧐', caption: '분석 중', img: '/static/stickers/leo_think.png' },
+            leo_cheer:     { emoji: '✊🤍', caption: '잘 해 봐', img: '/static/stickers/leo_cheer.png' },
+            // 지훈 (信·흑) - 나쁜남자 반항아
+            jihoon_heart:  { emoji: '🖤💕', caption: '넌 내꺼', img: '/static/stickers/jihoon_heart.png' },
+            jihoon_wink:   { emoji: '😜🔥', caption: '걸려들었네', img: '/static/stickers/jihoon_wink.png' },
+            jihoon_laugh:  { emoji: '😆🤣', caption: 'ㅋㅋㅋ 진심?', img: '/static/stickers/jihoon_laugh.png' },
+            jihoon_shy:    { emoji: '🙈🖤', caption: '...말하지 마', img: '/static/stickers/jihoon_shy.png' },
+            jihoon_think:  { emoji: '🤨💢', caption: '뭐라고?', img: '/static/stickers/jihoon_think.png' },
+            jihoon_cheer:  { emoji: '🤘🔥', caption: '가 보자!', img: '/static/stickers/jihoon_cheer.png' },
+            // 주노 (孝·청) - 해맑은 강아지 막내
+            juno_heart:    { emoji: '💙💖', caption: '완전 좋아해요!', img: '/static/stickers/juno_heart.png' },
+            juno_wink:     { emoji: '😜✌️', caption: '헤헤~', img: '/static/stickers/juno_wink.png' },
+            juno_laugh:    { emoji: '🤣😂', caption: 'ㅋㅋㅋㅋㅋ', img: '/static/stickers/juno_laugh.png' },
+            juno_shy:      { emoji: '🙈💙', caption: '부끄러워요!', img: '/static/stickers/juno_shy.png' },
+            juno_think:    { emoji: '🤔💭', caption: '음...뭐였지?', img: '/static/stickers/juno_think.png' },
+            juno_cheer:    { emoji: '🙌✨', caption: '아자아자!', img: '/static/stickers/juno_cheer.png' },
+        };
+
+        // 스티커 피커
+        function toggleStickerPicker() {
+            const panel = document.getElementById('sticker-picker-panel');
+            const btn = document.getElementById('sticker-picker-btn');
+            const isOpen = panel.classList.contains('show');
+
+            if (isOpen) {
+                panel.classList.remove('show');
+                btn.classList.remove('active');
+                return;
+            }
+
+            // 현재 캐릭터의 스티커로 그리드 채우기
+            const grid = document.getElementById('sticker-picker-grid');
+            grid.innerHTML = '';
+            // 각 캐릭터는 `{character}_` 프리픽스의 스티커만 표시 (지우 8종, 현우/화랑 4인 각 6종)
+            const prefix = `${currentCharacter}_`;
+
+            Object.entries(STICKERS).forEach(([id, sticker]) => {
+                if (!id.startsWith(prefix)) return;
+
+                const item = document.createElement('button');
+                item.className = 'sticker-picker-item';
+                item.onclick = () => sendSticker(id);
+
+                if (sticker.img) {
+                    item.innerHTML = `<img src="${sticker.img}" alt="${sticker.caption}"><span class="picker-caption">${sticker.caption}</span>`;
+                } else {
+                    item.innerHTML = `<span class="picker-emoji">${sticker.emoji}</span><span class="picker-caption">${sticker.caption}</span>`;
+                }
+
+                grid.appendChild(item);
+            });
+
+            panel.classList.add('show');
+            btn.classList.add('active');
+        }
+
+        async function sendSticker(stickerId) {
+            // 패널 닫기
+            document.getElementById('sticker-picker-panel').classList.remove('show');
+            document.getElementById('sticker-picker-btn').classList.remove('active');
+
+            const sticker = STICKERS[stickerId];
+            if (!sticker) return;
+
+            // 유저 채팅에 스티커 표시
+            addMessage(`[sticker:${stickerId}]`, true);
+
+            // AI에게 스티커 설명 전송
+            const emotion = stickerId.split('_').slice(1).join('_');
+            const charName = getCharacterName(currentCharacter);
+            const descMessage = `(유저가 ${charName}_${emotion} 스티커를 보냈습니다: "${sticker.caption}")`;
+
+            const typingIndicator = showTypingIndicator();
+
+            try {
+                // 스티커도 일반 메시지처럼 IndexedDB에 저장
+                let history = [];
+                try {
+                    history = await Storage.getHistoryForGemini(
+                        currentCharacter,
+                        30,
+                        activeScenario ? sessionId : null
+                    );
+                } catch (e) { /* ignore */ }
+                try {
+                    await Storage.addMessage(currentCharacter, 'user', `[sticker:${stickerId}]`, sessionId);
+                } catch (e) { /* ignore */ }
+
+                const formData = new FormData();
+                formData.append('message', descMessage);
+                formData.append('character', currentCharacter);
+                formData.append('user_profile', JSON.stringify(userProfile || {}));
+                formData.append('history', JSON.stringify(history));
+                formData.append('grammar_mode', 'false');
+                formData.append('extract_vocab', vocabMode ? 'true' : 'false');
+                if (activeScenario) formData.append('scenario_id', activeScenario);
+
+                const controller = new AbortController();
+                requestController = controller;
+                const tokenAtSend = sessionToken;
+                const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (tokenAtSend !== sessionToken) return;
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || '서버 응답에 문제가 있어요.');
+                }
+
+                typingIndicator.remove();
+
+                // SSE 스트림 파싱 (sendMessage와 동일 패턴)
+                const { contentDiv: streamContent } = createStreamBubble();
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let fullText = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    if (tokenAtSend !== sessionToken) { reader.cancel(); return; }
+                    buffer += decoder.decode(value, { stream: true });
+                    const parts = buffer.split('\n\n');
+                    buffer = parts.pop();
+                    for (const part of parts) {
+                        if (!part.startsWith('data: ')) continue;
+                        let evt;
+                        try { evt = JSON.parse(part.slice(6)); } catch { continue; }
+                        if (evt.error) {
+                            streamContent.textContent = evt.error;
+                            break;
+                        }
+                        if (evt.t) {
+                            fullText += evt.t;
+                            streamContent.innerHTML = renderMarkdownLinks(fullText);
+                            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+                        }
+                        if (evt.done) {
+                            try { await Storage.addMessage(currentCharacter, 'model', fullText, sessionId); } catch (e) {}
+                            // 단어는 chip 탭 시에만 저장
+                            speakKorean(fullText);
+                        }
+                    }
+                }
+            } catch (error) {
+                typingIndicator.remove();
+                console.error('Send sticker error:', error);
+                if (error.name === 'AbortError') {
+                    addMessage('응답이 지연되고 있어요. 잠시 후 다시 시도해주세요.', false);
+                } else {
+                    addMessage('죄송해요, 오류가 발생했어요. 다시 시도해주세요.', false);
+                }
+            } finally {
+                requestController = null;
+            }
+        }
+
+        // 패널 밖 클릭 시 닫기
+        document.addEventListener('click', (e) => {
+            const panel = document.getElementById('sticker-picker-panel');
+            const btn = document.getElementById('sticker-picker-btn');
+            if (panel && !panel.contains(e.target) && e.target !== btn) {
+                panel.classList.remove('show');
+                btn.classList.remove('active');
+            }
+        });
+
+        // 캐릭터 선택
+        async function selectCharacter(character) {
+            currentCharacter = character;
+            sessionToken += 1;
+            if (requestController) {
+                requestController.abort();
+                requestController = null;
+            }
+
+            try {
+                const response = await fetch('/select-character', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ character })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    sessionId = Storage.todayKey(); // 클라이언트가 세션 ID를 관리 (날짜 기반)
+                    // 영구 저장: 프로필에 현재 캐릭터 기록 + 온보딩 프로필 저장
+                    try {
+                        await Storage.saveProfile({
+                            nickname: userProfile.nickname || '',
+                            level: userProfile.level || '',
+                            interests: Array.isArray(userProfile.interests) ? userProfile.interests : [],
+                            currentCharacter: character,
+                        });
+                    } catch (e) { console.warn('[profile] save failed', e); }
+
+                    // UI 업데이트
+                    const headerAvatar = document.getElementById('header-avatar');
+                    const avatarSrc = getCharacterProfileSrc(character);
+                    const charName = getCharacterName(character);
+                    headerAvatar.innerHTML = `<img src="${avatarSrc}" alt="${charName}">`;
+
+                    document.getElementById('character-name').textContent = data.name || charName;
+
+                    // BMC 툴팁 캐릭터별 업데이트
+                    const bmcTooltip = document.getElementById('bmc-tooltip-text');
+                    if (bmcTooltip) {
+                        const bmcLabels = {
+                            jiwoo:   'Buy Jiwoo an Americano? ☕',
+                            hyunwoo: 'Buy Oppa a Coffee? ☕',
+                            taeo:    'Buy Tae-o a black coffee? ☕',
+                            leo:     'Buy Leo a coffee? ☕',
+                            jihoon:  'Buy Ji-hoon an iced americano? ☕',
+                            juno:    'Buy Ju-no a banana milk? 🥛',
+                        };
+                        bmcTooltip.textContent = bmcLabels[character] || bmcLabels.jiwoo;
+                    }
+
+                    // 화면 전환
+                    document.getElementById('character-selection').style.display = 'none';
+                    document.getElementById('lang-toggle').style.display = 'none';
+                    document.getElementById('chat-container').classList.add('active');
+                    document.getElementById('messages').innerHTML = '';
+
+                    // 하트/친밀도 표시 업데이트 (선택한 캐릭터 기준)
+                    initHeartDisplay();
+
+                    // 이전 대화 복원 (이 캐릭터의 최근 30개)
+                    let hadPriorMessages = false;
+                    try {
+                        const prior = await Storage.getRecentMessages(character, 30);
+                        if (prior && prior.length > 0) {
+                            hadPriorMessages = true;
+                            prior.forEach((m) => {
+                                addMessage(m.text, m.role === 'user');
+                            });
+                        }
+                    } catch (e) { console.warn('[history] restore failed', e); }
+
+                    // 이전 대화가 없을 때만 환영 메시지 표시
+                    if (!hadPriorMessages) {
+                        const welcomeMsg = buildWelcomeMessage(character);
+                        const welcomeTyping = showTypingIndicator();
+                        setTimeout(() => {
+                            welcomeTyping.remove();
+                            addMessage(welcomeMsg, false);
+                            // 환영 메시지는 Gemini 컨텍스트가 아니라 UI 전용 인사라서 DB 저장 X
+                        }, 1400);
+                    }
+
+                    // 푸시 알림에서 온 운세 자동 트리거
+                    if (pendingFortune) {
+                        pendingFortune = false;
+                        setTimeout(() => requestFortune(), 1500);
+                    }
+
+                    // 데일리 미션 로드
+                    loadDailyMission();
+
+                    // 알림 권한 배너 표시
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        const banner = document.getElementById('notification-banner');
+                        if (banner) banner.style.display = 'block';
+                    }
+
+                    // 기존 토큰이 있으면 캐릭터 업데이트
+                    if (fcmToken) {
+                        fetch('/register-push', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token: fcmToken, character: character })
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Character selection error:', error);
+            }
+        }
+
+        // 데일리 미션
+        async function loadDailyMission() {
+            try {
+                const res = await fetch('/daily-mission');
+                const data = await res.json();
+                if (data.success) {
+                    const m = data.mission;
+                    // 오늘 이미 완료한 미션이면 배너 숨김 (IDB 체크 + localStorage 폴백)
+                    const completedKey = `mission_done_${m.id}_${new Date().toDateString()}`;
+                    try {
+                        const state = await Storage.getMissionState();
+                        if (state.completed) return;
+                    } catch (e) { /* ignore, fall back */ }
+                    if (localStorage.getItem(completedKey)) return;
+
+                    document.getElementById('mission-emoji').textContent = m.emoji || '☀️';
+                    document.getElementById('mission-text').textContent = m.text || '';
+                    const goalEl = document.getElementById('mission-goal');
+                    if (goalEl) goalEl.textContent = m.goal_en ? `🎯 ${m.goal_en}` : '';
+                    const badgeEl = document.getElementById('mission-reward-badge');
+                    if (badgeEl) badgeEl.textContent = m.reward_points ? `❤️ +${m.reward_points}` : '';
+
+                    // 현재 미션 저장 (시작 전 참조용)
+                    activeMission = m;
+                    document.getElementById('daily-mission-banner').style.display = 'block';
+                }
+            } catch(e) { console.log('mission load failed', e); }
+        }
+
+        async function startMission() {
+            document.getElementById('daily-mission-banner').style.display = 'none';
+            if (!activeMission) return;
+
+            // 진행 바 표시
+            document.getElementById('mission-progress-emoji').textContent = activeMission.emoji || '☀️';
+            document.getElementById('mission-progress-text').textContent = activeMission.text || '미션 진행 중...';
+            document.getElementById('mission-progress-bar').classList.add('active');
+
+            try {
+                const res = await fetch('/start-mission', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ character: currentCharacter })
+                });
+                const data = await res.json();
+                if (data.success && data.opener) {
+                    addMessage(data.opener, false);
+                }
+            } catch(e) { console.log('mission start failed', e); }
+        }
+
+        function getRecentConversation(maxMessages = 10) {
+            const messages = document.querySelectorAll('#messages .message');
+            const msgs = [];
+            messages.forEach(m => {
+                const isUser = m.classList.contains('user');
+                const contentDiv = m.querySelector('.message-content');
+                if (!contentDiv) return;
+                const text = contentDiv.textContent.trim().replace(/번역\s*$/,'').trim();
+                if (text) msgs.push((isUser ? 'User: ' : 'AI: ') + text);
+            });
+            return msgs.slice(-maxMessages).join('\n');
+        }
+
+        async function checkMissionCompletion() {
+            if (!activeMission) return;
+            try {
+                const conversation = getRecentConversation();
+                const res = await fetch('/check-mission', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mission_id: activeMission.id,
+                        character: currentCharacter,
+                        conversation: conversation
+                    })
+                });
+                const data = await res.json();
+                if (data.completed) {
+                    const pts = data.reward_points || activeMission.reward_points || 10;
+                    const total = addHeartPoints(pts);
+
+                    // 완료 기록: IDB missions + streak, legacy localStorage도 같이 (새 탭 즉시 반영용)
+                    const completedKey = `mission_done_${activeMission.id}_${new Date().toDateString()}`;
+                    try {
+                        await Storage.markMissionCompleted(activeMission.id, currentCharacter);
+                    } catch (e) { console.warn('[mission] save failed', e); }
+                    localStorage.setItem(completedKey, '1');
+
+                    activeMission = null;
+                    document.getElementById('mission-progress-bar').classList.remove('active');
+                    showMissionSuccess(pts, total, data.success_msg);
+                }
+            } catch(e) { console.log('mission check failed', e); }
+        }
+
+        function showMissionSuccess(pts, total, msg) {
+            document.getElementById('success-points').textContent = pts;
+            document.getElementById('success-total').textContent = total;
+            const msgEl = document.getElementById('success-msg');
+            if (msgEl) msgEl.textContent = msg || '';
+            document.getElementById('mission-success-overlay').classList.add('show');
+        }
+
+        function closeMissionSuccess() {
+            document.getElementById('mission-success-overlay').classList.remove('show');
+        }
+
+        function giveUpMission() {
+            activeMission = null;
+            document.getElementById('mission-progress-bar').classList.remove('active');
+        }
+
+        // =============================================
+        // 시나리오 모드
+        // =============================================
+        let activeScenario = null; // { id, emoji, title, desc }
+
+        const SCENARIO_COMPLETE_MSGS = {
+            confession: '완벽한 고백이었어요! 실전에서도 자신 있게 말해보세요 💕',
+            makeup:     '화해 완료! 다툰 후엔 이렇게 풀면 돼요 🕊️',
+            first_meeting: '첫 만남 성공! 이 정도면 소개팅 걱정 없겠는데요 😊',
+            hangang:    '완벽한 한강 데이트였어요! 언젠가 진짜로도 가요 🌅',
+            kakaotalk_som: '썸 성공! 드디어 공식 커플이 됐네요 💬❤️',
+        };
+
+        function openScenarioSheet() {
+            document.getElementById('scenario-sheet-overlay').classList.add('show');
+        }
+
+        function closeScenarioSheet(e) {
+            if (!e || e.target === document.getElementById('scenario-sheet-overlay')) {
+                document.getElementById('scenario-sheet-overlay').classList.remove('show');
+            }
+        }
+
+        async function startScenario(scenarioId) {
+            // 기존 미션 진행 중이면 취소
+            activeMission = null;
+            document.getElementById('mission-progress-bar').classList.remove('active');
+            document.getElementById('daily-mission-banner').style.display = 'none';
+
+            // 채팅창 초기화
+            document.getElementById('messages').innerHTML = '';
+            sessionToken += 1;
+
+            // 타이핑 인디케이터 표시
+            const typing = showTypingIndicator();
+
+            try {
+                const res = await fetch('/scenario/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ scenario_id: scenarioId, character: currentCharacter })
+                });
+                const data = await res.json();
+
+                if (!data.success) throw new Error(data.error || 'Failed');
+
+                activeScenario = data.scenario;
+                // 시나리오 진입 시 기존 캐릭터 대화 히스토리는 컨텍스트에 포함하지 않음
+                // → 새 sessionId로 리셋 (IDB 대화 자체는 보존, 그룹만 새 세션)
+                sessionId = `${Storage.todayKey()}_scenario_${scenarioId}_${Date.now()}`;
+
+                // 시나리오 배너 표시
+                document.getElementById('scenario-banner-emoji').textContent = data.scenario.emoji || '🎭';
+                document.getElementById('scenario-banner-title').textContent = data.scenario.title;
+                document.getElementById('scenario-banner').classList.add('active');
+
+                typing.remove();
+
+                // 인트로 메시지 표시 + IDB 기록 (컨텍스트에 포함시키기 위해)
+                if (data.intro_message) {
+                    addMessage(data.intro_message, false);
+                    try {
+                        await Storage.addMessage(currentCharacter, 'model', data.intro_message, sessionId);
+                    } catch (e) { /* ignore */ }
+                }
+
+            } catch (e) {
+                typing.remove();
+                console.error('Scenario start error:', e);
+                addMessage('시나리오를 시작하지 못했어요. 다시 시도해주세요.', false);
+            }
+        }
+
+        function endScenario() {
+            activeScenario = null;
+            document.getElementById('scenario-banner').classList.remove('active');
+        }
+
+        function showScenarioComplete() {
+            if (!activeScenario) return;
+            const emoji = activeScenario.emoji || '🎉';
+            const title = activeScenario.title || '시나리오';
+            const desc = SCENARIO_COMPLETE_MSGS[activeScenario.id] || '완료했어요! 대단해요 🎉';
+
+            document.getElementById('scenario-complete-emoji').textContent = emoji + ' 🎉';
+            document.getElementById('scenario-complete-name').textContent = title;
+            document.getElementById('scenario-complete-desc').textContent = desc;
+            document.getElementById('scenario-complete-overlay').classList.add('show');
+
+            // 배너 숨기기
+            endScenario();
+        }
+
+        function closeScenarioComplete() {
+            document.getElementById('scenario-complete-overlay').classList.remove('show');
+        }
+
+        // =============================================
+        // 공유 카드
+        // =============================================
+        let shareCardCount = 2;
+
+        function setShareCount(n, btn) {
+            shareCardCount = n;
+            document.querySelectorAll('.share-count-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            buildShareCard();
+        }
+
+        function openShareCard() {
+            // 캐릭터 정보 업데이트 - CHARACTERS 레지스트리에서 가져옴
+            const c = CHARACTERS[currentCharacter] || CHARACTERS.jiwoo;
+            document.getElementById('share-card-avatar').src = getCharacterProfileSrc(currentCharacter);
+            document.getElementById('share-card-char-name').textContent = c.name;
+            document.getElementById('share-card-char-sub').textContent = c.info;
+
+            // 메시지 수 초기화
+            shareCardCount = 2;
+            document.querySelectorAll('.share-count-btn').forEach((b, i) => {
+                b.classList.toggle('active', i === 0);
+            });
+
+            buildShareCard();
+            document.getElementById('share-modal-overlay').classList.add('show');
+        }
+
+        function closeShareCard(e) {
+            if (!e || e.target === document.getElementById('share-modal-overlay')) {
+                document.getElementById('share-modal-overlay').classList.remove('show');
+            }
+        }
+
+        function buildShareCard() {
+            const container = document.getElementById('share-card-messages');
+            container.innerHTML = '';
+
+            // DOM에서 최근 메시지 수집
+            const allMsgs = document.querySelectorAll('#messages .message');
+            const msgs = [];
+            allMsgs.forEach(m => {
+                const isUser = m.classList.contains('user');
+                const contentEl = m.querySelector('.message-content');
+                if (!contentEl) return;
+                // 텍스트만 추출 (버튼, 칩 제외)
+                let text = '';
+                contentEl.childNodes.forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) text += node.textContent;
+                    else if (node.tagName === 'P' || node.tagName === 'SPAN') text += node.textContent;
+                });
+                text = text.trim().replace(/번역\s*$/, '').replace(/\[sticker:\w+\]/g, '').trim();
+                // sticker-container는 이모지로 대체
+                const stickerEl = m.querySelector('.sticker-container');
+                if (stickerEl && !text) text = '🖼️';
+                if (text.length > 0) msgs.push({ isUser, text: text.slice(0, 120) });
+            });
+
+            const recent = msgs.slice(-shareCardCount);
+
+            if (recent.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:20px;">대화를 시작해보세요!</div>';
+                return;
+            }
+
+            const aiAvatar = getCharacterProfileSrc(currentCharacter);
+
+            recent.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'share-card-msg ' + (msg.isUser ? 'user' : 'ai');
+
+                if (!msg.isUser) {
+                    div.innerHTML = `
+                        <img class="share-card-msg-avatar" src="${aiAvatar}" alt="">
+                        <div class="share-card-bubble">${escHtml(msg.text)}</div>`;
+                } else {
+                    div.innerHTML = `
+                        <div class="share-card-bubble">${escHtml(msg.text)}</div>`;
+                }
+                container.appendChild(div);
+            });
+        }
+
+        async function downloadShareCard() {
+            const card = document.getElementById('share-card');
+            const btn = document.querySelector('.share-btn-download');
+            btn.textContent = '생성 중...';
+            btn.disabled = true;
+
+            try {
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: null,
+                    logging: false,
+                });
+                const link = document.createElement('a');
+                link.download = 'kdating-chat.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (e) {
+                alert('이미지 생성에 실패했어요. 다시 시도해주세요.');
+                console.error(e);
+            } finally {
+                btn.textContent = '⬇️ 저장';
+                btn.disabled = false;
+            }
+        }
+
+        async function nativeShare() {
+            const card = document.getElementById('share-card');
+            const btn = document.querySelector('.share-btn-native');
+            btn.textContent = '준비 중...';
+            btn.disabled = true;
+
+            try {
+                const canvas = await html2canvas(card, {
+                    scale: 2, useCORS: true, backgroundColor: null, logging: false,
+                });
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'kdating-chat.png', { type: 'image/png' });
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'K-Dating Chat 💕',
+                            text: 'AI 한국인 파트너와 카톡해보세요! kdate.store',
+                        });
+                    } else {
+                        // fallback: 다운로드
+                        const link = document.createElement('a');
+                        link.download = 'kdating-chat.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    }
+                    btn.textContent = '↗️ 공유';
+                    btn.disabled = false;
+                }, 'image/png');
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    alert('공유에 실패했어요. 저장 버튼을 사용해주세요.');
+                }
+                btn.textContent = '↗️ 공유';
+                btn.disabled = false;
+            }
+        }
+
+        // 캐릭터 변경 (각 캐릭터의 대화/친밀도는 IndexedDB에 보존됨)
+        function changeCharacter() {
+            if (confirm('다른 캐릭터를 선택할까요?')) {
+                sessionToken += 1;
+                if (requestController) {
+                    requestController.abort();
+                    requestController = null;
+                }
+                document.getElementById('messages').innerHTML = '';
+                document.getElementById('character-selection').style.display = 'block';
+                document.getElementById('lang-toggle').style.display = 'flex';
+                document.getElementById('chat-container').classList.remove('active');
+                renderCharacterCards();
+            }
+        }
+
+        // =============================================
+        // 단어 칩 (vocab chips)
+        // =============================================
+        function showVocabChips(vocab, contentDiv) {
+            const saved = getVocabList().map(v => v.word);
+
+            const section = document.createElement('div');
+            section.className = 'vocab-section';
+
+            const divider = document.createElement('div');
+            divider.className = 'vocab-divider';
+            section.appendChild(divider);
+
+            const hint = document.createElement('div');
+            hint.className = 'vocab-hint';
+            hint.textContent = '💡 Tap to save to Vocab';
+            section.appendChild(hint);
+
+            const row = document.createElement('div');
+            row.className = 'vocab-chips-row';
+
+            vocab.forEach(v => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                const isSaved = saved.includes(v.word);
+                chip.className = 'vocab-chip' + (isSaved ? ' saved' : '');
+                chip.title = v.romanization || '';
+                chip.setAttribute('aria-pressed', isSaved ? 'true' : 'false');
+                chip.setAttribute('aria-label',
+                    `${v.word}, ${v.meaning}. ${isSaved ? 'Saved to vocab.' : 'Tap to save to vocab.'}`);
+                chip.innerHTML = chipInner(v, isSaved);
+                chip.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleSaveWord(v, chip);
+                });
+                row.appendChild(chip);
+            });
+
+            section.appendChild(row);
+            contentDiv.appendChild(section);
+        }
+
+        function chipInner(v, isSaved) {
+            const icon = isSaved ? '✓' : '+';
+            return `<span class="chip-icon" aria-hidden="true">${icon}</span>` +
+                   `<span>${escHtml(v.word)}</span>` +
+                   `<span class="chip-meaning">${escHtml(v.meaning)}</span>`;
+        }
+
+        async function toggleSaveWord(v, chipEl) {
+            const list = getVocabList();
+            const idx = list.findIndex(w => w.word === v.word);
+            let savedNow;
+            if (idx >= 0) {
+                // 삭제: IndexedDB에서 해당 row 제거
+                try {
+                    const db = await Storage.init();
+                    const existing = list[idx];
+                    if (existing && existing.id != null) {
+                        await new Promise((resolve, reject) => {
+                            const tx = db.transaction(['vocab'], 'readwrite');
+                            const req = tx.objectStore('vocab').delete(existing.id);
+                            req.onsuccess = () => resolve();
+                            req.onerror = () => reject(req.error);
+                        });
+                    }
+                } catch (e) { console.warn('[vocab] delete failed', e); }
+                chipEl.classList.remove('saved');
+                savedNow = false;
+            } else {
+                // 추가: IndexedDB에 저장
+                try {
+                    await Storage.addVocab(
+                        [{ word: v.word, meaning: v.meaning, romanization: v.romanization || '' }],
+                        currentCharacter,
+                        ''
+                    );
+                } catch (e) { console.warn('[vocab] add failed', e); }
+                chipEl.classList.add('saved');
+                savedNow = true;
+            }
+            await refreshVocabCache();
+
+            chipEl.innerHTML = chipInner(v, savedNow);
+            chipEl.setAttribute('aria-pressed', savedNow ? 'true' : 'false');
+            chipEl.setAttribute('aria-label',
+                `${v.word}, ${v.meaning}. ${savedNow ? 'Saved to vocab.' : 'Tap to save to vocab.'}`);
+
+            chipEl.classList.remove('bump');
+            void chipEl.offsetWidth;
+            chipEl.classList.add('bump');
+
+            showToast(savedNow ? 'Saved to Vocab ✅' : 'Removed from Vocab ❌');
+        }
+
+        let toastTimer = null;
+        function showToast(message) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = message;
+            el.classList.add('show');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                el.classList.remove('show');
+            }, 1600);
+        }
+
+        // =============================================
+        // 단어장 모달
+        // =============================================
+        function openVocabModal() {
+            document.getElementById('vocab-modal-overlay').classList.add('show');
+            switchVocabTab('list');
+        }
+        function closeVocabModal(e) {
+            if (!e || e.target === document.getElementById('vocab-modal-overlay')) {
+                document.getElementById('vocab-modal-overlay').classList.remove('show');
+            }
+        }
+        function switchVocabTab(tab) {
+            document.getElementById('tab-list').classList.toggle('active', tab === 'list');
+            document.getElementById('tab-quiz').classList.toggle('active', tab === 'quiz');
+            document.getElementById('vocab-list-pane').style.display = tab === 'list' ? '' : 'none';
+            document.getElementById('vocab-quiz-pane').style.display = tab === 'quiz' ? '' : 'none';
+            if (tab === 'list') renderVocabList();
+            if (tab === 'quiz') initQuiz();
+        }
+
+        function renderVocabList() {
+            const list = getVocabList();
+            const badge = document.getElementById('vocab-count-badge');
+            badge.textContent = list.length > 0 ? `(${list.length})` : '';
+            const el = document.getElementById('vocab-list-content');
+            if (list.length === 0) {
+                el.innerHTML = '<div class="vocab-empty">아직 저장된 단어가 없어요.<br>AI 응답 아래 단어 칩을 탭해서 저장해보세요! 📖</div>';
+                return;
+            }
+            el.innerHTML = '';
+            [...list].reverse().forEach((v, i) => {
+                const row = document.createElement('div');
+                row.className = 'vocab-list-item';
+                row.innerHTML = `
+                    <div>
+                        <div class="vocab-word">${escHtml(v.word)}</div>
+                        ${v.romanization ? `<div class="vocab-romanization">${escHtml(v.romanization)}</div>` : ''}
+                        <div class="vocab-meaning-text">${escHtml(v.meaning)}</div>
+                    </div>
+                    <button class="vocab-delete-btn" onclick="deleteWord('${escHtml(v.word)}')" title="삭제">🗑</button>
+                `;
+                el.appendChild(row);
+            });
+        }
+        function deleteWord(word) {
+            const list = getVocabList().filter(v => v.word !== word);
+            saveVocabList(list);
+            renderVocabList();
+        }
+        function escHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // =============================================
+        // 퀴즈
+        // =============================================
+        let quizState = { items: [], idx: 0, score: 0, answered: false };
+
+        function initQuiz() {
+            const list = getVocabList();
+            if (list.length < 2) {
+                document.getElementById('quiz-content').innerHTML =
+                    '<div class="vocab-empty">단어가 최소 2개 필요해요!<br>먼저 단어를 저장해보세요 📚</div>';
+                return;
+            }
+            quizState = { items: shuffle([...list]), idx: 0, score: 0, answered: false };
+            renderQuizCard();
+        }
+
+        function renderQuizCard() {
+            const { items, idx, score } = quizState;
+            if (idx >= items.length) {
+                document.getElementById('quiz-content').innerHTML = `
+                    <div class="quiz-finish">
+                        <div style="font-size:40px;margin-bottom:12px;">🎉</div>
+                        <div class="quiz-finish-score">${score} / ${items.length}</div>
+                        <div style="font-size:15px;color:#666;margin:8px 0 24px;">퀴즈 완료!</div>
+                        <button class="quiz-next-btn" style="display:block;" onclick="initQuiz()">다시 도전 🔄</button>
+                    </div>`;
+                return;
+            }
+            const current = items[idx];
+            // 오답 보기 3개 + 정답 1개
+            const others = items.filter((_, i) => i !== idx);
+            const wrongs = shuffle(others).slice(0, 3).map(v => v.meaning);
+            const choices = shuffle([current.meaning, ...wrongs]);
+            const el = document.getElementById('quiz-content');
+            el.innerHTML = `
+                <div class="quiz-card">
+                    <div class="quiz-question-word">${escHtml(current.word)}</div>
+                    ${current.romanization ? `<div class="quiz-question-roma">${escHtml(current.romanization)}</div>` : ''}
+                </div>
+                <div class="quiz-choices">
+                    ${choices.map(c => `<button class="quiz-choice" onclick="answerQuiz(this,'${escHtml(c)}','${escHtml(current.meaning)}')">${escHtml(c)}</button>`).join('')}
+                </div>
+                <div class="quiz-score">${idx + 1} / ${items.length} &nbsp;|&nbsp; ✅ ${score}</div>
+                <button class="quiz-next-btn" id="quiz-next-btn" onclick="nextQuizCard()">다음 →</button>
+            `;
+            quizState.answered = false;
+        }
+
+        function answerQuiz(btn, chosen, correct) {
+            if (quizState.answered) return;
+            quizState.answered = true;
+            document.querySelectorAll('.quiz-choice').forEach(b => b.disabled = true);
+            if (chosen === correct) {
+                btn.classList.add('correct');
+                quizState.score++;
+            } else {
+                btn.classList.add('wrong');
+                document.querySelectorAll('.quiz-choice').forEach(b => {
+                    if (b.textContent === correct) b.classList.add('correct');
+                });
+            }
+            document.getElementById('quiz-next-btn').style.display = 'block';
+        }
+
+        function nextQuizCard() {
+            quizState.idx++;
+            renderQuizCard();
+        }
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // =============================================
+        // 설정 모달
+        // =============================================
+        function openSettingsModal() {
+            document.getElementById('grammar-mode-toggle').checked = grammarMode;
+            document.getElementById('vocab-mode-toggle').checked = vocabMode;
+            document.getElementById('settings-modal-overlay').classList.add('show');
+        }
+        function closeSettingsModal(e) {
+            if (!e || e.target === document.getElementById('settings-modal-overlay')) {
+                document.getElementById('settings-modal-overlay').classList.remove('show');
+            }
+        }
+        function onGrammarToggle(el) {
+            grammarMode = el.checked;
+            localStorage.setItem('grammarMode', grammarMode);
+        }
+        function onVocabToggle(el) {
+            vocabMode = el.checked;
+            localStorage.setItem('vocabMode', vocabMode);
+        }
+
+        // =====================
+        // 네비게이션 바텀시트
+        // =====================
+        function openNavSheet() {
+            document.getElementById('nav-sheet-overlay').classList.add('show');
+        }
+        function closeNavSheet(e) {
+            if (!e || e.target === document.getElementById('nav-sheet-overlay')) {
+                document.getElementById('nav-sheet-overlay').classList.remove('show');
+            }
+        }
+
+        // 새 대화 시작
+        function confirmNewChat() {
+            if (!confirm('현재 대화를 초기화하고 새로 시작할까요?')) return;
+            fetch('/new_session', { method: 'POST' }).catch(() => {});
+            document.getElementById('messages').innerHTML = '';
+
+            const welcomeMsg = buildWelcomeMessage(currentCharacter);
+            setTimeout(() => addMessage(welcomeMsg, false), 300);
+        }
+
+        // 대화 기록 모달
+        // =====================
+        function openHistoryModal() {
+            document.getElementById('history-modal-overlay').classList.add('show');
+            showHistoryList();
+            loadHistorySessions();
+        }
+
+        function closeHistoryModal(e) {
+            if (!e || e.target === document.getElementById('history-modal-overlay')) {
+                document.getElementById('history-modal-overlay').classList.remove('show');
+            }
+        }
+
+        function showHistoryList() {
+            document.getElementById('history-list-view').style.display = 'flex';
+            document.getElementById('history-detail-view').style.display = 'none';
+        }
+
+        function showHistoryDetail() {
+            document.getElementById('history-list-view').style.display = 'none';
+            document.getElementById('history-detail-view').style.display = 'flex';
+        }
+
+        async function loadHistorySessions() {
+            const content = document.getElementById('history-list-content');
+            content.innerHTML = '<div class="history-empty">불러오는 중...</div>';
+
+            try {
+                // IndexedDB에서 직접 로드 (서버 stateless)
+                const sessions = await Storage.getGroupedSessions();
+                const keys = Object.keys(sessions);
+
+                if (keys.length === 0) {
+                    content.innerHTML = '<div class="history-empty">아직 대화 기록이 없어요 💬</div>';
+                    return;
+                }
+
+                content.innerHTML = '';
+                keys.forEach(key => {
+                    const s = sessions[key];
+                    const character = s.character || 'jiwoo';
+                    const charName = getCharacterName(character);
+                    const avatarSrc = getCharacterProfileSrc(character);
+                    const fallbackEmoji = character === 'jiwoo' ? '👩' : '👨';
+
+                    // 날짜 포맷: 2025-03-30 → 3월 30일
+                    const [year, month, day] = s.date.split('-');
+                    const today = new Date().toISOString().split('T')[0];
+                    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                    let dateLabel;
+                    if (s.date === today) dateLabel = '오늘';
+                    else if (s.date === yesterday) dateLabel = '어제';
+                    else dateLabel = `${parseInt(month)}월 ${parseInt(day)}일`;
+
+                    const item = document.createElement('div');
+                    item.className = 'history-session-item';
+                    item.innerHTML = `
+                        <img class="history-avatar" src="${avatarSrc}" alt="${charName}"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                        <div style="display:none; width:44px; height:44px; border-radius:50%; background:#f093fb22;
+                             align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">
+                            ${fallbackEmoji}
+                        </div>
+                        <div class="history-session-info">
+                            <div class="history-session-top">
+                                <span class="history-session-name">${charName}</span>
+                                <span class="history-session-time">${dateLabel} ${s.last_time ? s.last_time.slice(0,5) : ''}</span>
+                            </div>
+                            <div class="history-session-preview">${escapeHtml(s.first_message)}</div>
+                        </div>
+                        <span class="history-session-badge">${s.count}</span>
+                    `;
+                    item.onclick = () => openSessionDetail(key, s);
+                    content.appendChild(item);
+                });
+
+            } catch (e) {
+                content.innerHTML = '<div class="history-empty">기록을 불러올 수 없어요 😢</div>';
+            }
+        }
+
+        function openSessionDetail(key, session) {
+            const character = session.character || 'jiwoo';
+            const charName = getCharacterName(character);
+            const [year, month, day] = session.date.split('-');
+            document.getElementById('history-detail-title').textContent = `${charName}과의 대화`;
+            document.getElementById('history-detail-subtitle').textContent =
+                `${parseInt(month)}월 ${parseInt(day)}일 · ${session.count}개 메시지`;
+
+            const msgContainer = document.getElementById('history-detail-messages');
+            msgContainer.innerHTML = '';
+
+            session.messages.forEach(msg => {
+                const time = msg.timestamp ? msg.timestamp.split(' ')[1].slice(0,5) : '';
+
+                // 유저 메시지
+                const userDiv = document.createElement('div');
+                userDiv.className = 'history-msg user';
+                userDiv.innerHTML = `
+                    <span class="history-msg-time">${time}</span>
+                    <div class="history-msg-bubble">${escapeHtml(msg.user)}</div>
+                `;
+                msgContainer.appendChild(userDiv);
+
+                // AI 메시지 (스티커 태그 제거, 속삭임 태그 제거)
+                const cleanAi = msg.ai
+                    .replace(/\[sticker:\w+\]/g, '🖼️')
+                    .replace(/\(속삭임\)|\(whisper\)/gi, '')
+                    .trim();
+
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'history-msg ai';
+                aiDiv.innerHTML = `
+                    <div class="history-msg-bubble">${escapeHtml(cleanAi)}</div>
+                    <span class="history-msg-time">${time}</span>
+                `;
+                msgContainer.appendChild(aiDiv);
+            });
+
+            msgContainer.scrollTop = 0;
+            showHistoryDetail();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        // 메시지 전송
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // 내 메시지 표시
+            addMessage(message, true);
+            input.value = '';
+
+            // 헤더 상태: 입력 중...
+            document.getElementById('header-status').innerHTML = '<span class="typing-dot-sm"></span><span class="typing-dot-sm"></span><span class="typing-dot-sm"></span>';
+
+            // Typing indicator 표시
+            const typingIndicator = showTypingIndicator();
+
+            try {
+                // IndexedDB에서 최근 대화 히스토리(최대 30개) 꺼내 Gemini 형식으로 전송
+                // 시나리오 진행 중이면 해당 sessionId만 필터링해서 일반 대화와 격리
+                let history = [];
+                try {
+                    history = await Storage.getHistoryForGemini(
+                        currentCharacter,
+                        30,
+                        activeScenario ? sessionId : null
+                    );
+                } catch (e) {
+                    console.warn('[history] read failed — sending empty', e);
+                }
+
+                // 유저 메시지를 먼저 DB에 기록 (끊긴 요청도 기록되도록)
+                try {
+                    await Storage.addMessage(currentCharacter, 'user', message, sessionId);
+                } catch (e) { console.warn('[chat] save user msg failed', e); }
+
+                const formData = new FormData();
+                formData.append('message', message);
+                formData.append('grammar_mode', grammarMode ? 'true' : 'false');
+                formData.append('extract_vocab', vocabMode ? 'true' : 'false');
+                formData.append('character', currentCharacter);
+                formData.append('user_profile', JSON.stringify(userProfile || {}));
+                formData.append('history', JSON.stringify(history));
+                if (activeScenario) formData.append('scenario_id', activeScenario);
+                if (sessionId) formData.append('session_id', sessionId);
+
+                const controller = new AbortController();
+                requestController = controller;
+                const tokenAtSend = sessionToken;
+                const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || '서버 응답에 문제가 있어요.');
+                }
+
+                if (tokenAtSend !== sessionToken) return;
+
+                // Typing indicator 제거 + 빈 AI 버블 생성
+                typingIndicator.remove();
+                document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                document.querySelectorAll('.read-status').forEach(el => {
+                    el.textContent = '읽음'; el.classList.add('read');
+                });
+
+                // 스트리밍 버블 생성
+                const { messageDiv: streamDiv, contentDiv: streamContent } = createStreamBubble();
+                let fullText = '';
+
+                // SSE 스트림 읽기
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    if (tokenAtSend !== sessionToken) { reader.cancel(); return; }
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const parts = buffer.split('\n\n');
+                    buffer = parts.pop();
+
+                    for (const part of parts) {
+                        if (!part.startsWith('data: ')) continue;
+                        let evt;
+                        try { evt = JSON.parse(part.slice(6)); } catch { continue; }
+
+                        if (evt.error) {
+                            streamContent.textContent = evt.error;
+                            if (evt.detail) {
+                                console.error('[CHAT ERROR]', evt.error_kind || 'unknown', evt.detail);
+                            }
+                            if (evt.error_kind === 'quota') {
+                                showToast('Gemini quota exhausted — try again in a minute');
+                            }
+                            break;
+                        }
+                        if (evt.t) {
+                            fullText += evt.t;
+                            streamContent.innerHTML = renderMarkdownLinks(fullText);
+                            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+                        }
+                        if (evt.done) {
+                            // AI 응답을 IndexedDB에 저장 (시나리오 완료 태그는 이미 서버에서 제거됨)
+                            try {
+                                await Storage.addMessage(currentCharacter, 'model', fullText, sessionId);
+                            } catch (e) { console.warn('[chat] save ai msg failed', e); }
+                            // 단어는 사용자가 chip을 탭할 때만 저장 (toggleSaveWord 참조)
+
+                            // 번역 버튼 추가
+                            const cleanText = fullText.replace(/\[sticker:\w+\]/g, '').replace(/\(속삭임\)|\(whisper\)/gi, '').replace(/\(시나리오완료\)/g, '').trim();
+                            if (cleanText.length > 0) {
+                                const translateBtn = document.createElement('button');
+                                translateBtn.className = 'translate-btn';
+                                translateBtn.textContent = '🌐 English';
+                                translateBtn.onclick = () => translateMessage(streamContent, cleanText);
+                                streamContent.appendChild(translateBtn);
+                            }
+                            // TTS
+                            speakKorean(fullText);
+                            // 단어 칩
+                            if (vocabMode && evt.vocab && evt.vocab.length > 0) {
+                                showVocabChips(evt.vocab, streamContent);
+                            }
+                            // 미션 체크
+                            if (activeMission) checkMissionCompletion();
+                            // 시나리오 완료 체크
+                            if (evt.scenario_done && activeScenario) {
+                                setTimeout(() => showScenarioComplete(), 600);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                typingIndicator.remove();
+                document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                console.error('Send message error:', error);
+                if (error.name === 'AbortError') {
+                    addMessage('응답이 지연되고 있어요. 잠시 후 다시 시도해주세요.', false);
+                } else {
+                    addMessage('죄송해요, 오류가 발생했어요. 다시 시도해주세요.', false);
+                }
+            } finally {
+                requestController = null;
+            }
+        }
+
+        // 🔮 오늘의 운세 요청
+        // 별자리 계산
+        function getZodiacSign(month, day) {
+            const signs = [
+                { name: '염소자리', start: [1,1], end: [1,19] },
+                { name: '물병자리', start: [1,20], end: [2,18] },
+                { name: '물고기자리', start: [2,19], end: [3,20] },
+                { name: '양자리', start: [3,21], end: [4,19] },
+                { name: '황소자리', start: [4,20], end: [5,20] },
+                { name: '쌍둥이자리', start: [5,21], end: [6,21] },
+                { name: '게자리', start: [6,22], end: [7,22] },
+                { name: '사자자리', start: [7,23], end: [8,22] },
+                { name: '처녀자리', start: [8,23], end: [9,22] },
+                { name: '천칭자리', start: [9,23], end: [10,22] },
+                { name: '전갈자리', start: [10,23], end: [11,21] },
+                { name: '사수자리', start: [11,22], end: [12,21] },
+                { name: '염소자리', start: [12,22], end: [12,31] },
+            ];
+            for (const s of signs) {
+                if ((month === s.start[0] && day >= s.start[1]) || (month === s.end[0] && day <= s.end[1])) return s.name;
+            }
+            return '염소자리';
+        }
+
+        // 띠 계산
+        function getChineseZodiac(year) {
+            const animals = ['원숭이', '닭', '개', '돼지', '쥐', '소', '호랑이', '토끼', '용', '뱀', '말', '양'];
+            return animals[year % 12] + '띠';
+        }
+
+        // 생년월일 + MBTI 입력 팝업
+        function showBirthdayPopup() {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+                const popup = document.createElement('div');
+                popup.style.cssText = 'background:white;border-radius:16px;padding:30px;text-align:center;max-width:320px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3);';
+                const mbtiTypes = ['ISTJ','ISFJ','INFJ','INTJ','ISTP','ISFP','INFP','INTP','ESTP','ESFP','ENFP','ENTP','ESTJ','ESFJ','ENFJ','ENTJ'];
+                const mbtiOptions = mbtiTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+                popup.innerHTML = `
+                    <div style="font-size:40px;margin-bottom:12px;">🔮</div>
+                    <h3 style="margin-bottom:6px;color:#3C1E1E;">오늘의 운세</h3>
+                    <p style="color:#666;font-size:13px;margin-bottom:16px;">생년월일과 MBTI를 알려주시면<br>별자리+띠+MBTI 맞춤 운세를 봐드릴게요!</p>
+                    <input type="date" id="birthday-input" style="width:100%;padding:12px;border:2px solid #E0E0E0;border-radius:10px;font-size:15px;text-align:center;margin-bottom:12px;" max="${new Date().toISOString().split('T')[0]}">
+                    <select id="mbti-input" style="width:100%;padding:12px;border:2px solid #E0E0E0;border-radius:10px;font-size:15px;text-align:center;margin-bottom:16px;color:#333;background:white;">
+                        <option value="">MBTI 선택</option>
+                        ${mbtiOptions}
+                    </select>
+                    <div style="display:flex;gap:10px;">
+                        <button id="birthday-cancel" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:10px;background:white;cursor:pointer;font-size:14px;">취소</button>
+                        <button id="birthday-confirm" style="flex:1;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;cursor:pointer;font-size:14px;font-weight:bold;">확인</button>
+                    </div>
+                `;
+                overlay.appendChild(popup);
+                document.body.appendChild(overlay);
+
+                document.getElementById('birthday-confirm').onclick = () => {
+                    const val = document.getElementById('birthday-input').value;
+                    const mbti = document.getElementById('mbti-input').value;
+                    if (val) {
+                        localStorage.setItem('user_birthday', val);
+                        if (mbti) localStorage.setItem('user_mbti', mbti);
+                        overlay.remove();
+                        resolve(val);
+                    }
+                };
+                document.getElementById('birthday-cancel').onclick = () => {
+                    overlay.remove();
+                    resolve(null);
+                };
+            });
+        }
+
+        // 🔮 운세 요청
+        async function requestFortune() {
+            const fortuneBtn = document.getElementById('fortune-btn');
+            if (fortuneBtn.disabled) return;
+
+            // 하루 1회 제한
+            const today = new Date().toISOString().split('T')[0];
+            const fortuneKey = `fortune_${currentCharacter}_${today}`;
+            const cachedFortune = localStorage.getItem(fortuneKey);
+
+            if (cachedFortune) {
+                const repeatMsgs = {
+                    jiwoo: '오늘 운세는 이미 봤잖아요~ 내일 또 봐드릴게요! 💕',
+                    hyunwoo: '야, 오늘 이미 봐줬잖아~ 내일 또 봐줄게 😏💕',
+                    taeo: '자기야, 오늘 운세는 이미 봐줬잖아요. 내일 또 봐줄게요.',
+                    leo: '...오늘 봤잖아. 내일 와.',
+                    jihoon: '하... 오늘 이미 봐줬잖아. 내일 와.',
+                    juno: '어?? 자기야 오늘 이미 봤는데~~ 내일 또 봐줄게 ㅋㅋㅋ 💕',
+                };
+                const repeatMsg = repeatMsgs[currentCharacter] || repeatMsgs.jiwoo;
+                addMessage(repeatMsg, false);
+                addMessage(cachedFortune, false);
+                return;
+            }
+
+            // 생년월일 확인 (없으면 팝업)
+            let birthday = localStorage.getItem('user_birthday');
+            if (!birthday) {
+                birthday = await showBirthdayPopup();
+                if (!birthday) return; // 취소
+            }
+
+            const bdate = new Date(birthday);
+            const zodiac = getZodiacSign(bdate.getMonth() + 1, bdate.getDate());
+            const chineseZodiac = getChineseZodiac(bdate.getFullYear());
+            const birthYear = bdate.getFullYear();
+            const mbti = localStorage.getItem('user_mbti') || '';
+
+            // 개인화된 운세 요청 메시지
+            const mbtiPart = mbti ? `, MBTI: ${mbti}` : '';
+            const fortuneMsg = `오늘의 운세를 봐주세요. 내 생년월일: ${birthday} (${birthYear}년생, ${zodiac}, ${chineseZodiac}${mbtiPart})`;
+
+            fortuneBtn.disabled = true;
+            const typingIndicator = showTypingIndicator();
+
+            try {
+                // 운세도 stateless /chat 호출. SSE 스트림 파싱.
+                let history = [];
+                try { history = await Storage.getHistoryForGemini(currentCharacter, 30); } catch (e) {}
+
+                const formData = new FormData();
+                formData.append('message', fortuneMsg);
+                formData.append('character', currentCharacter);
+                formData.append('user_profile', JSON.stringify(userProfile || {}));
+                formData.append('history', JSON.stringify(history));
+                formData.append('grammar_mode', 'false');
+                formData.append('extract_vocab', 'false');
+
+                const controller = new AbortController();
+                requestController = controller;
+                const tokenAtSend = sessionToken;
+                const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (tokenAtSend !== sessionToken) {
+                    typingIndicator.remove();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || '서버 응답에 문제가 있어요.');
+                }
+
+                typingIndicator.remove();
+
+                // SSE 파싱
+                const { contentDiv: streamContent } = createStreamBubble();
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let fullText = '';
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    if (tokenAtSend !== sessionToken) { reader.cancel(); return; }
+                    buffer += decoder.decode(value, { stream: true });
+                    const parts = buffer.split('\n\n');
+                    buffer = parts.pop();
+                    for (const part of parts) {
+                        if (!part.startsWith('data: ')) continue;
+                        let evt;
+                        try { evt = JSON.parse(part.slice(6)); } catch { continue; }
+                        if (evt.error) { streamContent.textContent = evt.error; break; }
+                        if (evt.t) {
+                            fullText += evt.t;
+                            streamContent.innerHTML = renderMarkdownLinks(fullText);
+                            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+                        }
+                        if (evt.done) {
+                            if (fullText) {
+                                localStorage.setItem(fortuneKey, fullText);
+                                try { await Storage.addMessage(currentCharacter, 'model', fullText, sessionId); } catch (e) {}
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                typingIndicator.remove();
+                console.error('Fortune request error:', error);
+                if (error.name === 'AbortError') {
+                    addMessage('운세 확인이 지연되고 있어요. 잠시 후 다시 시도해주세요.', false);
+                } else {
+                    addMessage('죄송해요, 운세를 볼 수 없었어요. 다시 시도해주세요.', false);
+                }
+            } finally {
+                requestController = null;
+                setTimeout(() => { fortuneBtn.disabled = false; }, 3000);
+            }
+        }
+
+        // 오래된 운세 캐시 정리 (7일+)
+        (function cleanOldFortunes() {
+            const now = Date.now();
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('fortune_')) {
+                    const dateStr = key.split('_').pop();
+                    const entryDate = new Date(dateStr).getTime();
+                    if (now - entryDate > 7 * 24 * 60 * 60 * 1000) {
+                        localStorage.removeItem(key);
+                    }
+                }
+            }
+        })();
+
+        // 입력 중 Buy Me a Coffee 버튼 숨김
+        const userInput = document.getElementById('user-input');
+        const bmcFloating = document.querySelector('.bmc-floating');
+        if (userInput && bmcFloating) {
+            userInput.addEventListener('focus', () => {
+                bmcFloating.classList.add('hidden');
+            });
+            userInput.addEventListener('blur', () => {
+                bmcFloating.classList.remove('hidden');
+            });
+        }
+
+        // 메시지 추가 (현우 캐릭터용 - 영어 번역 포함)
+        function addMessageWithTranslation(korean, english, emotion) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            // 한국어 텍스트
+            const koreanText = document.createElement('div');
+            koreanText.textContent = korean;
+            koreanText.style.fontWeight = 'bold';
+            koreanText.style.marginBottom = '8px';
+            contentDiv.appendChild(koreanText);
+
+            // 영어 번역 (토글 가능)
+            const translationDiv = document.createElement('div');
+            translationDiv.className = 'translation';
+            translationDiv.textContent = english;
+            translationDiv.style.display = 'block'; // 항상 표시
+            contentDiv.appendChild(translationDiv);
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(timeDiv);
+            messagesDiv.appendChild(messageDiv);
+
+            // 한국어 TTS 자동 재생
+            speakKorean(korean);
+
+            // 스크롤 하단으로
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 메시지 추가 (민준/지우 캐릭터용)
+        // 마크다운 링크를 HTML로 변환 (XSS 방지 포함)
+        function renderMarkdownLinks(text) {
+            // 0) (속삭임) / (whisper) 태그 제거 (화면에 안 보이게)
+            text = text.replace(/\(속삭임\)|\(whisper\)/gi, '').trim();
+
+            // 0-1) 💡 문법 힌트 줄을 별도 스타일로 분리
+            text = text.replace(/(💡\s*.+)$/m, '<span class="grammar-hint">$1</span>');
+
+            // 1) Extract sticker tags [sticker:NAME] and split around them
+            const stickerRegex = /\[sticker:(\w+)\]/g;
+            const parts = [];
+            let lastIndex = 0;
+            let match;
+
+            while ((match = stickerRegex.exec(text)) !== null) {
+                if (match.index > lastIndex) {
+                    parts.push({ type: 'text', value: text.substring(lastIndex, match.index) });
+                }
+                parts.push({ type: 'sticker', value: match[1] });
+                lastIndex = match.index + match[0].length;
+            }
+            if (lastIndex < text.length) {
+                parts.push({ type: 'text', value: text.substring(lastIndex) });
+            }
+
+            // Helper: markdown link 먼저 추출 → HTML 이스케이프 → 링크 복원
+            function processText(t) {
+                // 1) 마크다운 링크를 플레이스홀더로 치환 (이스케이프 전에 실행)
+                const links = [];
+                const withPH = t.replace(
+                    /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+                    (_, linkText, url) => {
+                        links.push({ linkText, url });
+                        return '\x00LINK' + (links.length - 1) + '\x00';
+                    }
+                );
+                // 2) HTML 이스케이프
+                const escaped = withPH
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+                // 3) 플레이스홀더를 styled 버튼으로 복원
+                const restored = escaped.replace(/\x00LINK(\d+)\x00/g, (_, i) => {
+                    const { linkText, url } = links[parseInt(i)];
+                    const safeText = linkText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    const safeUrl = url.replace(/"/g, '&quot;');
+                    return '<a href="' + safeUrl + '" target="_blank" rel="noopener" class="chat-link">' + safeText + '</a>';
+                });
+                // 4) 혹시 raw URL이 남아있으면 링크로 변환 (fallback)
+                return restored.replace(
+                    /(^|[\s\n])(https?:\/\/[^\s<"]+)/g,
+                    (match, pre, url) => pre + '<a href="' + url + '" target="_blank" rel="noopener" class="chat-link">' + url + '</a>'
+                );
+            }
+
+            // No stickers found → original pipeline
+            if (parts.length === 0 || (parts.length === 1 && parts[0].type === 'text')) {
+                return processText(text);
+            }
+
+            // 2) Build HTML from parts
+            let html = '';
+            for (const part of parts) {
+                if (part.type === 'sticker') {
+                    const sticker = STICKERS[part.value];
+                    if (sticker) {
+                        if (sticker.img) {
+                            // Image-based sticker
+                            html += '<div class="sticker-container">' +
+                                '<img class="sticker-img" src="' + sticker.img + '" alt="' + sticker.caption + '">' +
+                                '<span class="sticker-caption">' + sticker.caption + '</span>' +
+                                '</div>';
+                        } else {
+                            // Emoji-based sticker
+                            html += '<div class="sticker-container">' +
+                                '<div class="sticker-bubble" style="background:' + sticker.bg + '">' +
+                                '<span class="sticker-emoji">' + sticker.emoji + '</span>' +
+                                '</div>' +
+                                '<span class="sticker-caption">' + sticker.caption + '</span>' +
+                                '</div>';
+                        }
+                    }
+                } else {
+                    const trimmed = part.value.trim();
+                    if (trimmed) {
+                        html += processText(trimmed);
+                    }
+                }
+            }
+            return html;
+        }
+
+        // 스트리밍용 빈 AI 버블 생성 (텍스트는 나중에 채워짐)
+        function createStreamBubble() {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            // 커서 효과
+            contentDiv.innerHTML = '<span class="stream-cursor">▍</span>';
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            const timeSpan = document.createElement('span');
+            timeSpan.textContent = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+            timeDiv.appendChild(timeSpan);
+
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(timeDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            return { messageDiv, contentDiv };
+        }
+
+        function addMessage(content, isUser) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            if (!isUser) {
+                // Check if message is sticker-only (no text besides sticker tag)
+                const textWithoutStickers = content.replace(/\[sticker:\w+\]/g, '').replace(/\(속삭임\)|\(whisper\)/gi, '').trim();
+                const isStickerOnly = textWithoutStickers.length === 0 && /\[sticker:\w+\]/.test(content);
+
+                if (isStickerOnly) {
+                    contentDiv.style.background = 'transparent';
+                    contentDiv.style.padding = '0';
+                    contentDiv.style.boxShadow = 'none';
+                    contentDiv.style.maxWidth = '160px';
+                }
+
+                // AI 메시지: 마크다운 링크 + 스티커를 HTML로 변환
+                contentDiv.innerHTML = renderMarkdownLinks(content);
+            } else {
+                // 유저 메시지: 스티커 태그 감지 시 렌더링
+                const isUserSticker = /^\[sticker:\w+\]$/.test(content.trim());
+                if (isUserSticker) {
+                    contentDiv.style.background = 'transparent';
+                    contentDiv.style.padding = '0';
+                    contentDiv.style.boxShadow = 'none';
+                    contentDiv.style.maxWidth = '160px';
+                    contentDiv.innerHTML = renderMarkdownLinks(content);
+                } else {
+                    contentDiv.textContent = content;
+                }
+            }
+
+            // AI 메시지에 번역 버튼 추가
+            if (!isUser) {
+                // Strip sticker tags + 속삭임 for translation
+                const cleanContent = content
+                    .replace(/\[sticker:\w+\]/g, '')
+                    .replace(/\(속삭임\)|\(whisper\)/gi, '')
+                    .trim();
+
+                // Only show translate button if there is actual text
+                if (cleanContent.length > 0) {
+                    const translateBtn = document.createElement('button');
+                    translateBtn.className = 'translate-btn';
+                    translateBtn.textContent = '🌐 English';
+                    translateBtn.onclick = () => translateMessage(contentDiv, cleanContent);
+                    contentDiv.appendChild(translateBtn);
+                }
+
+                // 한국어 TTS 자동 재생 (원본 텍스트 전달 - 백엔드에서 처리)
+                speakKorean(content);
+            }
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+
+            if (isUser) {
+                // 내 메시지: 읽음 카운트 표시
+                const readSpan = document.createElement('span');
+                readSpan.className = 'read-status';
+                readSpan.textContent = '1';
+                timeDiv.appendChild(readSpan);
+            }
+
+            const timeSpan = document.createElement('span');
+            timeSpan.textContent = new Date().toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            timeDiv.appendChild(timeSpan);
+
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(timeDiv);
+            messagesDiv.appendChild(messageDiv);
+
+
+            // 스크롤 하단으로
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            return isUser ? null : contentDiv;
+        }
+
+        // 번역
+        async function translateMessage(contentDiv, koreanText) {
+            const existingTranslation = contentDiv.querySelector('.translation');
+            if (existingTranslation) {
+                existingTranslation.remove();
+                return;
+            }
+
+            try {
+                const response = await fetch('/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: koreanText })
+                });
+
+                const data = await response.json();
+
+                if (data.translatedText) {
+                    const translationDiv = document.createElement('div');
+                    translationDiv.className = 'translation';
+                    translationDiv.textContent = data.translatedText;
+                    contentDiv.appendChild(translationDiv);
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+            }
+        }
+
+        // 한국어 TTS
+        async function speakKorean(text) {
+            try {
+                const response = await fetch('/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        language: 'ko-KR',
+                        character: currentCharacter
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.audio) {
+                    const audioBytes = atob(data.audio);
+                    const arrayBuffer = new ArrayBuffer(audioBytes.length);
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    for (let i = 0; i < audioBytes.length; i++) {
+                        uint8Array[i] = audioBytes.charCodeAt(i);
+                    }
+
+                    const blob = new Blob([uint8Array], { type: 'audio/mp3' });
+                    const audioUrl = URL.createObjectURL(blob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+
+                    audio.onended = () => {
+                        URL.revokeObjectURL(audioUrl);
+                    };
+                }
+            } catch (error) {
+                console.error('TTS error:', error);
+            }
+        }
+
+        // Typing indicator 표시
+        function showTypingIndicator() {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator active';
+            typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+            messageDiv.appendChild(typingDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            return messageDiv;
+        }
+
+        // Enter 키 처리
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // ==========================================
+        // Push Notification Setup
+        // ==========================================
+        let fcmToken = null;
+
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyClrG63hvRhUoI_EVl79xFFV9VCXCx673k",
+            authDomain: "my-k-dating-app.firebaseapp.com",
+            projectId: "my-k-dating-app",
+            storageBucket: "my-k-dating-app.firebasestorage.app",
+            messagingSenderId: "515513943326",
+            appId: "1:515513943326:web:ea256f3a704d914ff1f50f"
+        };
+
+        const VAPID_KEY = "BA1vx3DRJXZ47uBRFLX_ixsAtPxjsxG0IafBODQwIm8892wysxigzTfOL23V3k_LVe3eA4RcCYoIfoTJuk6EN8I";
+
+        // Firebase 초기화
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const fcmMessaging = firebase.messaging();
+
+        // 페이지 로드 시 알림 상태 확인
+        async function checkNotificationStatus() {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                await registerFCMToken();
+            }
+        }
+
+        // 알림 권한 요청
+        async function requestNotificationPermission() {
+            try {
+                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                console.log('[Push] SW registered:', registration.scope);
+
+                const permission = await Notification.requestPermission();
+                console.log('[Push] Permission:', permission);
+
+                if (permission === 'granted') {
+                    await registerFCMToken();
+                    const banner = document.getElementById('notification-banner');
+                    if (banner) banner.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('[Push] Permission failed:', error);
+            }
+        }
+
+        // FCM 토큰 등록
+        async function registerFCMToken() {
+            try {
+                let registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+                if (!registration) {
+                    registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                }
+
+                fcmToken = await fcmMessaging.getToken({
+                    vapidKey: VAPID_KEY,
+                    serviceWorkerRegistration: registration
+                });
+
+                console.log('[Push] FCM Token:', fcmToken ? fcmToken.substring(0, 20) + '...' : 'null');
+
+                if (fcmToken) {
+                    await fetch('/register-push', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            token: fcmToken,
+                            character: currentCharacter
+                        })
+                    });
+                    console.log('[Push] Token registered');
+                }
+            } catch (error) {
+                console.error('[Push] Token registration failed:', error);
+            }
+        }
+
+        // 포그라운드 메시지 처리 (앱이 열려 있을 때 → 채팅 버블로 표시)
+        fcmMessaging.onMessage((payload) => {
+            console.log('[Push] Foreground message:', payload);
+            if (payload.notification && payload.notification.body) {
+                addMessage(payload.notification.body, false);
+            }
+        });
+
+        // 🔮 Auto-fortune: 알림 클릭 → 자동 운세 트리거
+        let pendingFortune = false;
+
+        // URL 파라미터 체크 (새 탭으로 열렸을 때)
+        (function checkFortuneParam() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('fortune') === 'true') {
+                pendingFortune = true;
+                window.history.replaceState({}, '', '/');
+            }
+        })();
+
+        // Service Worker 메시지 리스너 (기존 탭이 포커스될 때)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
+                    const url = event.data.url || '';
+                    if (url.includes('fortune=true')) {
+                        if (document.getElementById('chat-container').classList.contains('active')) {
+                            requestFortune();
+                        } else {
+                            pendingFortune = true;
+                        }
+                    }
+                }
+            });
+        }
+
+        // 페이지 로드 시 초기화
+        if ('serviceWorker' in navigator) {
+            checkNotificationStatus();
+        }
+
+        // IndexedDB 초기화 + 마이그레이션 + 캐시 로드
+        (async function initStorage() {
+            try {
+                await Storage.init();
+                await Storage.migrateFromLocalStorage(currentCharacter);
+
+                // 프로필 복원
+                const p = await Storage.getProfile();
+                userProfile = {
+                    nickname: p.nickname || '',
+                    level: p.level || '',
+                    interests: Array.isArray(p.interests) ? p.interests : [],
+                };
+                if (p.currentCharacter) {
+                    currentCharacter = p.currentCharacter;
+                }
+
+                // 친밀도 캐시 로드
+                const chars = await Storage.getAllCharacters();
+                (chars || []).forEach((c) => {
+                    intimacyCache[c.id] = c.intimacy || 0;
+                });
+
+                // 단어장 캐시 로드
+                await refreshVocabCache();
+
+                // UI 반영
+                initHeartDisplay();
+
+                // 복귀 유저: 온보딩을 이미 완료했고 캐릭터도 선택한 적이 있으면
+                // 자동으로 해당 캐릭터 채팅 화면으로 진입
+                const onboardingDone = !!(userProfile.level && Array.isArray(userProfile.interests) && userProfile.interests.length > 0);
+                if (onboardingDone && p.currentCharacter) {
+                    // 온보딩 화면 숨김
+                    const s1 = document.getElementById('onboarding-step1');
+                    const s2 = document.getElementById('onboarding-step2');
+                    if (s1) s1.style.display = 'none';
+                    if (s2) s2.style.display = 'none';
+                    // 바로 해당 캐릭터 선택 (대화 복원 포함)
+                    selectCharacter(p.currentCharacter);
+                }
+            } catch (e) {
+                console.error('[KDateStorage] init failed — falling back to in-memory only', e);
+            }
+        })();
+    </script>
+</body>
+</html>
