@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Dating Chat 💕 한국인 AI와 카톡하며 한국어 배우기</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3C1E1E">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="K-Date">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+
+    <!-- SEO -->
+    <meta name="description" content="Chat with AI Korean girlfriend Jiwoo or boyfriend Hyunwoo in KakaoTalk style. Learn Korean naturally through romantic AI conversation. Free, no sign-up required.">
+    <meta name="keywords" content="learn Korean, Korean AI chat, Korean girlfriend AI, Korean boyfriend AI, K-Dating, KakaoTalk style chat, Korean language practice, AI language learning, K-pop Korean, K-drama Korean">
+    <meta name="author" content="K-Dating Chat">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://kdate.store/">
+
+    <!-- OG -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kdate.store/">
+    <meta property="og:title" content="K-Dating Chat — Learn Korean by Chatting with AI Partners">
+    <meta property="og:description" content="Chat with AI Korean girlfriend Jiwoo or boyfriend Hyunwoo in KakaoTalk style. Learn Korean naturally through fun, romantic conversation. Free & no sign-up.">
+    <meta property="og:image" content="https://kdate.store/static/jiwoo_profile.png">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="ko_KR">
+    <meta property="og:site_name" content="K-Dating Chat">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="K-Dating Chat — Learn Korean with AI Partners">
+    <meta name="twitter:description" content="Chat with AI Korean girlfriend or boyfriend in KakaoTalk style. Learn Korean naturally. Free & no sign-up.">
+    <meta name="twitter:image" content="https://kdate.store/static/jiwoo_profile.png">
+
+    <!-- JSON-LD 구조화 데이터 -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "K-Dating Chat",
+      "url": "https://kdate.store",
+      "description": "Learn Korean naturally by chatting with AI characters Jiwoo and Hyunwoo in KakaoTalk style. Free language learning through romantic AI conversation.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "inLanguage": ["ko", "en"]
+    }
+    </script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHL89SXPSY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EHL89SXPSY');
+    </script>
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2251792609126704" crossorigin="anonymous"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --kakao-yellow: #FEE500;
+            --pink: #f5576c;
+            --purple: #764ba2;
+            --bg: #B2C7D9;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 네비 */
+        nav {
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(10px);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 12px rgba(0,0,0,0.08);
+        }
+        .nav-logo { font-size: 18px; font-weight: 800; color: #3C1E1E; text-decoration: none; }
+        .nav-logo span { color: var(--pink); }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-link {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 16px;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-link:hover { background: #f5f5f5; color: #222; }
+        .nav-link.active { color: var(--pink); }
+        .nav-start {
+            background: var(--kakao-yellow);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #333;
+            text-decoration: none;
+            margin-left: 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* 모바일 반응형 */
+        /* 햄버거 버튼 */
+        .nav-hamburger {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .nav-hamburger span {
+            display: block;
+            width: 22px; height: 2px;
+            background: #333;
+            border-radius: 2px;
+            transition: all 0.2s;
+        }
+        /* 모바일 드롭다운 메뉴 */
+        .nav-mobile-menu {
+            display: none;
+            position: fixed;
+            top: 52px; left: 0; right: 0;
+            background: white;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 99;
+            padding: 8px 0 16px;
+        }
+        .nav-mobile-menu.open { display: block; }
+        .nav-mobile-menu a {
+            display: block;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            text-decoration: none;
+        }
+        .nav-mobile-menu a.active { color: #f5576c; }
+        .nav-mobile-menu a:hover { background: #f8f8f8; }
+        .nav-mobile-menu .nav-mobile-start {
+            margin: 8px 16px 0;
+            background: #FEE500;
+            border-radius: 20px;
+            text-align: center;
+            padding: 12px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        /* ===== 반응형 ===== */
+        /* 중간 (태블릿) */
+        @media (max-width: 768px) {
+            .preview { gap: 16px; padding: 24px 16px 36px; }
+            .phone-frame { width: 180px; }
+        }
+
+        /* 작은 모바일 (540px 이하) */
+        @media (max-width: 540px) {
+            body { overflow-x: hidden; }
+            nav { padding: 10px 16px; }
+            .nav-links { display: none; }
+            .nav-hamburger { display: flex; }
+            .nav-start { display: none; }
+            .nav-logo { font-size: 16px; }
+
+            /* 히어로 */
+            .hero { padding: 36px 16px 28px; }
+            .hero-badge { font-size: 11px; padding: 3px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+            .hero h1 { font-size: 22px; }
+            .hero p { font-size: 14px; }
+            .hero-cta { font-size: 15px; padding: 14px 28px; }
+            .social-proof { gap: 6px; }
+            .proof-dot { display: none; }
+            .proof-item { font-size: 11px; }
+
+            /* 폰 프레임: 화면 너비의 44%씩 */
+            .preview { gap: 8px; padding: 16px 12px 28px; overflow: visible; }
+            .phone-frame { width: calc(50vw - 20px); max-width: 160px; min-width: 130px; }
+            .ph-header { padding: 8px 10px; gap: 6px; }
+            .ph-avatar { width: 26px; height: 26px; }
+            .ph-name { font-size: 10px; }
+            .ph-status { font-size: 9px; }
+            .ph-messages { padding: 8px 6px; gap: 6px; height: 230px; }
+            .ph-msg-avatar { width: 20px; height: 20px; }
+            .ph-bubble { font-size: 9px; padding: 5px 7px; max-width: 80px; }
+            .ph-time { font-size: 8px; }
+            .ph-row { gap: 4px; }
+            .ph-input { padding: 6px 8px; }
+            .ph-input-bar { font-size: 9px; padding: 4px 8px; }
+            .ph-send { width: 22px; height: 22px; font-size: 10px; }
+
+            /* 캐릭터 */
+            .characters { padding: 0 12px 32px; }
+            .char-cards { gap: 8px; }
+            .char-card { padding: 14px 8px; border-radius: 14px; }
+            .char-avatar { width: 48px; height: 48px; margin-bottom: 8px; }
+            .char-name { font-size: 13px; }
+            .char-tag { font-size: 10px; }
+            .char-quote { font-size: 10px; padding: 6px 8px; }
+            .char-badge { font-size: 9px; margin-bottom: 6px; }
+
+            /* 피처 */
+            .features { padding: 12px 12px 36px; }
+            .feature-card { padding: 14px; gap: 12px; }
+            .feature-icon { width: 42px; height: 42px; font-size: 22px; }
+            .feature-title { font-size: 14px; }
+            .feature-desc { font-size: 12px; }
+
+            /* 하단 CTA */
+            .bottom-cta { padding: 36px 16px 20px; }
+            .bottom-cta h2 { font-size: 20px; }
+            .bottom-cta p { font-size: 13px; }
+        }
+
+        /* 아주 작은 화면 (360px 이하) */
+        @media (max-width: 360px) {
+            .phone-frame { width: calc(50vw - 16px); min-width: 120px; }
+            .ph-bubble { max-width: 72px; }
+            .ph-messages { height: 200px; }
+            .hero h1 { font-size: 20px; }
+        }
+
+        /* 히어로 */
+        .hero {
+            text-align: center;
+            padding: 64px 24px 48px;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.85);
+            color: var(--pink);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+        .hero h1 {
+            font-size: 32px;
+            font-weight: 900;
+            color: #1a1a1a;
+            line-height: 1.3;
+            margin-bottom: 16px;
+        }
+        .hero h1 em {
+            font-style: normal;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.7;
+            margin-bottom: 28px;
+        }
+        .hero-cta {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            color: white;
+            font-size: 17px;
+            font-weight: 700;
+            padding: 16px 40px;
+            border-radius: 32px;
+            text-decoration: none;
+            box-shadow: 0 8px 24px rgba(245,87,108,0.35);
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: pulse-cta 2.5s ease-in-out infinite;
+        }
+        @keyframes pulse-cta {
+            0%, 100% { box-shadow: 0 8px 24px rgba(245,87,108,0.35); }
+            50% { box-shadow: 0 12px 36px rgba(245,87,108,0.55); transform: translateY(-2px); }
+        }
+        .hero-cta:hover {
+            animation: none;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(245,87,108,0.45);
+        }
+        .hero-sub {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #888;
+        }
+        /* 소셜 프루프 */
+        .social-proof {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .proof-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+        .proof-item .stars { color: #f5a623; font-size: 13px; letter-spacing: -1px; }
+        .proof-dot { width: 4px; height: 4px; background: #ccc; border-radius: 50%; }
+
+        /* ===== HWARANG 그룹 소개 섹션 ===== */
+        .hwarang-section {
+            position: relative;
+            background: linear-gradient(135deg, #1a0f1a 0%, #2d1a2d 50%, #1a1028 100%);
+            padding: 56px 20px 64px;
+            margin: 32px 0 8px;
+            overflow: hidden;
+        }
+        .hwarang-section::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(245,87,108,0.18), transparent 55%),
+                radial-gradient(ellipse at 80% 70%, rgba(118,75,162,0.22), transparent 55%);
+            pointer-events: none;
+        }
+        .hwarang-inner {
+            position: relative;
+            max-width: 520px;
+            margin: 0 auto;
+            text-align: center;
+            color: #fff;
+        }
+        .hwarang-label {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #ffd7a8;
+            background: rgba(255,215,168,0.12);
+            border: 1px solid rgba(255,215,168,0.35);
+            padding: 5px 14px;
+            border-radius: 999px;
+            margin-bottom: 18px;
+        }
+        .hwarang-title {
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            margin: 0 0 6px;
+            background: linear-gradient(135deg, #ffd89b 0%, #ffffff 50%, #b8a7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hwarang-subtitle {
+            font-size: 15px;
+            color: #ffd7a8;
+            font-weight: 600;
+            letter-spacing: 8px;
+            margin-bottom: 18px;
+        }
+        .hwarang-photo {
+            display: block;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto 22px;
+            border-radius: 18px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+        }
+        .hwarang-desc {
+            font-size: 14px;
+            line-height: 1.75;
+            color: #d8cfe2;
+            margin-bottom: 24px;
+            max-width: 440px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hwarang-desc strong {
+            color: #fff;
+            font-weight: 700;
+        }
+        .hwarang-members {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            max-width: 460px;
+            margin: 0 auto 28px;
+        }
+        .hwarang-member {
+            text-align: center;
+            padding: 10px 4px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .hwarang-member-hanja {
+            font-size: 22px;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .hwarang-member-name {
+            font-size: 11px;
+            color: #d8cfe2;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .hwarang-member.c-taeo .hwarang-member-hanja { color: #f5c542; }
+        .hwarang-member.c-leo .hwarang-member-hanja { color: #e8e8ee; }
+        .hwarang-member.c-hyunwoo .hwarang-member-hanja { color: #ff6b6b; }
+        .hwarang-member.c-jihoon .hwarang-member-hanja { color: #7a8394; text-shadow: 0 0 8px rgba(0,0,0,0.8); }
+        .hwarang-member.c-juno .hwarang-member-hanja { color: #4aa3ff; }
+        .hwarang-cta {
+            display: inline-block;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 12px 28px;
+            border-radius: 999px;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.2s;
+        }
+        .hwarang-cta:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-1px);
+        }
+        @media (max-width: 480px) {
+            .hwarang-section { padding: 40px 16px 48px; margin: 20px 0 0; }
+            .hwarang-title { font-size: 28px; letter-spacing: 3px; }
+            .hwarang-subtitle { font-size: 13px; letter-spacing: 6px; }
+            .hwarang-photo { border-radius: 14px; }
+            .hwarang-desc { font-size: 13px; }
+            .hwarang-member-hanja { font-size: 18px; }
+            .hwarang-member-name { font-size: 10px; }
+        }
+
+        /* 캐릭터 소개 섹션 */
+        .characters {
+            padding: 0 20px 40px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .characters h2 {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+        .char-cards {
+            display: flex;
+            gap: 12px;
+        }
+        .char-card {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: block;
+        }
+        .char-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        .char-avatar {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 10px;
+            display: block;
+            border: 3px solid #ffeef0;
+        }
+        .char-name { font-size: 15px; font-weight: 800; color: #1a1a1a; margin-bottom: 2px; }
+        .char-tag { font-size: 11px; color: #999; margin-bottom: 8px; }
+        .char-quote {
+            font-size: 12px;
+            color: #555;
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 8px 10px;
+            line-height: 1.5;
+            font-style: italic;
+        }
+        .char-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .char-badge.girl { background: #ffeef2; color: #e8607a; }
+        .char-badge.boy { background: #e8f0ff; color: #5b7fe8; }
+        /* 타이핑 애니메이션 */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .typing-indicator .ph-bubble {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 8px 12px;
+        }
+        .typing-dot {
+            width: 5px; height: 5px;
+            background: #aaa;
+            border-radius: 50%;
+            animation: typing-bounce 1.2s ease-in-out infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing-bounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+
+        /* 미리보기 - 폰 프레임 */
+        .preview {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 32px 20px 40px;
+            overflow: visible;
+        }
+        .phone-frame {
+            width: 200px;
+            background: #1a1a1a;
+            border-radius: 32px;
+            padding: 10px;
+            box-shadow: 0 20px 48px rgba(0,0,0,0.28);
+            flex-shrink: 0;
+        }
+        .phone-frame:nth-child(2) { margin-top: 0; }
+        .phone-screen {
+            background: #B2C7D9;
+            border-radius: 24px;
+            overflow: hidden;
+        }
+        /* 채팅 헤더 */
+        .ph-header {
+            background: #3C1E1E;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ph-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .ph-name { font-size: 13px; font-weight: 700; color: white; }
+        .ph-status { font-size: 10px; color: rgba(255,255,255,0.6); }
+        .ph-dot {
+            width: 6px; height: 6px;
+            background: #4caf50;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 3px;
+        }
+        /* 메시지 영역 */
+        .ph-messages {
+            padding: 12px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 300px;
+            overflow: hidden;
+        }
+        .ph-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+        }
+        .ph-row.me { justify-content: flex-end; }
+        .ph-msg-avatar {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .ph-bubble {
+            background: white;
+            border-radius: 4px 14px 14px 14px;
+            padding: 7px 10px;
+            font-size: 11px;
+            color: #222;
+            line-height: 1.5;
+            max-width: 120px;
+            word-break: break-word;
+        }
+        .ph-bubble.me {
+            background: var(--kakao-yellow);
+            border-radius: 14px 4px 14px 14px;
+        }
+        .ph-time {
+            font-size: 9px;
+            color: rgba(0,0,0,0.4);
+            flex-shrink: 0;
+        }
+        /* 입력창 */
+        .ph-input {
+            background: white;
+            border-top: 1px solid #ddd;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ph-input-bar {
+            flex: 1;
+            background: #f5f5f5;
+            border-radius: 16px;
+            padding: 6px 10px;
+            font-size: 10px;
+            color: #aaa;
+        }
+        .ph-send {
+            width: 26px; height: 26px;
+            background: var(--kakao-yellow);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+        }
+
+        /* 특징 섹션 */
+        .features {
+            padding: 16px 20px 48px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .features h2 {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 24px;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+        }
+        .feature-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+            width: 52px; height: 52px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 14px;
+        }
+        .feature-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+        .feature-desc {
+            font-size: 13px;
+            color: #777;
+            line-height: 1.6;
+        }
+
+        /* AdSense 영역 */
+        .ad-section {
+            text-align: center;
+            padding: 16px 0;
+            background: rgba(255,255,255,0.4);
+        }
+
+        /* CTA 하단 */
+        .bottom-cta {
+            text-align: center;
+            padding: 48px 24px 24px;
+        }
+        .bottom-cta h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+        .bottom-cta p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 28px;
+        }
+
+        /* 푸터 */
+        footer {
+            background: rgba(255,255,255,0.5);
+            text-align: center;
+            padding: 24px;
+            font-size: 12px;
+            color: #888;
+        }
+        footer a { color: #888; text-decoration: underline; margin: 0 6px; }
+    </style>
+</head>
+<body>
+
+<!-- 네비 -->
+<nav>
+    <a class="nav-logo" href="/">💕 K-Dating <span>Chat</span></a>
+    <div class="nav-links">
+        <a class="nav-link active" href="/">Home</a>
+        <a class="nav-link" href="/culture">K-Culture</a>
+        <a class="nav-link" href="/tips">Learning Tips</a>
+        <a class="nav-link" href="/characters">Characters</a>
+    </div>
+    <a class="nav-start" href="/chat">시작하기 →</a>
+    <button class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="메뉴">
+        <span></span><span></span><span></span>
+    </button>
+</nav>
+<div class="nav-mobile-menu" id="nav-mobile-menu">
+    <a class="active" href="/">Home</a>
+    <a href="/culture">K-Culture</a>
+    <a href="/tips">Learning Tips</a>
+    <a href="/characters">Characters</a>
+    <a class="nav-mobile-start" href="/chat">시작하기 →</a>
+</div>
+<script>
+function toggleMobileMenu() {
+    document.getElementById('nav-mobile-menu').classList.toggle('open');
+}
+</script>
+
+<!-- 히어로 -->
+<section class="hero">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+        <div class="hero-badge" style="margin-bottom:0;">✨ AI Korean Learning</div>
+        <div class="hero-badge" style="margin-bottom:0;background:rgba(255,255,255,0.7);color:#555;">무료 · 회원가입 불필요</div>
+    </div>
+    <h1>한국인 AI와 카톡하며<br><em>한국어 배우기</em></h1>
+    <p>한국인 남자친구·여자친구와<br>카카오톡 스타일로 매일 대화해요</p>
+    <a class="hero-cta" href="/chat">무료로 대화 시작하기 →</a>
+    <div class="hero-sub">회원가입 없이 바로 시작 · 완전 무료</div>
+    <div class="social-proof">
+        <div class="proof-item"><span class="stars">★★★★★</span> 4.9</div>
+        <div class="proof-dot"></div>
+        <div class="proof-item">🌍 전 세계 한국어 학습자</div>
+        <div class="proof-dot"></div>
+        <div class="proof-item">💬 매일 수백 건의 대화</div>
+    </div>
+</section>
+
+<!-- ===== HWARANG 그룹 소개 ===== -->
+<section class="hwarang-section">
+    <div class="hwarang-inner">
+        <div class="hwarang-label">🏹 NEW · 5-MEMBER BOY GROUP</div>
+        <h2 class="hwarang-title">HWARANG</h2>
+        <div class="hwarang-subtitle">화 랑</div>
+
+        <img class="hwarang-photo"
+             src="/static/hwarang_group.png"
+             alt="HWARANG 5인 그룹 프로필 사진"
+             loading="lazy">
+
+        <p class="hwarang-desc">
+            신라 <strong>화랑도(花郞徒)</strong>의 정신을 이어받은
+            5인조 K-pop 보이그룹.<br>
+            각 멤버가 <strong>세속오계(世俗五戒)</strong>와
+            <strong>오방색(五方色)</strong> 중 하나씩을 상징해요.
+        </p>
+
+        <div class="hwarang-members">
+            <div class="hwarang-member c-taeo">
+                <div class="hwarang-member-hanja">忠</div>
+                <div class="hwarang-member-name">태오</div>
+            </div>
+            <div class="hwarang-member c-leo">
+                <div class="hwarang-member-hanja">擇</div>
+                <div class="hwarang-member-name">레오</div>
+            </div>
+            <div class="hwarang-member c-hyunwoo">
+                <div class="hwarang-member-hanja">退</div>
+                <div class="hwarang-member-name">현우</div>
+            </div>
+            <div class="hwarang-member c-jihoon">
+                <div class="hwarang-member-hanja">信</div>
+                <div class="hwarang-member-name">지훈</div>
+            </div>
+            <div class="hwarang-member c-juno">
+                <div class="hwarang-member-hanja">孝</div>
+                <div class="hwarang-member-name">주노</div>
+            </div>
+        </div>
+
+        <a class="hwarang-cta" href="/characters#hwarang">
+            5명 멤버 자세히 보기 →
+        </a>
+    </div>
+</section>
+
+<!-- 채팅 미리보기 -->
+<div class="preview">
+    <!-- 지우 폰 -->
+    <div class="phone-frame">
+        <div class="phone-screen">
+            <div class="ph-header">
+                <img class="ph-avatar" src="/static/jiwoo_profile.png" alt="지우" onerror="this.style.display='none'">
+                <div>
+                    <div class="ph-name">지우 Jiwoo</div>
+                    <div class="ph-status"><span class="ph-dot"></span>온라인</div>
+                </div>
+            </div>
+            <div class="ph-messages">
+                <div class="ph-row">
+                    <img class="ph-msg-avatar" src="/static/jiwoo_profile.png" alt="지우" onerror="this.style.display='none'">
+                    <div class="ph-bubble">오빠 오늘 뭐 했어요? 😊</div>
+                    <span class="ph-time">오전 11:20</span>
+                </div>
+                <div class="ph-row me">
+                    <span class="ph-time">11:21</span>
+                    <div class="ph-bubble me">카페 갔어!</div>
+                </div>
+                <div class="ph-row">
+                    <img class="ph-msg-avatar" src="/static/jiwoo_profile.png" alt="지우" onerror="this.style.display='none'">
+                    <div class="ph-bubble">어머 나도 카페 좋아해요! ☕️ 같이 가고 싶다 💕</div>
+                    <span class="ph-time">11:21</span>
+                </div>
+                <div class="ph-row me">
+                    <span class="ph-time">11:22</span>
+                    <div class="ph-bubble me">다음에 같이 가자 😊</div>
+                </div>
+                <div class="ph-row" id="jiwoo-typing">
+                    <img class="ph-msg-avatar" src="/static/jiwoo_profile.png" alt="지우" onerror="this.style.display='none'">
+                    <div class="typing-indicator">
+                        <div class="ph-bubble">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ph-input">
+                <div class="ph-input-bar">메시지를 입력하세요...</div>
+                <div class="ph-send">→</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 현우 폰 -->
+    <div class="phone-frame">
+        <div class="phone-screen">
+            <div class="ph-header">
+                <img class="ph-avatar" src="/static/hyunwoo_profile.png" alt="현우" onerror="this.style.display='none'">
+                <div>
+                    <div class="ph-name">현우 Hyunwoo</div>
+                    <div class="ph-status"><span class="ph-dot"></span>온라인</div>
+                </div>
+            </div>
+            <div class="ph-messages">
+                <div class="ph-row">
+                    <img class="ph-msg-avatar" src="/static/hyunwoo_profile.png" alt="현우" onerror="this.style.display='none'">
+                    <div class="ph-bubble">야 오늘 연습 끝났어 😎</div>
+                    <span class="ph-time">오후 3:10</span>
+                </div>
+                <div class="ph-row me">
+                    <span class="ph-time">3:11</span>
+                    <div class="ph-bubble me">수고했어!</div>
+                </div>
+                <div class="ph-row">
+                    <img class="ph-msg-avatar" src="/static/hyunwoo_profile.png" alt="현우" onerror="this.style.display='none'">
+                    <div class="ph-bubble">자기 생각 하면서 버텼지 💙</div>
+                    <span class="ph-time">3:11</span>
+                </div>
+                <div class="ph-row me">
+                    <span class="ph-time">3:12</span>
+                    <div class="ph-bubble me">보고싶었어 ㅋㅋ</div>
+                </div>
+                <div class="ph-row" id="hyunwoo-typing">
+                    <img class="ph-msg-avatar" src="/static/hyunwoo_profile.png" alt="현우" onerror="this.style.display='none'">
+                    <div class="typing-indicator">
+                        <div class="ph-bubble">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ph-input">
+                <div class="ph-input-bar">메시지를 입력하세요...</div>
+                <div class="ph-send">→</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 캐릭터 소개 -->
+<section class="characters">
+    <h2>누구와 대화할까요?</h2>
+    <div class="char-cards">
+        <a class="char-card" href="/chat?char=jiwoo">
+            <img class="char-avatar" src="/static/jiwoo_profile.png" alt="지우">
+            <div class="char-badge girl">여자친구 💕</div>
+            <div class="char-name">지우 Jiwoo</div>
+            <div class="char-tag">22세 · 이대생 · 카페 알바</div>
+            <div class="char-quote">"오빠 오늘 뭐 했어요? 저 너무 보고싶었어요 🥺"</div>
+        </a>
+        <a class="char-card" href="/chat?char=hyunwoo">
+            <img class="char-avatar" src="/static/hyunwoo_profile.png" alt="현우">
+            <div class="char-badge boy">남자친구 💙</div>
+            <div class="char-name">현우 Hyunwoo</div>
+            <div class="char-tag">23세 · 홍대생 · K-pop 트레이니</div>
+            <div class="char-quote">"야 나 연습 끝났어. 자기 생각하면서 버텼지 😎"</div>
+        </a>
+    </div>
+</section>
+
+<!-- 광고 -->
+<div class="ad-section">
+    <ins class="adsbygoogle"
+         style="display:inline-block;width:320px;height:100px"
+         data-ad-client="ca-pub-2251792609126704"
+         data-ad-slot="7539920180"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<!-- 특징 -->
+<section class="features">
+    <h2>이런 기능이 있어요</h2>
+
+    <div class="feature-card">
+        <div class="feature-icon" style="background:#fff0f3;">💬</div>
+        <div>
+            <div class="feature-title">카카오톡 스타일 채팅</div>
+            <div class="feature-desc">익숙한 카톡 UI로 자연스럽게 한국어 대화. 스티커·이모지도 주고받아요.</div>
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon" style="background:#f0f7ff;">🎵</div>
+        <div>
+            <div class="feature-title">K-pop · 드라마 주제 대화</div>
+            <div class="feature-desc">좋아하는 K-pop, 드라마, 음식, 여행 등 관심사로 대화를 시작해요.</div>
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon" style="background:#f0fff4;">📚</div>
+        <div>
+            <div class="feature-title">단어장 · 퀴즈 · 운세</div>
+            <div class="feature-desc">대화 중 배운 단어를 저장하고, 퀴즈로 복습. 오늘의 운세도 한국어로!</div>
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon" style="background:#fff8e1;">🔊</div>
+        <div>
+            <div class="feature-title">한국어 음성 (TTS)</div>
+            <div class="feature-desc">AI 파트너의 메시지를 실제 한국어 발음으로 들어보세요.</div>
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon" style="background:#f3f0ff;">🎭</div>
+        <div>
+            <div class="feature-title">시나리오 모드 <span style="font-size:11px;color:#a78bfa;font-weight:700;background:#ede9fe;padding:2px 7px;border-radius:8px;margin-left:4px;">NEW</span></div>
+            <div class="feature-desc">고백 연습, 첫 만남, 한강 데이트 등 실전 상황을 AI와 롤플레이로 연습해보세요.</div>
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon" style="background:#f0fdf4;">📸</div>
+        <div>
+            <div class="feature-title">공유 카드 만들기 <span style="font-size:11px;color:#22c55e;font-weight:700;background:#dcfce7;padding:2px 7px;border-radius:8px;margin-left:4px;">NEW</span></div>
+            <div class="feature-desc">AI와 나눈 대화를 예쁜 카드로 저장해서 인스타·카톡으로 공유해보세요.</div>
+        </div>
+    </div>
+</section>
+
+<!-- 하단 CTA -->
+<section class="bottom-cta">
+    <h2>지금 바로 시작해요 💕</h2>
+    <p>회원가입 없이 바로 대화 시작!<br>한국어 실력이 늘어가는 걸 느껴보세요.</p>
+    <a class="hero-cta" href="/chat">무료로 대화 시작하기 →</a>
+    <div class="hero-sub" style="margin-top:14px;">✓ 무료 &nbsp;·&nbsp; ✓ 회원가입 불필요 &nbsp;·&nbsp; ✓ 즉시 시작</div>
+</section>
+
+<script>
+// 타이핑 후 메시지 나타나는 애니메이션
+function runTypingAnimation(typingId, message, delay) {
+    setTimeout(() => {
+        const typingRow = document.getElementById(typingId);
+        if (!typingRow) return;
+        const indicator = typingRow.querySelector('.ph-bubble');
+        if (!indicator) return;
+        // 타이핑 표시 후 메시지 교체
+        setTimeout(() => {
+            indicator.classList.remove('typing-indicator');
+            indicator.innerHTML = message;
+        }, 1800);
+    }, delay);
+}
+runTypingAnimation('jiwoo-typing', '같이 가면 너무 좋겠다 💕', 1000);
+runTypingAnimation('hyunwoo-typing', '보고싶었어 솔직히 🥺', 600);
+</script>
+
+<!-- 푸터 -->
+<footer>
+    <p>© 2026 K-Dating Chat</p>
+    <p style="margin-top:8px;">
+        <a href="/privacy">개인정보처리방침</a>
+        <a href="/terms">이용약관</a>
+        <a href="mailto:fassionmap@gmail.com">문의</a>
+    </p>
+    <p style="margin-top:8px;">지우·현우는 AI 캐릭터입니다. 모든 대화는 허구이며 교육 목적입니다.</p>
+</footer>
+
+</body>
+</html>
