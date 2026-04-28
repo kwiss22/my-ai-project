@@ -1,0 +1,12 @@
+Flask
+gunicorn
+google-genai
+google-cloud-aiplatform
+google-cloud-datastore
+google-cloud-texttospeech
+google-cloud-translate
+python-dotenv
+gspread
+oauth2client
+azure-cognitiveservices-speech
+firebase-admin

@@ -1,0 +1,5 @@
+# app.yaml - K-Dating Chat
+
+runtime: python311
+entrypoint: gunicorn -b :$PORT chatbot:app
+service: dating-chat

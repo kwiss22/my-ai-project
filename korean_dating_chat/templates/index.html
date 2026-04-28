@@ -204,6 +204,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            min-width: 0;
+            flex: 1 1 auto;
         }
 
         .header-avatar {
@@ -217,19 +219,30 @@
             object-fit: cover;
         }
 
+        .header-info {
+            min-width: 0;
+            overflow: hidden;
+        }
         .header-info h2 {
             font-size: 16px;
             font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .header-info p {
             font-size: 12px;
             opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .header-buttons {
             display: flex;
             gap: 6px;
+            flex-shrink: 0;
         }
 
         /* 바텀시트 네비게이션 메뉴 */
@@ -348,6 +361,8 @@
             padding: 12px 16px;
             border-radius: 18px;
             position: relative;
+            word-break: keep-all;
+            overflow-wrap: anywhere;
         }
 
         .message.ai .message-content {
@@ -819,18 +834,23 @@
             gap: 5px;
             padding: 4px 10px 4px 8px;
             border: 1.5px solid #f093fb;
-            border-radius: 20px;
+            border-radius: 16px;
             font-size: 12px;
             font-weight: 600;
             color: #c0306a;
             background: white;
             cursor: pointer;
             transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s, box-shadow 0.18s;
-            white-space: nowrap;
+            max-width: 100%;
+            white-space: normal;
+            word-break: keep-all;
+            overflow-wrap: anywhere;
+            text-align: left;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             font-family: inherit;
         }
+        .vocab-chip > .chip-icon { flex-shrink: 0; }
         .vocab-chip:hover { background: #fff0fc; }
         .vocab-chip:active { transform: scale(0.94); }
         .vocab-chip.saved {
@@ -1216,6 +1236,8 @@
             border-radius: 18px;
             font-size: 13px;
             line-height: 1.5;
+            word-break: keep-all;
+            overflow-wrap: anywhere;
         }
         .history-msg.ai .history-msg-bubble {
             background: white;
@@ -1331,6 +1353,7 @@
         .sticker-img {
             width: 160px;
             height: 160px;
+            max-width: 100%;
             object-fit: contain;
             border-radius: 12px;
             animation: stickerBounce 0.4s ease;
