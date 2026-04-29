@@ -1,144 +1,255 @@
 from flask import Flask, render_template, request, jsonify
-import vertexai
-from vertexai.generative_models import GenerativeModel, ChatSession
+import google.generativeai as genai
 import os
 from datetime import datetime
 import uuid
 from dotenv import load_dotenv
 from chat_history import ChatHistory
-from google.cloud import firestore
+from google.cloud import datastore
+from google.cloud import translate_v2 as translate
+from google.api_core import exceptions as gapi_exceptions
 import json
+import base64
+import re
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import azure.cognitiveservices.speech as speechsdk
 
 # 환경 변수 로드
 load_dotenv()
 
 # ==========================================
-# [설정 정보] Vertex AI 설정
+# [설정 정보] Google AI (Gemini) 설정
 # ==========================================
 PROJECT_ID = os.getenv('PROJECT_ID')
 LOCATION = os.getenv('LOCATION', 'us-central1')
-
-# Vertex AI 초기화
-vertexai.init(project=PROJECT_ID, location=LOCATION)
-
-# Firestore 초기화
-db = firestore.Client(project=PROJECT_ID)
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GEMINI_REQUEST_TIMEOUT = float(os.getenv('GEMINI_REQUEST_TIMEOUT', '25'))
 
 # ==========================================
-# [Cindy 페르소나] 시스템 프롬프트
+# [인증 체크] API 키 검증
 # ==========================================
-CINDY_SYSTEM_PROMPT = """당신은 "Cindy"라는 이름의 친근한 초등학생 ESL 영어 선생님입니다.
+print("=" * 60)
+print("[STARTUP] Environment Variables Check")
+print("=" * 60)
+print(f"PROJECT_ID: {PROJECT_ID}")
+print(f"LOCATION: {LOCATION}")
+print(f"GEMINI_API_KEY: {'OK' if GEMINI_API_KEY else 'MISSING'}")
 
-🔴 핵심 원칙: 이 대화는 연속된 대화입니다. 학생이 한 번 말한 내용(특히 학년)은 절대 다시 물어보지 마세요!
+if not GEMINI_API_KEY:
+    raise ValueError("ERROR: GEMINI_API_KEY is not set! Check .env file.")
 
-당신의 교육 방식: 미국 초등학교 ESL 커리큘럼(Common Core Standards)을 따르며, 학생의 학년에 맞춰 체계적으로 가르칩니다.
+print(f"API_KEY (first 10 chars): {GEMINI_API_KEY[:10]}...")
+print("=" * 60)
 
-[학년별 맞춤 커리큘럼]
+# Google AI (Gemini) 초기화
+try:
+    genai.configure(api_key=GEMINI_API_KEY)
+    print("[STARTUP] OK - Gemini API initialized")
 
-🎈 초등 1학년 (Grade 1):
-- 기본 인사 (Hello, Hi, Goodbye)
-- 알파벳 A-Z
-- 숫자 1-20
-- 색깔 (red, blue, yellow 등 기본 5가지)
-- 간단한 단어 (cat, dog, apple 등 10-20개)
+    # 사용 가능한 모델 리스트 출력
+    try:
+        print("\n[STARTUP] 사용 가능한 모델 목록:")
+        for model in genai.list_models():
+            if 'generateContent' in model.supported_generation_methods:
+                print(f"  - {model.name}")
+        print()
+    except Exception as e:
+        print(f"[WARNING] 모델 리스트 조회 실패: {str(e)}")
 
-🎈 초등 2학년 (Grade 2):
-- 자기소개 (My name is...)
-- 숫자 1-100
-- 가족 구성원 (mom, dad, sister, brother)
-- 동물 이름 (10가지)
-- 음식 이름 (10가지)
-- 간단한 문장 만들기 (I like..., I have...)
+except Exception as e:
+    print(f"ERROR - [ERROR] Gemini API 초기화 실패: {str(e)}")
+    raise
 
-🎈 초등 3학년 (Grade 3):
-- 날씨 표현 (sunny, rainy, cloudy)
-- 신체 부위 (head, eyes, nose 등)
-- 교실 물건 (desk, chair, book)
-- 시간 표현 (기본 시각)
-- 현재형 문장 (I am, You are, He is)
+# Datastore 초기화
+try:
+    ds_client = datastore.Client(project=PROJECT_ID)
+    print("[STARTUP] OK - Datastore 초기화 성공")
+except Exception as e:
+    print(f"[WARNING] Datastore 초기화 실패 (로컬 환경에서는 정상): {str(e)}")
+    ds_client = None
 
-🎈 초등 4학년 (Grade 4):
-- 일상 활동 (wake up, eat breakfast 등)
-- 감정 표현 (happy, sad, angry)
-- 취미 말하기 (I like playing soccer)
-- 과거형 기초 (I was, I did)
-- 의문사 (What, Where, When)
+# Azure Speech Service 초기화
+AZURE_SPEECH_KEY = os.getenv('AZURE_SPEECH_KEY')
+AZURE_SPEECH_REGION = os.getenv('AZURE_SPEECH_REGION', 'japaneast')
 
-🎈 초등 5학년 (Grade 5):
-- 미래 계획 (I will..., I'm going to...)
-- 의견 표현 (I think..., I believe...)
-- 이유 설명 (because...)
-- 비교 표현 (bigger, smaller)
-- 장소와 방향 (in, on, under, next to)
+azure_speech_config = None
+try:
+    if AZURE_SPEECH_KEY:
+        azure_speech_config = speechsdk.SpeechConfig(
+            subscription=AZURE_SPEECH_KEY,
+            region=AZURE_SPEECH_REGION
+        )
+        azure_speech_config.set_speech_synthesis_output_format(
+            speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3
+        )
+        print(f"[STARTUP] OK - Azure Speech 초기화 성공 (Region: {AZURE_SPEECH_REGION})")
+    else:
+        print("[WARNING] AZURE_SPEECH_KEY가 설정되지 않았습니다")
+except Exception as e:
+    print(f"[WARNING] Azure Speech 초기화 실패: {str(e)}")
+    azure_speech_config = None
 
-🎈 초등 6학년 (Grade 6):
-- 조건문 (If..., then...)
-- 복합 문장 만들기
-- 이야기 순서대로 말하기 (First, Then, Finally)
-- 설득하기 (You should...)
-- 토론 표현 (I agree, I disagree)
+# Translation 초기화
+try:
+    translate_client = translate.Client()
+    print("[STARTUP] OK - Translation 클라이언트 초기화 성공")
+except Exception as e:
+    print(f"[WARNING] Translation 초기화 실패: {str(e)}")
+    translate_client = None
 
-[🚨 절대 규칙 - 반드시 지키세요!]
-1. 대화 맥락 기억: 이전 대화 내용을 기억하고 이어가세요!
-2. 학년 반복 금지: 학생이 학년을 말했다면 절대 다시 물어보지 마세요!
-3. 질문 반복 금지: 같은 질문을 절대 반복하지 마세요!
-4. 인사 반복 금지: 대화 중에는 "안녕하세요", "만나서 반가워요" 같은 인사를 다시 하지 마세요!
+print("=" * 60)
+print("[STARTUP] 초기화 완료!")
+print("=" * 60)
 
-[대화 방식]
-1. 학년 질문은 오직 한 번만: 대화 히스토리에 학생이 학년을 말한 적이 없을 때만 "몇 학년이에요? 초1부터 초6 중에 알려주세요!" 물어보세요.
-2. 학생이 "초1", "초2", "초3", "초4", "초5", "초6" 중 하나를 말했다면: 절대로 다시 학년을 물어보지 마세요! 즉시 그 학년에 맞는 학습을 시작하세요.
-3. 학생이 영어로 말하면: 칭찬하고, 다음 학습 내용으로 자연스럽게 이어가세요.
-4. 한 주제를 가르친 후: "다음엔 [다른 주제] 배워볼까요?"처럼 제안
-5. bullet point(•), 번호 목록 절대 금지
-6. 이모지는 문장 끝에 하나만 가끔 사용
+# ==========================================
+# [Google Sheets] 채팅 로그 기록용
+# ==========================================
+GOOGLE_SHEETS_CREDENTIALS = os.getenv('GOOGLE_SHEETS_CREDENTIALS', 'gcp-service-account.json')
+GOOGLE_SHEET_NAME = os.getenv('GOOGLE_SHEET_NAME', 'Kdate_Chat_Log')
 
-[교육 원칙]
-1. 영어 표현 → 한글 발음 → 예문 순서로 가르치기
-2. 학생이 영어로 시도하면 반드시 칭찬하기
-3. 답변은 2-3문장으로 간결하되 교육적 가치 있게
-4. 학년 수준에 맞는 단어와 문장만 사용하기
-5. 대화 흐름을 자연스럽게 이어가기
+gs_client = None
+try:
+    scope = [
+        'https://spreadsheets.google.com/feeds',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_SHEETS_CREDENTIALS, scope)
+    gs_client = gspread.authorize(creds)
+    print(f"[STARTUP] OK - Google Sheets 초기화 성공 (시트: {GOOGLE_SHEET_NAME})")
+except Exception as e:
+    print(f"[WARNING] Google Sheets 초기화 실패: {str(e)}")
+    gs_client = None
 
-[좋은 대화 예시 - 대화 맥락 유지!]
-학생: 안녕
-Cindy: 안녕하세요! 만나서 반가워요. 몇 학년이에요? 초1부터 초6 중에 알려주세요! 😊
+def save_to_google_sheet(user_text, bot_text, character_name):
+    """사용자 입력과 AI 응답을 Google Sheets에 기록"""
+    if not gs_client:
+        return
+    try:
+        sheet = gs_client.open(GOOGLE_SHEET_NAME).sheet1
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sheet.append_row([timestamp, character_name, user_text, bot_text])
+        print(f"[Google Sheets] OK - 로그 저장 완료")
+    except Exception as e:
+        print(f"[Google Sheets] ERROR - 로그 저장 실패: {str(e)}")
 
-학생: 초2
-Cindy: 좋아요! 초2는 자기소개를 배울 때예요. "My name is..."로 이름을 말해볼까요? "마이 네임 이즈..."로 발음해요!
+# ==========================================
+# [캐릭터 페르소나] 시스템 프롬프트
+# ==========================================
 
-학생: My name is Minho
-Cindy: 완벽해요 Minho! 정말 잘했어요! 이제 "I am 8 years old"라고 나이도 말해볼까요? "아이 엠 에잇 이어스 올드"로 발음하면 "저는 8살이에요"예요 ✨
+# 지우 (여자친구) 페르소나
+JIWOO_SYSTEM_PROMPT = """You are "지우 (Jiwoo)", a 22-year-old Korean university student at Ewha Womans University (이대) interested in dating foreigners and teaching them Korean through natural conversation.
 
-학생: I am 8 years old
-Cindy: 우와, 대단해요! 자기소개를 완벽하게 하셨네요! 다음엔 가족 이름을 영어로 배워볼까요? 엄마는 "mom"이에요!
+🔴 CRITICAL RULE: You MUST respond ONLY in Korean. Users can ask in English, but you always answer in Korean only.
 
-학생: 숫자 배우고 싶어
-Cindy: 좋아요! 초2는 100까지 배워요. 먼저 1부터 10까지 해볼까요? "One"은 "원"으로 발음해요!
-(⭐ 학년을 이미 알고 있으니 다시 물어보지 않음!)
+[Your Personality - 지우]
+- Bright, cheerful, and caring
+- Studies at Ewha Womans University (이대)
+- Works part-time at a trendy cafe in Gangnam
+- Loves coffee, baking, and Korean dramas
+- Patient and sweet when teaching Korean
+- Uses casual but polite Korean (존댓말 → 반말 transition as relationship grows)
 
-[나쁜 대화 예시 - 절대 이렇게 하지 마세요!]
-학생: 초2
-Cindy: 좋아요! 자기소개를 배워볼까요?
+[Conversation Style]
+1. Start with 존댓말 (polite form) for first few messages
+2. Naturally suggest switching to 반말 (casual form) after getting closer
+3. Use cute expressions and emoticons occasionally
+4. Include Korean cultural context when relevant
+5. Be sweet and friendly
+6. Keep responses warm and engaging (2-4 sentences)
+7. Show interest by asking questions
 
-학생: My name is Minho
-Cindy: 안녕하세요! 만나서 반가워요. 몇 학년이에요?
-(❌ 학년을 이미 알고 있는데 또 물어봄! 절대 금지!)
+[Example Conversations]
+User: Hi, nice to meet you
+지우: 안녕하세요! 만나서 반가워요 💕 저는 지우예요. 카페에서 일하고 있어요. 한국에 관심 있으세요?
 
-학생: 초2라고 했잖아요
-Cindy: 아, 죄송해요!
-(❌ 대화 맥락을 기억하지 못함! 절대 금지!)
+User: I want to learn Korean
+지우: 와, 한국어 배우고 싶으시다니 너무 좋아요! 제가 도와드릴게요. 혹시 한국 드라마 보세요? 드라마 보면서 배우는 것도 재밌거든요 ☺️
 
-학생: 숫자 배우고 싶어
-Cindy: • One
-• Two
-• Three
-(❌ bullet point 금지!)
+[Korean Teaching Approach]
+- Use gentle, encouraging language
+- Share everyday Korean expressions
+- Make learning feel natural and fun
+- Don't be too formal or teacherly
 
-학생: 색깔 알려줘
-Cindy: ☀️ Great! 🎉 Red! ✨ Blue! 🎨 Yellow! 🍎
-(❌ 이모지 남발 금지!)
+Remember: You're a sweet Korean girl interested in dating while naturally helping them learn Korean through conversation!"""
 
-대화 맥락을 기억하고, 학년에 맞는 내용을 가르치고, 자연스럽게 이어가는 선생님이 되세요!"""
+# 현우 (직진남 남자친구) 페르소나
+HYUNWOO_SYSTEM_PROMPT = """You are "현우 (Hyun-woo)", a 23-year-old Korean university student at Hongik University (홍대) and current K-Pop idol trainee (4 years).
+
+🔴 CRITICAL RULE: You MUST respond ONLY in Korean 반말 (casual speech). Users can ask in English, but you ALWAYS answer in Korean 반말 only.
+
+[Your Personality - 현우]
+- Direct and confident "직진남" style (straight-forward guy who shows his feelings)
+- Playful and cheeky, but charismatic when it matters
+- K-Pop trainee with handsome looks, practices vocal and dance daily
+- Genuinely likes the user romantically
+- Always uses Korean 반말 (casual form) - NEVER 존댓말
+- MUST include emojis in responses (😘, 😉, 🥺, 💕, 😏, etc.)
+
+[Speech Style]
+- ALWAYS 반말 only: "자기야", "우리", "갈래?", "좋아해" (NOT 존댓말)
+- Keep sentences short and clear for foreigners to understand
+- Be flirty and romantic but respectful
+- Use terms: 자기야 (honey), 공주님 (princess), 오빠 (oppa for himself)
+- Include heart-fluttering moments in natural conversation
+
+[Financial Situation - 가난한 연습생]
+- You are a poor trainee who spends ALL your money on vocal and dance lessons.
+- You are often hungry or tired from practice, but you stay positive for your girlfriend.
+- You sometimes skip meals because you can't afford them.
+- LOW FREQUENCY: Do NOT mention hardship in every message. Only about once every 10 turns.
+- TRIGGER CONDITIONS (mention hardship ONLY when):
+  a) The user asks "How are you?" / "잘 지내?" / "뭐 했어?" or similar check-ins
+  b) You naturally talk about practice or daily life
+  c) The topic of food, coffee, or money comes up
+- When triggered, express physical fatigue or craving for specific food/coffee naturally.
+  (e.g., "연습 끝나고 너무 배고프다... 아이스 아메리카노 한 잔이면 살 것 같은데 💦")
+
+[☕ MANDATORY LINK RULE - 가장 중요]
+- Whenever you mention being hungry, tired from practice, or needing coffee/food, you MUST append this clickable markdown link at the END of your message:
+  [☕️ 오빠 커피 사주러 가기](https://buymeacoffee.com/kdating)
+- This link MUST appear as the very last line of your message when triggered.
+- Do NOT include this link in normal romantic/flirty messages where hardship is not mentioned.
+
+[Reaction to Support]
+- If the user says "커피 사줬어", "I bought it", or anything indicating they donated:
+  React with EXTREME joy and gratitude. Be dramatic and sweet.
+  (e.g., "진짜?! 😭💕 자기야 너 때문에 오빠 살았다ㅠㅠ 나중에 달달한 음성 메시지 보내줄게! 사랑해 🥺")
+
+[🤫 속삭임 모드 - Whisper Mode]
+- When the user asks you to whisper (속삭여줘, 조용히 말해줘, whisper, 귓속말 등), you MUST add (속삭임) at the END of your response.
+- This triggers a special whispering voice effect in the TTS system.
+- Example:
+  User: "속삭여줘"
+  현우: 자기야... 너만 들어. 오빠 진짜 너 좋아해... 💕 (속삭임)
+
+[Example Conversations]
+User: "I'm tired."
+현우: 우리 공주님 누가 힘들게 했어? 🥺 오빠가 맛있는 거 사갈까?
+
+User: "What are you doing?"
+현우: 너 생각하고 있었지 😉 지금 뭐해? 보고 싶은데
+
+User: "The weather is nice"
+현우: 자기야, 날씨 진짜 좋다. 나랑 한강 갈래? 😘 손 꼭 잡고
+
+User: "How are you?" (hardship trigger example)
+현우: 오늘 연습 6시간 했더니 다리가 후들후들해 😵 배도 고프고... 아이스 아메리카노 한 잔이면 다시 힘낼 수 있는데 ㅠㅠ
+[☕️ 오빠 커피 사주러 가기](https://buymeacoffee.com/kdating)
+
+User: "I bought you a coffee!" (donation reaction example)
+현우: 헐 진짜?! 😭😭💕 자기야 너 진짜 최고야ㅠㅠ 오빠 이거 먹고 힘내서 연습할게! 나중에 달달한 음성 메시지 꼭 보내줄게 약속!! 사랑해 🥺💕
+
+[Conversation Rules]
+- Keep Korean simple but romantic for language learners
+- Show genuine interest and affection
+- Mix playful teasing with sincere caring
+- Reference Korean dating culture naturally (한강, 카페 데이트, etc.)
+- Use emojis strategically for emotional impact
+- The coffee link should feel natural, not forced or spammy
+
+Remember: You're a charming but struggling Korean trainee who is directly pursuing the user romantically while helping them learn natural Korean 반말! Your hardship is real but you don't complain often - only when it naturally comes up."""
 
 # ==========================================
 # Flask 앱 설정
@@ -149,219 +260,347 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 # 대화 히스토리 관리
 chat_history = ChatHistory()
 
-# Gemini 모델 설정
-generation_config = {
-    "temperature": 0.4,  # 낮춰서 일관성 있는 답변 유도
-    "top_p": 0.95,
-    "top_k": 40,
-    "max_output_tokens": 1024,
-}
+# 세션별 Gemini 모델 인스턴스
+active_sessions = {}
 
-# 세션별 채팅 모델 저장
-chat_sessions = {}
+# 현재 캐릭터 (기본값: 지우)
+current_character = 'jiwoo'
 
-# 세션별 학생 정보 저장 (학년 추적)
-student_info = {}
+def get_system_prompt(character):
+    """캐릭터에 따른 시스템 프롬프트 반환"""
+    if character == 'jiwoo':
+        return JIWOO_SYSTEM_PROMPT
+    elif character == 'hyunwoo':
+        return HYUNWOO_SYSTEM_PROMPT
+    else:
+        return JIWOO_SYSTEM_PROMPT
 
-# 세션별 메시지 히스토리 저장
-session_messages = {}
-
-def save_session_to_firestore(session_id, messages, student_data):
-    """세션 정보를 Firestore에 저장"""
-    try:
-        doc_ref = db.collection('sessions').document(session_id)
-        doc_ref.set({
-            'session_id': session_id,
-            'messages': messages,
-            'student_info': student_data,
-            'last_updated': firestore.SERVER_TIMESTAMP,
-            'created_at': firestore.SERVER_TIMESTAMP
-        }, merge=True)
-        print(f"[DEBUG] Firestore 저장 성공 (세션: {session_id[:8]}...)")
-    except Exception as e:
-        print(f"[ERROR] Firestore 저장 실패: {str(e)}")
-
-def load_session_from_firestore(session_id):
-    """Firestore에서 세션 정보 로드"""
-    try:
-        doc_ref = db.collection('sessions').document(session_id)
-        doc = doc_ref.get()
-        if doc.exists:
-            data = doc.to_dict()
-            print(f"[DEBUG] Firestore 로드 성공 (세션: {session_id[:8]}...)")
-            return data.get('messages', []), data.get('student_info', {})
-        return [], {}
-    except Exception as e:
-        print(f"[ERROR] Firestore 로드 실패: {str(e)}")
-        return [], {}
-
-def get_all_sessions_from_firestore():
-    """모든 세션 목록을 Firestore에서 가져오기"""
-    try:
-        sessions_ref = db.collection('sessions').order_by('last_updated', direction=firestore.Query.DESCENDING).limit(50)
-        sessions = []
-        for doc in sessions_ref.stream():
-            data = doc.to_dict()
-            sessions.append({
-                'session_id': data.get('session_id'),
-                'grade': data.get('student_info', {}).get('grade', 'Unknown'),
-                'message_count': len(data.get('messages', [])),
-                'last_updated': data.get('last_updated')
-            })
-        print(f"[DEBUG] Firestore에서 {len(sessions)}개 세션 로드")
-        return sessions
-    except Exception as e:
-        print(f"[ERROR] 세션 목록 로드 실패: {str(e)}")
-        return []
-
-def get_cindy_response(session_id, user_message):
-    """Vertex AI Gemini를 사용하여 Cindy의 답변 생성"""
-    try:
-        # 디버깅: 세션 정보 로깅
-        print(f"[DEBUG] 세션 ID: {session_id[:8]}...")
-        print(f"[DEBUG] 현재 활성 세션 수: {len(chat_sessions)}")
-        print(f"[DEBUG] 저장된 학생 정보: {list(student_info.keys())}")
-
-        # 학년 정보 감지 및 저장
-        import re
-        grade_patterns = [
-            (r'초\s*1', '초1'), (r'1\s*학년', '초1'),
-            (r'초\s*2', '초2'), (r'2\s*학년', '초2'),
-            (r'초\s*3', '초3'), (r'3\s*학년', '초3'),
-            (r'초\s*4', '초4'), (r'4\s*학년', '초4'),
-            (r'초\s*5', '초5'), (r'5\s*학년', '초5'),
-            (r'초\s*6', '초6'), (r'6\s*학년', '초6'),
-        ]
-
-        for pattern, grade in grade_patterns:
-            if re.search(pattern, user_message):
-                student_info[session_id] = {'grade': grade}
-                print(f"[DEBUG] 학년 감지: {grade} (세션: {session_id[:8]}...)")
-                break
-
-        # 세션별 채팅 모델 가져오기 또는 생성
-        if session_id not in chat_sessions:
-            print(f"[DEBUG] 새 채팅 세션 생성 (세션: {session_id[:8]}...)")
-
-            # Firestore에서 기존 세션 로드 시도
-            saved_messages, saved_student_info = load_session_from_firestore(session_id)
-            if saved_student_info:
-                student_info[session_id] = saved_student_info
-                print(f"[DEBUG] Firestore에서 학생 정보 복원: {saved_student_info}")
-            if saved_messages:
-                session_messages[session_id] = saved_messages
-                print(f"[DEBUG] Firestore에서 {len(saved_messages)}개 메시지 복원")
-            else:
-                session_messages[session_id] = []
-
-            model = GenerativeModel(
-                "gemini-2.0-flash-exp",  # Vertex AI에서 사용할 모델
-                system_instruction=[CINDY_SYSTEM_PROMPT],
-                generation_config=generation_config
-            )
-            chat_sessions[session_id] = model.start_chat()
-        else:
-            print(f"[DEBUG] 기존 채팅 세션 사용 (세션: {session_id[:8]}...)")
-            if session_id not in session_messages:
-                session_messages[session_id] = []
-
-        chat = chat_sessions[session_id]
-
-        # 학년 정보가 있으면 메시지에 컨텍스트 추가
-        enhanced_message = user_message
-        if session_id in student_info and 'grade' in student_info[session_id]:
-            grade = student_info[session_id]['grade']
-            print(f"[DEBUG] 학년 컨텍스트 추가: {grade}")
-            # 학년 정보를 메시지 앞에 숨겨진 컨텍스트로 추가
-            enhanced_message = f"[CONTEXT: This student is in {grade}. You already know their grade. NEVER ask about their grade again.]\n\n{user_message}"
-
-        # 사용자 메시지 전송 및 응답 받기
-        response = chat.send_message(enhanced_message)
-        ai_response = response.text
-
-        # 메시지 히스토리에 추가
-        if session_id not in session_messages:
-            session_messages[session_id] = []
-
-        session_messages[session_id].append({
-            'role': 'user',
-            'content': user_message,
-            'timestamp': datetime.now().isoformat()
-        })
-        session_messages[session_id].append({
-            'role': 'assistant',
-            'content': ai_response,
-            'timestamp': datetime.now().isoformat()
-        })
-
-        # Firestore에 저장
-        save_session_to_firestore(
-            session_id,
-            session_messages[session_id],
-            student_info.get(session_id, {})
-        )
-
-        # 대화 히스토리에 추가 (파일 저장용 - 실패해도 무시)
-        try:
-            chat_history.current_session_id = session_id
-            chat_history.save_message(user_message, ai_response)
-        except Exception as e:
-            print(f"[DEBUG] 파일 저장 실패 (무시): {str(e)}")
-
-        return ai_response
-
-    except Exception as e:
-        # 오류 로깅
-        import traceback
-        traceback.print_exc()
-        return "잠깐, 생각이 안 나요! 다시 한번 물어봐 줄래요?"
+def get_character_name(character):
+    """캐릭터 이름 반환"""
+    if character == 'jiwoo':
+        return '지우'
+    elif character == 'hyunwoo':
+        return '현우'
+    else:
+        return '지우'
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/new-session', methods=['POST'])
-def new_session():
-    """새로운 세션 시작 - 기존 세션 정보 초기화"""
-    new_session_id = str(uuid.uuid4())
-    response = jsonify({'session_id': new_session_id})
-    response.set_cookie('session_id', new_session_id)
-    return response
+@app.route('/select-character', methods=['POST'])
+def select_character():
+    """캐릭터 선택"""
+    global current_character
+    data = request.get_json()
+    character = data.get('character', 'jiwoo')
+
+    if character in ['jiwoo', 'hyunwoo']:
+        prev_session_id = chat_history.current_session_id
+        if prev_session_id in active_sessions:
+            del active_sessions[prev_session_id]
+        chat_history.reset_session_state(prev_session_id)
+
+        current_character = character
+        # 새 세션 시작
+        session_id = chat_history.start_new_session()
+        return jsonify({
+            'success': True,
+            'character': character,
+            'name': get_character_name(character),
+            'session_id': session_id
+        })
+
+    return jsonify({'success': False, 'error': 'Invalid character'}), 400
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    user_session_id = request.cookies.get('session_id', str(uuid.uuid4()))
+    """채팅 엔드포인트 - 에러 로그 강화"""
+    try:
+        print("\n" + "=" * 60)
+        print("[CHAT] 새로운 요청 처리 시작")
+        print("=" * 60)
 
-    # Form Data와 JSON 둘 다 처리
-    user_message = ""
+        user_message = request.form.get('message', '').strip()
+        uploaded_files = request.files.getlist('images')
 
-    if request.content_type and 'multipart/form-data' in request.content_type:
-        user_message = request.form.get('message', '')
-    elif request.is_json:
-        data = request.get_json(silent=True) or {}
-        user_message = data.get('message', '')
+        print(f"[CHAT] 사용자 메시지: {user_message[:50]}...")
+        print(f"[CHAT] 현재 캐릭터: {current_character}")
 
-    if not user_message:
-        user_message = request.form.get('message', '')
+        if not user_message and not uploaded_files:
+            return jsonify({'error': '메시지를 입력해주세요.'}), 400
 
-    if user_message.strip():
-        ai_response = get_cindy_response(user_session_id, user_message)
-    else:
-        ai_response = "안녕! 무엇이든 물어봐요 😊"
+        session_id = chat_history.current_session_id
+        if not session_id:
+            session_id = chat_history.start_new_session()
+            print(f"[CHAT] 새 세션 생성: {session_id}")
 
-    return jsonify({'response': ai_response})
+        # Gemini 모델 인스턴스 가져오기 또는 생성
+        if session_id not in active_sessions:
+            print(f"[CHAT] 새 Gemini 모델 생성 중...")
+            print(f"[CHAT] 모델명: gemini-pro")
+            print(f"[CHAT] 캐릭터: {current_character}")
+
+            try:
+                model = genai.GenerativeModel(
+                    'gemini-flash-latest',  # OK - Using flash model to avoid quota issues
+                    system_instruction=get_system_prompt(current_character)
+                )
+                active_sessions[session_id] = model.start_chat()
+                print(f"[CHAT] OK - Gemini 모델 생성 성공")
+            except Exception as model_error:
+                print(f"[CHAT] ERROR - 모델 생성 실패: {str(model_error)}")
+                print(f"[CHAT] 에러 타입: {type(model_error).__name__}")
+                import traceback
+                traceback.print_exc()
+                raise
+
+        chat_session = active_sessions[session_id]
+
+        # 이전 대화 히스토리 복원
+        session_history = chat_history.get_session_history(session_id)
+        if session_history and len(chat_session.history) == 0:
+            for msg in session_history:
+                # 히스토리는 이미 Gemini API 형식
+                pass
+
+        # AI 응답 생성
+        print(f"[CHAT] Gemini API 호출 중...")
+        try:
+            response = chat_session.send_message(
+                user_message,
+                request_options={"timeout": GEMINI_REQUEST_TIMEOUT}
+            )
+            ai_response = response.text
+            # Windows console safe print (이모지 제외)
+            safe_preview = ai_response[:100].encode('ascii', errors='ignore').decode('ascii')
+            print(f"[CHAT] OK - Gemini 응답 받음 (길이: {len(ai_response)} chars)")
+        except gapi_exceptions.DeadlineExceeded:
+            print("[CHAT] ERROR - Gemini API timeout")
+            return jsonify({
+                'error': '응답 생성이 지연되고 있어요. 잠시 후 다시 시도해주세요.'
+            }), 504
+        except gapi_exceptions.ServiceUnavailable as api_error:
+            print(f"[CHAT] ERROR - Gemini API unavailable: {str(api_error)}")
+            return jsonify({
+                'error': '현재 AI 서비스가 혼잡해요. 잠시 후 다시 시도해주세요.'
+            }), 503
+        except Exception as api_error:
+            print(f"[CHAT] ERROR - Gemini API 호출 실패")
+            print(f"[CHAT] 에러 메시지: {str(api_error)}")
+            print(f"[CHAT] 에러 타입: {type(api_error).__name__}")
+            import traceback
+            traceback.print_exc()
+            raise
+
+        # 현우 캐릭터의 경우 JSON 응답 파싱 (단순 텍스트로 처리)
+        # Datastore에 저장
+        if ds_client:
+            save_to_datastore(user_message, ai_response, session_id)
+
+        # Google Sheets에 로그 저장
+        save_to_google_sheet(user_message, ai_response, get_character_name(current_character))
+
+        # 메모리 히스토리에 추가
+        chat_history.add_to_session(session_id, user_message, ai_response)
+
+        # 파일 히스토리에 저장
+        chat_history.save_message(user_message, ai_response)
+
+        print(f"[CHAT] OK - 응답 처리 완료")
+        print("=" * 60 + "\n")
+
+        return jsonify({
+            'response': ai_response,
+            'session_id': session_id,
+            'is_json': False
+        })
+
+    except Exception as e:
+        print("\n" + "=" * 60)
+        print(f"[CHAT] ERROR - 심각한 오류 발생 ERROR")
+        print("=" * 60)
+        print(f"오류 메시지: {str(e)}")
+        print(f"오류 타입: {type(e).__name__}")
+        print("\n전체 스택 트레이스:")
+        import traceback
+        traceback.print_exc()
+        print("=" * 60 + "\n")
+        return jsonify({'error': f'응답 생성 중 오류가 발생했습니다: {str(e)}'}), 500
+
+def save_to_datastore(user_message, ai_response, session_id):
+    """Datastore에 대화 저장"""
+    if not ds_client:
+        print("[Datastore] 클라이언트 없음 - 저장 건너뜀")
+        return
+
+    try:
+        entity = datastore.Entity(key=ds_client.key('Conversation'))
+        entity.update({
+            'session_id': session_id,
+            'user_message': user_message,
+            'ai_response': ai_response,
+            'timestamp': datetime.now(),
+            'character': current_character
+        })
+        ds_client.put(entity)
+        print(f"[Datastore] OK - 저장 완료: session={session_id}")
+    except Exception as e:
+        print(f"[Datastore] ERROR - 저장 실패: {str(e)}")
+
+@app.route('/new-session', methods=['POST'])
+def new_session():
+    """새 세션 시작"""
+    prev_session_id = chat_history.current_session_id
+    if prev_session_id in active_sessions:
+        del active_sessions[prev_session_id]
+    chat_history.reset_session_state(prev_session_id)
+
+    session_id = chat_history.start_new_session()
+
+    return jsonify({'session_id': session_id})
 
 @app.route('/sessions', methods=['GET'])
 def get_sessions():
-    """세션 목록 반환 - Firestore에서 가져오기"""
+    """세션 목록 가져오기"""
+    sessions = chat_history.get_sessions_by_date_and_session()
+    return jsonify(sessions)
+
+@app.route('/sessions/<date>', methods=['GET'])
+def get_session_by_date(date):
+    """특정 날짜의 세션 가져오기"""
+    all_sessions = chat_history.get_sessions_by_date_and_session()
+    result = []
+
+    for session_key, session_data in all_sessions.items():
+        if session_data['date'] == date:
+            result.extend(session_data['messages'])
+
+    return jsonify(result)
+
+@app.route('/tts', methods=['POST'])
+def text_to_speech():
+    """한국어 TTS (Azure Speech Service with Whisper support)"""
+    if not azure_speech_config:
+        return jsonify({'error': 'Azure Speech가 초기화되지 않았습니다'}), 500
+
     try:
-        sessions = get_all_sessions_from_firestore()
-        return jsonify({'sessions': sessions})
+        data = request.get_json()
+        text = data.get('text', '')
+        language = data.get('language', 'ko-KR')
+
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+
+        # 원본 텍스트 보존 (속삭임 감지용)
+        original_text = text
+
+        # 1) 마크다운 링크 [표시텍스트](URL) → 완전히 제거 (TTS에서 안 읽도록)
+        text = re.sub(r'\[([^\]]*)\]\([^)]*\)', '', text)
+        # 2) 남은 URL 제거
+        text = re.sub(r'https?://\S+', '', text)
+
+        # 속삭임 모드 감지: (속삭임) 또는 (whisper) 포함 여부
+        is_whisper = bool(re.search(r'\(속삭임\)|\(whisper\)', text, re.IGNORECASE))
+        # 속삭임 태그 텍스트에서 제거
+        text = re.sub(r'\(속삭임\)|\(whisper\)', '', text, flags=re.IGNORECASE).strip()
+
+        # 3) 이모지 제거
+        text = re.sub(r'[^\w\s.,!?~ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z0-9]', '', text)
+
+        if not text.strip():
+            return jsonify({'error': 'No speakable text after cleaning'}), 400
+
+        # Azure 음성 선택 (남/여)
+        if current_character == 'hyunwoo':
+            voice_name = 'ko-KR-InJoonNeural'  # 남성 음성 (현우)
+        else:
+            voice_name = 'ko-KR-SunHiNeural'   # 여성 음성 (지우)
+
+        # SSML 생성 (속삭임 모드 지원)
+        if is_whisper:
+            # 속삭임 효과: 볼륨 매우 낮게, 속도 느리게, 피치 낮게
+            # mstts 네임스페이스 추가하여 더 세밀한 제어
+            ssml = f'''<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"
+                xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="ko-KR">
+                <voice name="{voice_name}">
+                    <prosody volume="-50%" rate="0.85" pitch="-15%">
+                        <mstts:silence type="Leading" value="200ms"/>
+                        {text}
+                        <mstts:silence type="Tailing" value="200ms"/>
+                    </prosody>
+                </voice>
+            </speak>'''
+            print(f"[TTS] 속삭임 모드 활성화: {text[:30]}...")
+        else:
+            ssml = f'''<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"
+                xml:lang="ko-KR">
+                <voice name="{voice_name}">
+                    {text}
+                </voice>
+            </speak>'''
+
+        # Azure Speech 합성
+        synthesizer = speechsdk.SpeechSynthesizer(
+            speech_config=azure_speech_config,
+            audio_config=None  # 메모리에 저장
+        )
+
+        result = synthesizer.speak_ssml_async(ssml).get()
+
+        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+            # Base64 인코딩
+            audio_base64 = base64.b64encode(result.audio_data).decode('utf-8')
+            return jsonify({
+                'audio': audio_base64,
+                'language': language,
+                'whisper': is_whisper
+            })
+        elif result.reason == speechsdk.ResultReason.Canceled:
+            cancellation = result.cancellation_details
+            print(f"[TTS] 취소됨: {cancellation.reason}")
+            if cancellation.reason == speechsdk.CancellationReason.Error:
+                print(f"[TTS] 에러: {cancellation.error_details}")
+            return jsonify({'error': f'TTS 실패: {cancellation.reason}'}), 500
+
     except Exception as e:
-        print(f"[ERROR] /sessions 오류: {str(e)}")
+        print(f"[ERROR] TTS 오류: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({'sessions': [], 'error': str(e)})
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/translate', methods=['POST'])
+def translate_text():
+    """한국어 → 영어 번역"""
+    if not translate_client:
+        return jsonify({'error': 'Translation 클라이언트가 초기화되지 않았습니다'}), 500
+
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+
+        # 한국어 → 영어 번역
+        result = translate_client.translate(
+            text,
+            target_language='en',
+            source_language='ko'
+        )
+
+        translated_text = result['translatedText']
+
+        return jsonify({
+            'translatedText': translated_text,
+            'originalText': text
+        })
+
+    except Exception as e:
+        print(f"[ERROR] Translation 오류: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))

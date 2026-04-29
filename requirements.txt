@@ -1,5 +1,11 @@
 Flask
 gunicorn
+google-generativeai>=0.8.6
 google-cloud-aiplatform
-google-cloud-firestore
+google-cloud-datastore
+google-cloud-texttospeech
+google-cloud-translate
 python-dotenv
+gspread
+oauth2client
+azure-cognitiveservices-speech

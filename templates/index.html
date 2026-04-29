@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cindy - AI 영어 선생님</title>
+    <title>K-Dating Chat - 한국어 배우기</title>
     <style>
         * {
             margin: 0;
@@ -13,1002 +12,888 @@
         }
 
         :root {
-            --primary-color: #FF69B4;
-            --primary-light: #FFB6C1;
-            --secondary-color: #87CEEB;
-            --accent-color: #98FB98;
-            --bg-dark: #1a1a1a;
-            --bg-medium: #2a2a2a;
-            --bg-light: #f7f7f8;
-            --text-dark: #333;
-            --text-light: #666;
-            --text-white: #fff;
-            --border-color: #e5e5e5;
-            --hover-color: #f5f5f5;
+            --kakao-yellow: #FEE500;
+            --kakao-brown: #3C1E1E;
+            --bg-gray: #B2C7D9;
+            --bubble-me: #FEE500;
+            --bubble-other: #FFFFFF;
+            --text-dark: #000000;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: var(--bg-light);
-            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: var(--bg-gray);
+            min-height: 100vh;
             display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px 0;
         }
 
-        /* 사이드바 스타일 */
-        .sidebar {
-            width: 280px;
+        /* 캐릭터 선택 화면 */
+        .character-selection {
             background: white;
-            border-right: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .character-selection h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: var(--kakao-brown);
+        }
+
+        .character-selection p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .character-cards {
             display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .character-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px 20px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            color: white;
+            width: 200px;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        .character-card.jiwoo {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .character-card.hyunwoo {
+            background: linear-gradient(135deg, #12c2e9 0%, #c471ed 50%, #f64f59 100%);
+        }
+
+        .character-avatar {
+            font-size: 80px;
+            margin-bottom: 15px;
+        }
+
+        .character-avatar img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .character-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .character-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* 채팅 화면 */
+        .chat-container {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            height: 90vh;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             flex-direction: column;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .sidebar-header {
-            padding: 16px 12px;
-            border-bottom: 1px solid var(--border-color);
-            background: white;
-        }
-
-        .new-chat-button {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .new-chat-button:hover {
-            background: var(--primary-light);
-            transform: translateY(-1px);
-        }
-
-        /* 학습 설정 */
-        .learning-settings {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-            background: #fafafa;
-        }
-
-        .setting-group {
-            margin-bottom: 12px;
-        }
-
-        .setting-label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-light);
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .setting-select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 13px;
-            background: white;
-            cursor: pointer;
-            transition: border-color 0.2s ease;
-        }
-
-        .setting-select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .quick-actions {
-            padding: 8px 12px;
-            display: flex;
-            gap: 8px;
-        }
-
-        .quick-button {
-            flex: 1;
-            padding: 8px 12px;
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s ease;
-        }
-
-        .quick-button:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        /* 학습 주제 버튼 스타일 */
-        .topic-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .topic-button {
-            padding: 10px 12px;
-            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .topic-button:hover {
-            border-color: var(--primary-color);
-            background: linear-gradient(135deg, #fff0f5 0%, #ffe4f1 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 105, 180, 0.2);
-        }
-
-        .topic-button:active {
-            transform: translateY(0);
-        }
-
-        /* 대화 목록 */
-        .conversation-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px 0;
-        }
-
-        .conversation-item {
-            margin: 2px 8px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .conversation-item:hover {
-            background: var(--hover-color);
-        }
-
-        .conversation-item.active {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-            color: white;
-        }
-
-        .conversation-title {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 4px;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            line-clamp: 1;
-            -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-        .conversation-preview {
-            font-size: 12px;
-            color: var(--text-light);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.3;
-        }
-
-        .conversation-item.active .conversation-preview {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .conversation-time {
-            font-size: 11px;
-            color: var(--text-light);
-            position: absolute;
-            top: 12px;
-            right: 16px;
-        }
-
-        .conversation-item.active .conversation-time {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* 하단 컨트롤 */
-        .sidebar-footer {
-            padding: 12px;
-            border-top: 1px solid var(--border-color);
-            background: white;
-        }
-
-        .footer-button {
-            width: 100%;
-            padding: 8px 12px;
-            background: transparent;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-bottom: 8px;
-            transition: all 0.2s ease;
+        .chat-container.active {
             display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
-        .footer-button:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .footer-button.danger:hover {
-            border-color: #ff4757;
-            color: #ff4757;
-        }
-
-        /* 메인 채팅 영역 */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
+        /* 헤더 (카톡 스타일) */
         .chat-header {
-            background: white;
-            border-bottom: 1px solid var(--border-color);
-            padding: 16px 24px;
+            background: var(--kakao-brown);
+            color: white;
+            padding: 15px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        .chat-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-dark);
+        .header-left {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
-        .level-badge {
-            background: var(--primary-color);
+        .header-avatar {
+            font-size: 32px;
+        }
+
+        .header-avatar img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .header-info h2 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .header-info p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
             color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
         }
 
-        .chat-messages {
+        .header-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* 메시지 영역 (카톡 스타일) */
+        .messages {
             flex: 1;
             overflow-y: auto;
-            padding: 24px;
-            background: white;
+            padding: 20px;
+            background: var(--bg-gray);
         }
 
         .message {
-            margin-bottom: 24px;
             display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            animation: fadeIn 0.3s ease-out;
+            margin-bottom: 15px;
+            animation: slideUp 0.3s ease;
         }
 
-        @keyframes fadeIn {
+        @keyframes slideUp {
             from {
                 opacity: 0;
                 transform: translateY(10px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            flex-shrink: 0;
-        }
-
-        .user-avatar {
-            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
-            color: white;
-        }
-
-        .ai-avatar {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-            color: white;
+        .message.user {
+            flex-direction: row-reverse;
         }
 
         .message-content {
-            flex: 1;
-            padding: 12px 16px;
-            border-radius: 12px;
-            line-height: 1.5;
-            font-size: 14px;
-        }
-
-        .user-message .message-content {
-            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
-            color: white;
-            margin-left: auto;
             max-width: 70%;
-        }
-
-        .ai-message .message-content {
-            background: #f1f3f4;
-            color: var(--text-dark);
-            max-width: 80%;
-        }
-
-        .typing-indicator {
-            background: #f1f3f4;
-            color: var(--text-light);
-            font-style: italic;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.7;
-            }
-        }
-
-        /* 입력 영역 */
-        .input-container {
-            background: white;
-            border-top: 1px solid var(--border-color);
-            padding: 16px 24px;
-        }
-
-        .image-upload-area {
-            background: #f8f9fa;
-            border: 1px dashed var(--border-color);
-            border-radius: 8px;
             padding: 12px 16px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.2s ease;
-        }
-
-        .image-upload-area:hover,
-        .image-upload-area.dragover {
-            border-color: var(--primary-color);
-            background: #fff0f5;
-        }
-
-        .file-input-wrapper {
+            border-radius: 18px;
             position: relative;
         }
 
-        #image-input {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
+        .message.ai .message-content {
+            background: var(--bubble-other);
+            color: var(--text-dark);
+            border-top-left-radius: 5px;
         }
 
-        .file-button {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s ease;
+        .message.user .message-content {
+            background: var(--bubble-me);
+            color: var(--text-dark);
+            border-top-right-radius: 5px;
         }
 
-        .file-button:hover {
-            background: var(--primary-light);
-        }
-
-        .input-row {
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-        }
-
-        #user-input {
-            flex: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 12px 20px;
-            font-size: 14px;
-            resize: none;
-            outline: none;
-            min-height: 48px;
-            max-height: 120px;
-            font-family: inherit;
-            line-height: 1.4;
-        }
-
-        #user-input:focus {
-            border-color: var(--primary-color);
-        }
-
-        #send-button {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            cursor: pointer;
+        .message-time {
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            transition: all 0.2s ease;
+            gap: 5px;
         }
 
-        #send-button:hover {
-            background: var(--primary-light);
+        /* 채팅 내 클릭 링크 (커피 버튼 등) */
+        .chat-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #ff9a56, #ff6b6b);
+            color: #fff !important;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .chat-link:hover {
+            opacity: 0.85;
+        }
+
+        /* 번역 버튼 */
+        .translate-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 5px;
+            padding: 0;
+        }
+
+        .translate-btn:hover {
+            text-decoration: underline;
+        }
+
+        .translation {
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+            border-left: 3px solid #667eea;
+        }
+
+        /* 입력 영역 */
+        .input-area {
+            background: white;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-area input:focus {
+            border-color: var(--kakao-yellow);
+        }
+
+        .send-btn {
+            background: var(--kakao-yellow);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
             transform: scale(1.05);
         }
 
-        #send-button:disabled {
-            background: #ccc;
+        .send-btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
-        .image-preview {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .preview-image {
-            width: 60px;
-            height: 60px;
-            border-radius: 6px;
-            object-fit: cover;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-        }
-
-        /* 상태 알림 */
-        .status-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #4CAF50;
-            color: white;
+        /* Typing indicator */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
             padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: white;
+            border-radius: 18px;
+            width: fit-content;
         }
 
-        .status-indicator.show {
-            opacity: 1;
+        .typing-indicator.active {
+            display: flex;
         }
 
-        .status-indicator.error {
-            background: #ff4757;
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
         }
 
-        /* 빈 상태 */
-        .empty-state {
-            padding: 40px 20px;
-            text-align: center;
-            color: var(--text-light);
-            font-size: 13px;
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
         }
 
-        /* 모바일 반응형 */
-        @media (max-width: 768px) {
-            .sidebar {
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Mobile responsive tweaks */
+        @media (max-width: 600px) {
+            body {
+                align-items: stretch;
+            }
+
+            .character-selection {
                 width: 100%;
-                max-width: 280px;
-                position: fixed;
-                left: -280px;
-                z-index: 1000;
-                transition: left 0.3s ease;
+                margin: 0 12px;
+                padding: 24px 18px 32px;
             }
 
-            .sidebar.open {
-                left: 0;
+            .character-cards {
+                flex-direction: column;
+                gap: 14px;
             }
 
-            .main-content {
-                margin-left: 0;
+            .character-card {
+                width: 100%;
+                padding: 22px 16px;
             }
 
-            .chat-messages {
+            .chat-container {
+                max-width: 100%;
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .chat-header {
+                padding: 12px 16px;
+            }
+
+            .header-info h2 {
+                font-size: 15px;
+            }
+
+            .header-info p {
+                font-size: 11px;
+            }
+
+            .messages {
                 padding: 16px;
+                padding-bottom: 220px;
             }
 
-            .input-container {
-                padding: 16px;
+            .input-area {
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .input-area input {
+                font-size: 16px;
+            }
+
+            .send-btn {
+                padding: 12px 16px;
+            }
+        }
+
+        /* Buy Me a Coffee floating button */
+        .bmc-floating {
+            position: fixed;
+            right: 16px;
+            bottom: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            pointer-events: none;
+        }
+
+        .bmc-tooltip {
+            background: #fff7cc;
+            color: #3c1e1e;
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            border: 1px solid #f6d365;
+            pointer-events: auto;
+        }
+
+        .bmc-button {
+            pointer-events: auto;
+        }
+
+        .bmc-button img {
+            width: 170px;
+            max-width: 44vw;
+            height: auto;
+            display: block;
+        }
+
+        .bmc-floating.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        @media (max-width: 600px) {
+            .bmc-floating {
+                bottom: 150px; /* keep clear of input area on mobile */
+                right: 12px;
+            }
+            .bmc-button img {
+                width: 130px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .messages {
+                padding-bottom: 240px;
+            }
+            .bmc-tooltip {
+                font-size: 11px;
+                padding: 5px 8px;
             }
         }
     </style>
 </head>
-
 <body>
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <button class="new-chat-button" onclick="startNewChat()">
-                <span>➕</span>
-                새 영어 학습 시작
-            </button>
-        </div>
+    <!-- 캐릭터 선택 화면 -->
+    <div class="character-selection" id="character-selection">
+        <h1>💕 K-Dating Chat</h1>
+        <p>한국어를 배우면서 로맨틱한 대화를 나눠보세요!</p>
 
-        <div class="learning-settings">
-            <div class="setting-group">
-                <label class="setting-label">📚 미국 초등 ESL 커리큘럼</label>
-                <div class="topic-buttons">
-                    <button class="topic-button" onclick="learnTopic('인사와 자기소개 배우고 싶어')">👋 인사말</button>
-                    <button class="topic-button" onclick="learnTopic('숫자 세는 방법 알려줘')">🔢 숫자</button>
-                    <button class="topic-button" onclick="learnTopic('색깔 영어로 알려줘')">🎨 색깔</button>
-                    <button class="topic-button" onclick="learnTopic('가족 영어로 뭐야?')">👨‍👩‍👧‍👦 가족</button>
-                    <button class="topic-button" onclick="learnTopic('동물 이름 영어로 알려줘')">🐶 동물</button>
-                    <button class="topic-button" onclick="learnTopic('음식 이름 영어로 알려줘')">🍎 음식</button>
-                    <button class="topic-button" onclick="learnTopic('날씨 영어로 말하는 법 알려줘')">☀️ 날씨</button>
-                    <button class="topic-button" onclick="learnTopic('신체 부위 영어로 알려줘')">👁️ 신체</button>
+        <div class="character-cards">
+            <div class="character-card jiwoo" onclick="selectCharacter('jiwoo')">
+                <div class="character-avatar">
+                    <img src="{{ url_for('static', filename='jiwoo_profile.png') }}" alt="지우">
                 </div>
+                <div class="character-name">지우</div>
+                <div class="character-info">22세 · 이대 재학중</div>
+            </div>
+
+            <div class="character-card hyunwoo" onclick="selectCharacter('hyunwoo')">
+                <div class="character-avatar">
+                    <img src="{{ url_for('static', filename='hyunwoo_profile.png') }}" alt="현우">
+                </div>
+                <div class="character-name">현우</div>
+                <div class="character-info">23세 · 홍대 재학중</div>
             </div>
         </div>
-
-        <div class="conversation-list" id="conversation-list">
-            <div class="empty-state">
-                아직 저장된 대화가 없습니다.<br>
-                Cindy와 영어 학습을 시작해보세요!
-            </div>
-        </div>
-
-        <div class="sidebar-footer">
-            <button class="footer-button" onclick="refreshSessions()">
-                <span>🔄</span>
-                목록 새로고침
-            </button>
-            <button class="footer-button danger" onclick="clearAllHistory()">
-                <span>🗑️</span>
-                모든 기록 삭제
-            </button>
-        </div>
+        <p style="margin-top: 28px; margin-bottom: 0; font-size: 13px; color: #555; line-height: 1.7; background: rgba(0,0,0,0.05); padding: 12px 16px; border-radius: 8px;">
+            지우와 현우는 AI 캐릭터입니다. 모든 대화는 허구이며, 실제 만남은 이루어지지 않습니다.<br>
+            Jiwoo and Hyunwoo are AI characters. All conversations are fictional role-play.
+        </p>
     </div>
 
-    <div class="main-content">
+    <!-- 채팅 화면 -->
+    <div class="chat-container" id="chat-container">
         <div class="chat-header">
-            <div class="chat-title">
-                <span>👩‍🏫</span>
-                Cindy - AI 영어 선생님
-            </div>
-            <div class="level-badge" id="level-badge">초등</div>
-        </div>
-
-        <div class="chat-messages" id="chat-messages">
-            <div class="message ai-message">
-                <div class="message-avatar ai-avatar">👩‍🏫</div>
-                <div class="message-content">
-                    <strong>Hello! I'm Cindy, your English teacher!</strong><br>
-                    안녕하세요! 저는 영어 선생님 Cindy예요!<br><br>
-
-                    <strong>What grade are you in?</strong><br>
-                    몇 학년이에요? 초1부터 초6 중에 알려주세요!<br><br>
-
-                    학년에 맞춰서 재미있게 영어를 가르쳐드릴게요 😊
+            <div class="header-left">
+                <div class="header-avatar" id="header-avatar">👨</div>
+                <div class="header-info">
+                    <h2 id="character-name">민준</h2>
+                    <p>한국어로 대화해요</p>
                 </div>
+            </div>
+            <div class="header-buttons">
+                <button class="header-btn" onclick="changeCharacter()">캐릭터 변경</button>
             </div>
         </div>
 
-        <div class="input-container">
-            <div class="image-upload-area" id="image-upload-area">
-                <div class="file-input-wrapper">
-                    <input type="file" id="image-input" accept="image/*" multiple>
-                    <button class="file-button" onclick="document.getElementById('image-input').click()">
-                        📸 사진 선택
-                    </button>
-                </div>
-                <div style="flex: 1; font-size: 13px; color: #666;">
-                    영어 공부에 도움이 되는 사진을 올려보세요!
-                </div>
-                <div id="image-preview" class="image-preview"></div>
-            </div>
+        <div class="messages" id="messages"></div>
 
-            <div class="input-row">
-                <textarea id="user-input" placeholder="영어로 대화해 보세요! Type in English or Korean!" rows="1"></textarea>
-                <button id="send-button" onclick="sendMessage()">
-                    ➤
-                </button>
-            </div>
+        <div class="input-area">
+            <input
+                type="text"
+                id="user-input"
+                placeholder="메시지를 입력하세요..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <button class="send-btn" id="send-btn" onclick="sendMessage()">전송</button>
         </div>
     </div>
 
-    <div class="status-indicator" id="status-indicator"></div>
+    <div class="bmc-floating" aria-label="Buy Me a Coffee">
+        <div class="bmc-tooltip">Buy Oppa a Coffee? ☕️</div>
+        <a class="bmc-button" href="https://buymeacoffee.com/kdating" target="_blank" rel="noopener noreferrer">
+            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee">
+        </a>
+    </div>
 
     <script>
-        const chatMessages = document.getElementById('chat-messages');
-        const userInput = document.getElementById('user-input');
-        const sendButton = document.getElementById('send-button');
-        const levelSelect = document.getElementById('level-select');
-        const activitySelect = document.getElementById('activity-select');
-        const levelBadge = document.getElementById('level-badge');
-        const statusIndicator = document.getElementById('status-indicator');
-        const imageInput = document.getElementById('image-input');
-        const imageUploadArea = document.getElementById('image-upload-area');
-        const imagePreview = document.getElementById('image-preview');
-        const conversationList = document.getElementById('conversation-list');
+        let currentCharacter = 'jiwoo';
+        let sessionId = null;
+        let requestController = null;
+        let sessionToken = 0;
 
-        let selectedFiles = [];
-        let currentLevel = 'elementary';
-        let currentActivity = 'conversation';
-
-        // 레벨/활동 변경 이벤트
-        levelSelect.addEventListener('change', function () {
-            currentLevel = this.value;
-            const levelText = this.options[this.selectedIndex].text.split(' ')[0];
-            levelBadge.textContent = levelText;
-            showStatus(`학습 레벨이 ${levelText}로 변경되었습니다!`);
-        });
-
-        activitySelect.addEventListener('change', function () {
-            currentActivity = this.value;
-            const activityText = this.options[this.selectedIndex].text;
-            showStatus(`학습 활동: ${activityText}`);
-        });
-
-        // 입력 관련 이벤트
-        userInput.addEventListener('input', function () {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-        });
-
-        userInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
+        // 캐릭터 선택
+        async function selectCharacter(character) {
+            currentCharacter = character;
+            sessionToken += 1;
+            if (requestController) {
+                requestController.abort();
+                requestController = null;
             }
-        });
 
-        // 이미지 관련 이벤트
-        imageInput.addEventListener('change', function (e) {
-            handleImageSelection(e.target.files);
-        });
-
-        imageUploadArea.addEventListener('dragover', function (e) {
-            e.preventDefault();
-            this.classList.add('dragover');
-        });
-
-        imageUploadArea.addEventListener('dragleave', function (e) {
-            e.preventDefault();
-            this.classList.remove('dragover');
-        });
-
-        imageUploadArea.addEventListener('drop', function (e) {
-            e.preventDefault();
-            this.classList.remove('dragover');
-            handleImageSelection(e.dataTransfer.files);
-        });
-
-        function handleImageSelection(files) {
-            selectedFiles = Array.from(files);
-            updateImagePreview();
-        }
-
-        function updateImagePreview() {
-            imagePreview.innerHTML = '';
-            selectedFiles.forEach((file, index) => {
-                if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = URL.createObjectURL(file);
-                    img.className = 'preview-image';
-                    img.onclick = () => removeImage(index);
-                    img.title = '클릭하여 제거';
-                    imagePreview.appendChild(img);
-                }
-            });
-        }
-
-        function removeImage(index) {
-            selectedFiles.splice(index, 1);
-            updateImagePreview();
-        }
-
-        function addMessage(content, isUser = false) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
-
-            const avatar = document.createElement('div');
-            avatar.className = `message-avatar ${isUser ? 'user-avatar' : 'ai-avatar'}`;
-            avatar.textContent = isUser ? '👤' : '👩‍🏫';
-
-            const messageContent = document.createElement('div');
-            messageContent.className = 'message-content';
-            messageContent.innerHTML = content.replace(/\n/g, '<br>');
-
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(messageContent);
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function showTyping() {
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message ai-message';
-            typingDiv.id = 'typing-indicator';
-
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar ai-avatar';
-            avatar.textContent = '👩‍🏫';
-
-            const content = document.createElement('div');
-            content.className = 'message-content typing-indicator';
-            content.textContent = 'Cindy가 생각하고 있어요...';
-
-            typingDiv.appendChild(avatar);
-            typingDiv.appendChild(content);
-            chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function hideTyping() {
-            const typingIndicator = document.getElementById('typing-indicator');
-            if (typingIndicator) {
-                typingIndicator.remove();
-            }
-        }
-
-        function showStatus(message, isError = false) {
-            statusIndicator.textContent = message;
-            statusIndicator.className = `status-indicator show ${isError ? 'error' : ''}`;
-            setTimeout(() => {
-                statusIndicator.classList.remove('show');
-            }, 3000);
-        }
-
-        async function sendMessage() {
-            const message = userInput.value.trim();
-            if (!message && selectedFiles.length === 0) return;
-
-            if (message) addMessage(message, true);
-            if (selectedFiles.length > 0) {
-                selectedFiles.forEach(file => {
-                    addMessage(`📸 사진: ${file.name}`, true);
+            try {
+                const response = await fetch('/select-character', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ character })
                 });
-            }
 
-            userInput.value = '';
-            userInput.style.height = 'auto';
-            sendButton.disabled = true;
-            showTyping();
+                const data = await response.json();
+
+                if (data.success) {
+                    sessionId = data.session_id || null;
+                    // UI 업데이트
+                    const headerAvatar = document.getElementById('header-avatar');
+
+                    if (character === 'hyunwoo') {
+                        headerAvatar.innerHTML = '<img src="/static/hyunwoo_profile.png" alt="현우">';
+                    } else if (character === 'jiwoo') {
+                        headerAvatar.innerHTML = '<img src="/static/jiwoo_profile.png" alt="지우">';
+                    } else {
+                        headerAvatar.textContent = '👨';
+                    }
+
+                    document.getElementById('character-name').textContent = data.name;
+
+                    // 화면 전환
+                    document.getElementById('character-selection').style.display = 'none';
+                    document.getElementById('chat-container').classList.add('active');
+                    document.getElementById('messages').innerHTML = '';
+
+                    // 환영 메시지
+                    let welcomeMsg = '';
+                    if (character === 'jiwoo') {
+                        welcomeMsg = '안녕하세요! 저는 지우예요. 반가워요 💕';
+                    } else if (character === 'hyunwoo') {
+                        welcomeMsg = '야, 드디어 왔네? 😉 기다렸어. 나는 현우야';
+                    }
+
+                    addMessage(welcomeMsg, false);
+                }
+            } catch (error) {
+                console.error('Character selection error:', error);
+            }
+        }
+
+        // 캐릭터 변경
+        function changeCharacter() {
+            if (confirm('캐릭터를 변경하면 대화가 초기화됩니다. 계속하시겠어요?')) {
+                sessionToken += 1;
+                if (requestController) {
+                    requestController.abort();
+                    requestController = null;
+                }
+                document.getElementById('messages').innerHTML = '';
+                document.getElementById('character-selection').style.display = 'block';
+                document.getElementById('chat-container').classList.remove('active');
+            }
+        }
+
+        // 메시지 전송
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // 내 메시지 표시
+            addMessage(message, true);
+            input.value = '';
+
+            // Typing indicator 표시
+            const typingIndicator = showTypingIndicator();
 
             try {
                 const formData = new FormData();
                 formData.append('message', message);
-                formData.append('level', currentLevel);
-                formData.append('activity_type', currentActivity);
 
-                selectedFiles.forEach(file => {
-                    formData.append('files', file);
-                });
+                const controller = new AbortController();
+                requestController = controller;
+                const tokenAtSend = sessionToken;
+                const timeoutId = setTimeout(() => controller.abort(), 45000);
 
                 const response = await fetch('/chat', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    signal: controller.signal
                 });
 
-                const data = await response.json();
-                hideTyping();
+                clearTimeout(timeoutId);
 
-                if (data.error) {
-                    addMessage(data.error);
-                } else {
-                    addMessage(data.response);
-                    refreshSessions(); // 새 메시지 후 세션 목록 업데이트
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    data = null;
                 }
 
+                if (tokenAtSend !== sessionToken) {
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorMsg = data && data.error ? data.error : '서버 응답에 문제가 있어요.';
+                    throw new Error(errorMsg);
+                }
+
+                // Typing indicator 제거
+                typingIndicator.remove();
+
+                if (data.response) {
+                    // 현우 캐릭터의 JSON 응답 처리
+                    if (data.is_json && data.response_json) {
+                        addMessageWithTranslation(
+                            data.response_json.korean,
+                            data.response_json.english,
+                            data.response_json.emotion
+                        );
+                    } else {
+                        // 민준/지우 캐릭터의 일반 응답
+                        addMessage(data.response, false);
+                    }
+                }
             } catch (error) {
-                hideTyping();
-                addMessage('죄송해요! 다시 시도해주세요.');
-                showStatus('오류가 발생했어요. 다시 시도해주세요!', true);
+                typingIndicator.remove();
+                console.error('Send message error:', error);
+                if (error.name === 'AbortError') {
+                    addMessage('응답이 지연되고 있어요. 잠시 후 다시 시도해주세요.', false);
+                } else {
+                    addMessage('죄송해요, 오류가 발생했어요. 다시 시도해주세요.', false);
+                }
             } finally {
-                sendButton.disabled = false;
-                selectedFiles = [];
-                updateImagePreview();
-                userInput.focus();
+                requestController = null;
             }
         }
 
-        // 세션 관리 함수들
-        async function refreshSessions() {
-            try {
-                const response = await fetch('/sessions');
-                const sessions = await response.json();
-                displaySessions(sessions);
-            } catch (error) {
-                console.error('세션 로딩 오류:', error);
-            }
+        // 입력 중 Buy Me a Coffee 버튼 숨김
+        const userInput = document.getElementById('user-input');
+        const bmcFloating = document.querySelector('.bmc-floating');
+        if (userInput && bmcFloating) {
+            userInput.addEventListener('focus', () => {
+                bmcFloating.classList.add('hidden');
+            });
+            userInput.addEventListener('blur', () => {
+                bmcFloating.classList.remove('hidden');
+            });
         }
 
-        function displaySessions(sessions) {
-            conversationList.innerHTML = '';
+        // 메시지 추가 (현우 캐릭터용 - 영어 번역 포함)
+        function addMessageWithTranslation(korean, english, emotion) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
 
-            if (Object.keys(sessions).length === 0) {
-                conversationList.innerHTML = '<div class="empty-state">아직 저장된 대화가 없습니다.<br>Cindy와 영어 학습을 시작해보세요!</div>';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            // 한국어 텍스트
+            const koreanText = document.createElement('div');
+            koreanText.textContent = korean;
+            koreanText.style.fontWeight = 'bold';
+            koreanText.style.marginBottom = '8px';
+            contentDiv.appendChild(koreanText);
+
+            // 영어 번역 (토글 가능)
+            const translationDiv = document.createElement('div');
+            translationDiv.className = 'translation';
+            translationDiv.textContent = english;
+            translationDiv.style.display = 'block'; // 항상 표시
+            contentDiv.appendChild(translationDiv);
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(timeDiv);
+            messagesDiv.appendChild(messageDiv);
+
+            // 한국어 TTS 자동 재생
+            speakKorean(korean);
+
+            // 스크롤 하단으로
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 메시지 추가 (민준/지우 캐릭터용)
+        // 마크다운 링크를 HTML로 변환 (XSS 방지 포함)
+        function renderMarkdownLinks(text) {
+            // 0) (속삭임) / (whisper) 태그 제거 (화면에 안 보이게)
+            text = text.replace(/\(속삭임\)|\(whisper\)/gi, '').trim();
+            // 1) HTML 특수문자 이스케이프 (XSS 방지)
+            const escaped = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+            // 2) 마크다운 링크 [text](url) → <a> 태그로 변환
+            return escaped.replace(
+                /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+                '<a href="$2" target="_blank" class="chat-link">$1</a>'
+            );
+        }
+
+        function addMessage(content, isUser) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            if (!isUser) {
+                // AI 메시지: 마크다운 링크를 클릭 가능한 HTML로 변환
+                contentDiv.innerHTML = renderMarkdownLinks(content);
+            } else {
+                contentDiv.textContent = content;
+            }
+
+            // AI 메시지에 번역 버튼 추가
+            if (!isUser) {
+                const translateBtn = document.createElement('button');
+                translateBtn.className = 'translate-btn';
+                translateBtn.textContent = '🌐 English';
+                // 번역에도 (속삭임) 태그 제거된 텍스트 전달
+                const cleanContent = content.replace(/\(속삭임\)|\(whisper\)/gi, '').trim();
+                translateBtn.onclick = () => translateMessage(contentDiv, cleanContent);
+                contentDiv.appendChild(translateBtn);
+
+                // 한국어 TTS 자동 재생 (원본 텍스트 전달 - 백엔드에서 처리)
+                speakKorean(content);
+            }
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(timeDiv);
+            messagesDiv.appendChild(messageDiv);
+
+            // 스크롤 하단으로
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 번역
+        async function translateMessage(contentDiv, koreanText) {
+            const existingTranslation = contentDiv.querySelector('.translation');
+            if (existingTranslation) {
+                existingTranslation.remove();
                 return;
             }
 
-            Object.entries(sessions).forEach(([date, info]) => {
-                const item = document.createElement('div');
-                item.className = 'conversation-item';
-                item.onclick = () => loadSession(date, item);
+            try {
+                const response = await fetch('/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: koreanText })
+                });
 
-                const time = info.last_time || '';
-                const title = formatDate(date);
-                const preview = info.first_message || '새로운 대화';
+                const data = await response.json();
 
-                item.innerHTML = `
-                    <div class="conversation-time">${time}</div>
-                    <div class="conversation-title">${title}</div>
-                    <div class="conversation-preview">${preview}</div>
-                `;
-
-                conversationList.appendChild(item);
-            });
-        }
-
-        function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            if (dateStr === today.toISOString().split('T')[0]) {
-                return '오늘';
-            } else if (dateStr === yesterday.toISOString().split('T')[0]) {
-                return '어제';
-            } else {
-                return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+                if (data.translatedText) {
+                    const translationDiv = document.createElement('div');
+                    translationDiv.className = 'translation';
+                    translationDiv.textContent = data.translatedText;
+                    contentDiv.appendChild(translationDiv);
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
             }
         }
 
-        async function loadSession(date, element) {
+        // 한국어 TTS
+        async function speakKorean(text) {
             try {
-                document.querySelectorAll('.conversation-item').forEach(item => {
-                    item.classList.remove('active');
+                const response = await fetch('/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        language: 'ko-KR'
+                    })
                 });
-                element.classList.add('active');
 
-                const response = await fetch(`/sessions/${date}`);
-                const sessionData = await response.json();
+                const data = await response.json();
 
-                chatMessages.innerHTML = '';
-                addMessage(`${formatDate(date)} 대화를 불러왔어요!`);
-
-                sessionData.forEach(chat => {
-                    if (chat.file_info) {
-                        addMessage(`📸 사진: ${chat.file_info.filename}`, true);
-                        addMessage(chat.ai);
-                    } else {
-                        addMessage(chat.user, true);
-                        addMessage(chat.ai);
+                if (data.audio) {
+                    const audioBytes = atob(data.audio);
+                    const arrayBuffer = new ArrayBuffer(audioBytes.length);
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    for (let i = 0; i < audioBytes.length; i++) {
+                        uint8Array[i] = audioBytes.charCodeAt(i);
                     }
-                });
 
+                    const blob = new Blob([uint8Array], { type: 'audio/mp3' });
+                    const audioUrl = URL.createObjectURL(blob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+
+                    audio.onended = () => {
+                        URL.revokeObjectURL(audioUrl);
+                    };
+                }
             } catch (error) {
-                console.error('세션 로딩 오류:', error);
+                console.error('TTS error:', error);
             }
         }
 
-        async function startNewChat() {
-            document.querySelectorAll('.conversation-item').forEach(item => {
-                item.classList.remove('active');
-            });
+        // Typing indicator 표시
+        function showTypingIndicator() {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
 
-            chatMessages.innerHTML = '';
-            addMessage(`<strong>Hello! I'm Cindy, your English teacher!</strong><br>
-                안녕하세요! 저는 영어 선생님 Cindy예요!<br><br>
-                <strong>What grade are you in?</strong><br>
-                몇 학년이에요? 초1부터 초6 중에 알려주세요!<br><br>
-                학년에 맞춰서 재미있게 영어를 가르쳐드릴게요 😊`);
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator active';
+            typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
 
-            try {
-                await fetch('/new-session', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-                showStatus('새로운 영어 학습이 시작되었습니다!');
-                setTimeout(refreshSessions, 500);
-            } catch (error) {
-                console.error('새 세션 생성 오류:', error);
-            }
+            messageDiv.appendChild(typingDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-            userInput.focus();
+            return messageDiv;
         }
 
-        async function clearAllHistory() {
-            if (!confirm('정말로 모든 대화 기록을 삭제하시겠습니까?')) return;
-
-            try {
-                await fetch('/clear', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-                startNewChat();
-                refreshSessions();
-                showStatus('모든 대화 기록이 삭제되었습니다.');
-            } catch (error) {
-                console.error('기록 삭제 오류:', error);
-                showStatus('기록 삭제에 실패했습니다.', true);
+        // Enter 키 처리
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
             }
         }
-
-        async function getVocabQuiz() {
-            showTyping();
-            try {
-                const response = await fetch('/vocab-quiz');
-                const data = await response.json();
-                hideTyping();
-                addMessage(data.quiz);
-                showStatus('단어 퀴즈를 준비했어요!');
-            } catch (error) {
-                hideTyping();
-                addMessage('퀴즈를 준비하는 중 오류가 발생했어요.');
-            }
-        }
-
-        async function getDailyPhrase() {
-            showTyping();
-            try {
-                const response = await fetch('/daily-phrase');
-                const data = await response.json();
-                hideTyping();
-                addMessage(data.daily_phrase);
-                showStatus('오늘의 영어 표현을 준비했어요!');
-            } catch (error) {
-                hideTyping();
-                addMessage('오늘의 표현을 준비하는 중 오류가 발생했어요.');
-            }
-        }
-
-        // 학습 주제 버튼 클릭 함수
-        function learnTopic(topic) {
-            userInput.value = topic;
-            sendMessage();
-            showStatus('학습 주제: ' + topic.replace(' 배우고 싶어', '').replace(' 알려줘', '').replace('?', '').replace(' 뭐야', ''));
-        }
-
-        // 페이지 로드 시 실행
-        window.addEventListener('load', () => {
-            userInput.focus();
-            refreshSessions();
-            showStatus('Cindy와 함께 영어 공부를 시작해요!');
-        });
     </script>
 </body>
-
 </html>
