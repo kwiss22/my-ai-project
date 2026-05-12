@@ -1575,10 +1575,83 @@
 
         /* 헤더 하트 표시 */
         #heart-counter {
-            display: flex; align-items: center; gap: 4px;
+            display: flex; align-items: center; gap: 5px;
             background: rgba(255,255,255,0.2);
             border-radius: 12px; padding: 4px 8px;
             font-size: 12px; font-weight: 700; color: white;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s ease;
+        }
+        #heart-counter:hover { background: rgba(255,255,255,0.32); }
+        #heart-counter:active { transform: scale(0.96); }
+        #heart-level-badge {
+            background: rgba(255,255,255,0.85);
+            color: #d6336c;
+            border-radius: 8px;
+            padding: 1px 6px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+        /* 호감도 모달 */
+        #intimacy-modal-overlay .modal-box { max-width: 360px; padding: 22px 20px 24px; }
+        .intimacy-current {
+            text-align: center; margin-bottom: 18px;
+        }
+        .intimacy-level-title {
+            font-size: 22px; font-weight: 800; color: #d6336c;
+            margin-bottom: 4px;
+        }
+        .intimacy-level-sub {
+            font-size: 12px; color: #999;
+        }
+        .intimacy-bar {
+            height: 12px; background: #f0f0f0; border-radius: 8px;
+            overflow: hidden; position: relative; margin: 10px 0 6px;
+        }
+        .intimacy-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f093fb, #f5576c);
+            border-radius: 8px;
+            transition: width 0.4s ease;
+        }
+        .intimacy-bar-labels {
+            display: flex; justify-content: space-between;
+            font-size: 11px; color: #888; margin-top: 4px;
+        }
+        .intimacy-tiers {
+            margin-top: 18px;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 14px;
+        }
+        .intimacy-tier-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        .intimacy-tier-row.current {
+            font-weight: 800;
+            color: #d6336c;
+        }
+        .intimacy-tier-row .tier-range { color: #aaa; font-size: 11px; }
+        /* 레벨업 토스트 */
+        #levelup-toast {
+            position: fixed; top: 80px; left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white; padding: 12px 22px;
+            border-radius: 24px;
+            font-size: 14px; font-weight: 800;
+            box-shadow: 0 8px 24px rgba(240,147,251,0.5);
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #levelup-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
 
         /* ===================== 시나리오 모드 ===================== */
@@ -1856,8 +1929,11 @@
                 </div>
             </div>
             <div class="header-buttons">
-                <!-- 하트 카운터 -->
-                <div id="heart-counter" title="미션 포인트">❤️ <span id="heart-count">0</span></div>
+                <!-- 호감도 카운터 (클릭 → 진행도 모달) -->
+                <div id="heart-counter" title="호감도" onclick="openIntimacyModal()">
+                    <span id="heart-level-badge">Lv1</span>
+                    ❤️ <span id="heart-count">0</span>
+                </div>
                 <!-- 대화기록 -->
                 <button class="header-btn icon-btn" onclick="openHistoryModal()" title="대화 기록">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2213,6 +2289,36 @@
         </div>
     </div>
 
+    <!-- 호감도 모달 -->
+    <div class="modal-overlay" id="intimacy-modal-overlay" onclick="closeIntimacyModal(event)">
+        <div class="modal-sheet modal-box" style="max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>❤️ 호감도</h3>
+                <button class="modal-close" onclick="closeIntimacyModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 14px 22px 22px;">
+                <div class="intimacy-current">
+                    <div class="intimacy-level-title" id="intimacy-modal-title">Lv1 · 처음 만남</div>
+                    <div class="intimacy-level-sub" id="intimacy-modal-points">0 / 10 ❤️</div>
+                    <div class="intimacy-bar"><div class="intimacy-bar-fill" id="intimacy-modal-bar" style="width:0%"></div></div>
+                    <div class="intimacy-bar-labels">
+                        <span id="intimacy-modal-min">0</span>
+                        <span id="intimacy-modal-max">10</span>
+                    </div>
+                </div>
+                <div class="intimacy-tiers" id="intimacy-tier-list">
+                    <!-- 동적 렌더 -->
+                </div>
+                <div style="font-size:11px; color:#999; margin-top:14px; line-height:1.6;">
+                    대화하면 호감도가 오르고, 캐릭터의 말투가 단계에 맞게 자연스럽게 변해요.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 레벨업 토스트 -->
+    <div id="levelup-toast"></div>
+
     <div class="bmc-floating" aria-label="Buy Me a Coffee">
         <div class="bmc-tooltip" id="bmc-tooltip-text">Buy Oppa a Coffee? ☕️</div>
         <a class="bmc-button" href="https://buymeacoffee.com/kdating" target="_blank" rel="noopener noreferrer">
@@ -2262,6 +2368,33 @@
         // IndexedDB가 source of truth. 이 객체는 UI 렌더 + 동기 addHeartPoints용 in-memory cache.
         const intimacyCache = Object.fromEntries(CHARACTER_IDS.map(id => [id, 0]));
 
+        // 호감도 레벨 정의 (max는 다음 레벨 진입 기준)
+        const INTIMACY_LEVELS = [
+            { level: 1, name: '처음 만남',     min: 0,   max: 10 },
+            { level: 2, name: '친해지는 중',   min: 10,  max: 30 },
+            { level: 3, name: '친구',         min: 30,  max: 70 },
+            { level: 4, name: '썸',           min: 70,  max: 150 },
+            { level: 5, name: '연인',         min: 150, max: Infinity },
+        ];
+        function getIntimacyLevel(intimacy) {
+            const pts = Math.max(0, intimacy || 0);
+            for (let i = INTIMACY_LEVELS.length - 1; i >= 0; i--) {
+                if (pts >= INTIMACY_LEVELS[i].min) return INTIMACY_LEVELS[i];
+            }
+            return INTIMACY_LEVELS[0];
+        }
+
+        // 대화로 호감도 획득 쿨다운 (도배 방지)
+        let lastChatEarnAt = 0;
+        function earnFromChat(message) {
+            const now = Date.now();
+            if (now - lastChatEarnAt < 5000) return 0;
+            lastChatEarnAt = now;
+            let pts = 1;
+            if (/[가-힣]/.test(message || '')) pts += 1;
+            return pts;
+        }
+
         // 선택 화면의 캐릭터 카드 5+1개를 레지스트리에서 동적으로 렌더링
         function renderCharacterCards() {
             const container = document.getElementById('character-cards');
@@ -2295,11 +2428,26 @@
         function getHeartPoints() {
             return intimacyCache[currentCharacter] || 0;
         }
+        function updateHeartUI() {
+            const total = getHeartPoints();
+            const lvl = getIntimacyLevel(total);
+            const cntEl = document.getElementById('heart-count');
+            const badgeEl = document.getElementById('heart-level-badge');
+            if (cntEl) cntEl.textContent = total;
+            if (badgeEl) badgeEl.textContent = 'Lv' + lvl.level;
+        }
         function addHeartPoints(pts) {
-            const total = getHeartPoints() + pts;
+            if (!pts) return getHeartPoints();
+            const before = getHeartPoints();
+            const total = before + pts;
             intimacyCache[currentCharacter] = total;
-            const el = document.getElementById('heart-count');
-            if (el) el.textContent = total;
+            updateHeartUI();
+            // 레벨업 감지 → 토스트
+            const beforeLv = getIntimacyLevel(before).level;
+            const afterLv = getIntimacyLevel(total).level;
+            if (afterLv > beforeLv) {
+                showLevelUpToast(getIntimacyLevel(total));
+            }
             // 비동기 영구 저장 (실패해도 UI는 이미 반영됨)
             Storage.addIntimacy(currentCharacter, pts).catch((e) =>
                 console.warn('[intimacy] save failed', e)
@@ -2307,8 +2455,68 @@
             return total;
         }
         function initHeartDisplay() {
-            const el = document.getElementById('heart-count');
-            if (el) el.textContent = getHeartPoints();
+            updateHeartUI();
+        }
+
+        // 레벨업 토스트 (2.6초 표시)
+        let levelUpToastTimer = null;
+        function showLevelUpToast(lvl) {
+            const toast = document.getElementById('levelup-toast');
+            if (!toast) return;
+            toast.textContent = `🎉 Lv${lvl.level} · ${lvl.name}이 됐어요!`;
+            toast.classList.add('show');
+            if (levelUpToastTimer) clearTimeout(levelUpToastTimer);
+            levelUpToastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2600);
+        }
+
+        // 호감도 모달
+        function openIntimacyModal() {
+            const overlay = document.getElementById('intimacy-modal-overlay');
+            if (!overlay) return;
+            renderIntimacyModal();
+            overlay.classList.add('show');
+        }
+        function closeIntimacyModal(e) {
+            const overlay = document.getElementById('intimacy-modal-overlay');
+            if (!overlay) return;
+            if (!e || e.target === overlay) overlay.classList.remove('show');
+        }
+        function renderIntimacyModal() {
+            const pts = getHeartPoints();
+            const lvl = getIntimacyLevel(pts);
+            const isMax = !isFinite(lvl.max);
+            const titleEl = document.getElementById('intimacy-modal-title');
+            const subEl = document.getElementById('intimacy-modal-points');
+            const barEl = document.getElementById('intimacy-modal-bar');
+            const minEl = document.getElementById('intimacy-modal-min');
+            const maxEl = document.getElementById('intimacy-modal-max');
+            const tierEl = document.getElementById('intimacy-tier-list');
+            if (titleEl) titleEl.textContent = `Lv${lvl.level} · ${lvl.name}`;
+            if (subEl) {
+                subEl.textContent = isMax
+                    ? `${pts} ❤️ · 최고 단계`
+                    : `${pts} / ${lvl.max} ❤️`;
+            }
+            if (minEl) minEl.textContent = lvl.min;
+            if (maxEl) maxEl.textContent = isMax ? '∞' : lvl.max;
+            if (barEl) {
+                const pct = isMax
+                    ? 100
+                    : Math.max(0, Math.min(100, ((pts - lvl.min) / (lvl.max - lvl.min)) * 100));
+                barEl.style.width = pct + '%';
+            }
+            if (tierEl) {
+                tierEl.innerHTML = INTIMACY_LEVELS.map(t => {
+                    const cur = t.level === lvl.level ? ' current' : '';
+                    const range = !isFinite(t.max) ? `${t.min}+` : `${t.min}–${t.max - 1}`;
+                    return `<div class="intimacy-tier-row${cur}">
+                        <span>Lv${t.level} · ${t.name}</span>
+                        <span class="tier-range">${range} ❤️</span>
+                    </div>`;
+                }).join('');
+            }
         }
 
         // 온보딩 유저 프로필 (IndexedDB profile 스토어와 동기)
@@ -2645,6 +2853,7 @@
                 formData.append('history', JSON.stringify(history));
                 formData.append('grammar_mode', 'false');
                 formData.append('extract_vocab', vocabMode ? 'true' : 'false');
+                formData.append('intimacy_level', String(getIntimacyLevel(getHeartPoints()).level));
                 if (activeScenario) formData.append('scenario_id', activeScenario);
 
                 const controller = new AbortController();
@@ -3660,6 +3869,10 @@
                     await Storage.addMessage(currentCharacter, 'user', message, sessionId);
                 } catch (e) { console.warn('[chat] save user msg failed', e); }
 
+                // 대화 호감도 획득 (쿨다운 5초, 한글이면 +1 보너스)
+                const earned = earnFromChat(message);
+                if (earned > 0) addHeartPoints(earned);
+
                 const formData = new FormData();
                 formData.append('message', message);
                 formData.append('grammar_mode', grammarMode ? 'true' : 'false');
@@ -3667,6 +3880,7 @@
                 formData.append('character', currentCharacter);
                 formData.append('user_profile', JSON.stringify(userProfile || {}));
                 formData.append('history', JSON.stringify(history));
+                formData.append('intimacy_level', String(getIntimacyLevel(getHeartPoints()).level));
                 if (activeScenario) formData.append('scenario_id', activeScenario);
                 if (sessionId) formData.append('session_id', sessionId);
 
@@ -3910,6 +4124,7 @@
                 formData.append('history', JSON.stringify(history));
                 formData.append('grammar_mode', 'false');
                 formData.append('extract_vocab', 'false');
+                formData.append('intimacy_level', String(getIntimacyLevel(getHeartPoints()).level));
 
                 const controller = new AbortController();
                 requestController = controller;

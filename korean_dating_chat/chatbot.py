@@ -1085,8 +1085,18 @@ INTEREST_MAP = {
     'romance': '한국 연애'
 }
 
-def get_system_prompt(character, profile=None, scenario_id=None):
-    """캐릭터 + 유저 프로필 + (옵션) 시나리오를 합쳐서 system_instruction 반환.
+INTIMACY_TONE_GUIDE = {
+    1: "처음 만남 단계. 존댓말 기본, 약간의 거리감과 예의를 유지하면서도 호기심은 보여줘.",
+    2: "친해지는 중. 존댓말을 살짝 풀고 더 친근한 톤. 캐릭터 원래 말투가 반말이면 그대로 자연스럽게.",
+    3: "친구 단계. 편한 반말과 농담이 자연스러워진다. 사적인 질문에도 더 솔직하게.",
+    4: "썸 단계. 가벼운 플러팅, 다정한 호칭(예: '~씨', 닉네임 부르기)이 가끔 나와도 OK. 단, 너무 들이대지 말고 은근하게.",
+    5: "연인 단계. '자기', '오빠', 닉네임+'야/아' 같은 애칭 자연스럽게. 다정한 표현과 짧은 애정 표현 자유롭게.",
+}
+INTIMACY_LEVEL_NAMES = {1: '처음 만남', 2: '친해지는 중', 3: '친구', 4: '썸', 5: '연인'}
+
+
+def get_system_prompt(character, profile=None, scenario_id=None, intimacy_level=None):
+    """캐릭터 + 유저 프로필 + (옵션) 시나리오 + (옵션) 호감도 레벨을 합쳐서 system_instruction 반환.
 
     Stateless: 모든 컨텍스트는 인자로 전달받는다.
     """
@@ -1111,6 +1121,20 @@ def get_system_prompt(character, profile=None, scenario_id=None):
             if profile.get('nickname'):
                 user_context += f"\n- 가끔 '{profile['nickname']}'라고 이름을 불러주세요."
             prompt = prompt + user_context
+
+    if intimacy_level:
+        try:
+            lv = int(intimacy_level)
+        except (TypeError, ValueError):
+            lv = 1
+        lv = max(1, min(5, lv))
+        guide = INTIMACY_TONE_GUIDE.get(lv)
+        if guide:
+            level_name = INTIMACY_LEVEL_NAMES.get(lv, '')
+            prompt += (
+                f"\n\n[관계 단계 - Lv{lv} {level_name}]\n{guide}\n"
+                "- 단계 변화는 점진적으로. 갑자기 말투를 확 바꾸지 말고 이 단계에 맞는 일관된 톤을 유지해."
+            )
 
     if scenario_id:
         scenario_prompt = SCENARIO_PROMPTS.get(scenario_id, '')
@@ -1444,6 +1468,11 @@ def chat():
         character = 'jiwoo'
     scenario_id = request.form.get('scenario_id', '') or None
     session_id_passthru = request.form.get('session_id', '') or None
+    try:
+        intimacy_level = int(request.form.get('intimacy_level', '1') or '1')
+    except ValueError:
+        intimacy_level = 1
+    intimacy_level = max(1, min(5, intimacy_level))
 
     try:
         user_profile = json.loads(request.form.get('user_profile', '{}') or '{}')
@@ -1462,7 +1491,7 @@ def chat():
     if not user_message:
         return jsonify({'error': '메시지를 입력해주세요.'}), 400
 
-    system_instruction = get_system_prompt(character, user_profile, scenario_id)
+    system_instruction = get_system_prompt(character, user_profile, scenario_id, intimacy_level)
 
     effective_message = user_message
     if grammar_mode:
