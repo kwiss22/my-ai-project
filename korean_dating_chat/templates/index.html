@@ -1750,6 +1750,31 @@
         .scenario-card-emoji { font-size: 28px; margin-bottom: 6px; }
         .scenario-card-title { font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 3px; }
         .scenario-card-desc { font-size: 11px; color: #888; line-height: 1.4; }
+        .scenario-card.locked {
+            opacity: 0.55;
+            cursor: not-allowed;
+            position: relative;
+            filter: grayscale(0.4);
+        }
+        .scenario-card.locked:hover {
+            border-color: #ddd; background: #fafafa; transform: none;
+        }
+        .scenario-card-lock {
+            position: absolute;
+            top: 6px; right: 6px;
+            background: rgba(0,0,0,0.75);
+            color: white;
+            font-size: 10px; font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 10px;
+            letter-spacing: 0.5px;
+        }
+        .scenario-card.shake { animation: scenarioShake 0.34s ease; }
+        @keyframes scenarioShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
         .scenario-sheet-cancel {
             padding: 14px; text-align: center; font-size: 15px;
             color: #666; cursor: pointer; border-top: 8px solid #f5f5f5;
@@ -2229,33 +2254,7 @@
                 <div class="scenario-sheet-title">🎭 시나리오 모드</div>
                 <div class="scenario-sheet-sub">상황을 선택하면 새 대화가 시작돼요</div>
             </div>
-            <div class="scenario-grid">
-                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('confession')">
-                    <div class="scenario-card-emoji">💌</div>
-                    <div class="scenario-card-title">고백 연습</div>
-                    <div class="scenario-card-desc">좋아한다고 말해보세요</div>
-                </div>
-                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('makeup')">
-                    <div class="scenario-card-emoji">🕊️</div>
-                    <div class="scenario-card-title">싸움 화해</div>
-                    <div class="scenario-card-desc">다퉜던 상황을 풀어보세요</div>
-                </div>
-                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('first_meeting')">
-                    <div class="scenario-card-emoji">👋</div>
-                    <div class="scenario-card-title">첫 만남</div>
-                    <div class="scenario-card-desc">소개팅 첫 만남 연습</div>
-                </div>
-                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('hangang')">
-                    <div class="scenario-card-emoji">🌅</div>
-                    <div class="scenario-card-title">한강 데이트</div>
-                    <div class="scenario-card-desc">한강 치맥 저녁 데이트</div>
-                </div>
-                <div class="scenario-card" onclick="closeScenarioSheet(); startScenario('kakaotalk_som')" style="grid-column: 1 / -1;">
-                    <div class="scenario-card-emoji">💬</div>
-                    <div class="scenario-card-title">카카오톡 썸</div>
-                    <div class="scenario-card-desc">카톡으로 썸 타는 연습</div>
-                </div>
-            </div>
+            <div class="scenario-grid" id="scenario-grid"></div>
             <div class="scenario-sheet-cancel" onclick="closeScenarioSheet()">취소</div>
         </div>
     </div>
@@ -3334,9 +3333,65 @@
             first_meeting: '첫 만남 성공! 이 정도면 소개팅 걱정 없겠는데요 😊',
             hangang:    '완벽한 한강 데이트였어요! 언젠가 진짜로도 가요 🌅',
             kakaotalk_som: '썸 성공! 드디어 공식 커플이 됐네요 💬❤️',
+            cafe_date:  '편안한 카페 데이트였어요 ☕ 다음엔 어디 갈까요?',
+            movie_date: '영화 같이 보고 감상 나누는 것까지 완벽! 🎬',
+            karaoke:    '노래방 무대 장악! 듀엣 케미 최고였어요 🎤',
+            amusement:  '놀이공원 종일 데이트 클리어! 무서운 거 잘 탔어요 🎢',
+            rainy_day:  '비 오는 날도 분위기 좋게! 우산 속 거리감 느꼈죠 🌧️',
+            namsan:     '남산타워 자물쇠까지! 영원의 약속 완성 🏔️💕',
         };
 
+        // 시나리오 메타 (백엔드 SCENARIOS와 동기 유지). API 호출 없이 즉시 렌더하기 위한 미러.
+        const SCENARIO_META = [
+            { id: 'cafe_date',     emoji: '☕',  title: '카페 데이트',    desc: '가벼운 첫 데이트, 잡담 중심', min_level: 1 },
+            { id: 'first_meeting', emoji: '👋',  title: '첫 만남',         desc: '소개팅 첫 만남 연습',         min_level: 1 },
+            { id: 'kakaotalk_som', emoji: '💬',  title: '카카오톡 썸',     desc: '카톡으로 썸 타는 연습',       min_level: 1 },
+            { id: 'confession',    emoji: '💌',  title: '고백 연습',       desc: '좋아한다고 말해보세요',        min_level: 1 },
+            { id: 'makeup',        emoji: '🕊️', title: '싸움 화해',       desc: '다퉜던 상황을 풀어보세요',     min_level: 1 },
+            { id: 'hangang',       emoji: '🌅',  title: '한강 데이트',     desc: '한강 치맥 저녁 데이트',        min_level: 1 },
+            { id: 'movie_date',    emoji: '🎬',  title: '영화관 데이트',   desc: '영화 고르고 같이 보는 흐름',   min_level: 2 },
+            { id: 'karaoke',       emoji: '🎤',  title: '노래방',          desc: '같이 노래 부르며 신나게',      min_level: 2 },
+            { id: 'amusement',     emoji: '🎢',  title: '놀이공원',        desc: '종일 데이트, 무서운 거 같이', min_level: 3 },
+            { id: 'rainy_day',     emoji: '🌧️', title: '비 오는 날',     desc: '우산 같이 쓰고 잔잔한 무드',   min_level: 3 },
+            { id: 'namsan',        emoji: '🏔️', title: '남산타워 야경',  desc: '야경 보며 자물쇠 채우기',      min_level: 4 },
+        ];
+
+        function renderScenarioCards() {
+            const grid = document.getElementById('scenario-grid');
+            if (!grid) return;
+            const curLevel = getIntimacyLevel(getHeartPoints()).level;
+            grid.innerHTML = SCENARIO_META.map((s) => {
+                const locked = curLevel < s.min_level;
+                const lockBadge = locked ? `<div class="scenario-card-lock">🔒 Lv${s.min_level}</div>` : '';
+                const onclick = locked
+                    ? `onclick="onLockedScenarioClick(event, ${s.min_level})"`
+                    : `onclick="closeScenarioSheet(); startScenario('${s.id}')"`;
+                return `
+                    <div class="scenario-card${locked ? ' locked' : ''}" ${onclick}>
+                        ${lockBadge}
+                        <div class="scenario-card-emoji">${s.emoji}</div>
+                        <div class="scenario-card-title">${s.title}</div>
+                        <div class="scenario-card-desc">${s.desc}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function onLockedScenarioClick(e, minLevel) {
+            const card = e.currentTarget;
+            if (card) {
+                card.classList.remove('shake');
+                // 트리거 reflow → 같은 클래스 재추가하면 다시 애니메이션
+                void card.offsetWidth;
+                card.classList.add('shake');
+            }
+            if (typeof showToast === 'function') {
+                showToast(`호감도 Lv${minLevel}부터 열려요`);
+            }
+        }
+
         function openScenarioSheet() {
+            renderScenarioCards();
             document.getElementById('scenario-sheet-overlay').classList.add('show');
         }
 
