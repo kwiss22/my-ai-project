@@ -1635,24 +1635,80 @@
             color: #d6336c;
         }
         .intimacy-tier-row .tier-range { color: #aaa; font-size: 11px; }
-        /* 레벨업 토스트 */
-        #levelup-toast {
-            position: fixed; top: 80px; left: 50%;
-            transform: translateX(-50%) translateY(-20px);
+        /* 레벨업 풀스크린 모달 */
+        #levelup-modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 600;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        #levelup-modal-overlay.show {
+            display: flex;
+            animation: levelupFade 0.35s ease;
+        }
+        @keyframes levelupFade { from {opacity: 0;} to {opacity: 1;} }
+        .levelup-card {
+            background: linear-gradient(135deg, #ffffff 0%, #ffe7f1 100%);
+            border-radius: 24px;
+            padding: 28px 22px 22px;
+            max-width: 320px;
+            width: 86%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(240,147,251,0.45);
+            animation: levelupPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes levelupPop {
+            0% { transform: scale(0.6); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .levelup-confetti { font-size: 38px; line-height: 1; }
+        .levelup-avatar {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            margin: 10px auto 12px;
+            overflow: hidden;
+            border: 3px solid #f093fb;
+            box-shadow: 0 6px 20px rgba(240,147,251,0.4);
+        }
+        .levelup-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .levelup-lv {
+            font-size: 12px; color: #d6336c; font-weight: 800;
+            letter-spacing: 2px;
+        }
+        .levelup-title {
+            font-size: 26px; font-weight: 800;
             background: linear-gradient(135deg, #f093fb, #f5576c);
-            color: white; padding: 12px 22px;
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+            margin: 2px 0 14px;
+        }
+        .levelup-message {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.55;
+            padding: 14px 14px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 14px;
+            margin-bottom: 10px;
+        }
+        .levelup-unlock {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 18px;
+        }
+        .levelup-btn {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white; border: none;
+            padding: 12px 28px;
             border-radius: 24px;
             font-size: 14px; font-weight: 800;
-            box-shadow: 0 8px 24px rgba(240,147,251,0.5);
-            z-index: 500;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            cursor: pointer;
+            width: 100%;
         }
-        #levelup-toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+        .levelup-btn:active { transform: scale(0.97); }
 
         /* ===================== 시나리오 모드 ===================== */
         /* 시나리오 선택 시트 */
@@ -2316,8 +2372,18 @@
         </div>
     </div>
 
-    <!-- 레벨업 토스트 -->
-    <div id="levelup-toast"></div>
+    <!-- 레벨업 풀스크린 모달 -->
+    <div id="levelup-modal-overlay" onclick="closeLevelUpModal(event)">
+        <div class="levelup-card" onclick="event.stopPropagation()">
+            <div class="levelup-confetti">🎉</div>
+            <div class="levelup-avatar"><img id="levelup-avatar-img" src="" alt=""></div>
+            <div class="levelup-lv" id="levelup-lv">Lv2</div>
+            <div class="levelup-title" id="levelup-title">친해지는 중</div>
+            <div class="levelup-message" id="levelup-message"></div>
+            <div class="levelup-unlock" id="levelup-unlock"></div>
+            <button class="levelup-btn" onclick="closeLevelUpModal()">확인</button>
+        </div>
+    </div>
 
     <div class="bmc-floating" aria-label="Buy Me a Coffee">
         <div class="bmc-tooltip" id="bmc-tooltip-text">Buy Oppa a Coffee? ☕️</div>
@@ -2387,12 +2453,48 @@
         // 대화로 호감도 획득 쿨다운 (도배 방지)
         let lastChatEarnAt = 0;
         function earnFromChat(message) {
+            const msg = (message || '').trim();
+            // 너무 짧으면 기본 보상 없음 (AI 보너스는 별도)
+            if (msg.length <= 3) return 0;
             const now = Date.now();
             if (now - lastChatEarnAt < 5000) return 0;
             lastChatEarnAt = now;
             let pts = 1;
-            if (/[가-힣]/.test(message || '')) pts += 1;
+            if (/[가-힣]/.test(msg)) pts += 1;
             return pts;
+        }
+
+        // 시간당 호감도 캡 (도배·자동화 방지). 캐릭터별로 1시간 +30까지.
+        const INTIMACY_HOURLY_CAP = 30;
+        const intimacyCapState = {}; // { [charId]: { bucketStart, total } }
+        function applyHourlyCap(charId, pts) {
+            if (pts <= 0) return pts; // 페널티는 캡과 무관
+            const HOUR_MS = 60 * 60 * 1000;
+            const now = Date.now();
+            let bucket = intimacyCapState[charId];
+            if (!bucket || now - bucket.bucketStart >= HOUR_MS) {
+                bucket = { bucketStart: now, total: 0 };
+                intimacyCapState[charId] = bucket;
+            }
+            const remaining = Math.max(0, INTIMACY_HOURLY_CAP - bucket.total);
+            const allowed = Math.min(pts, remaining);
+            bucket.total += allowed;
+            return allowed;
+        }
+
+        // AI 응답의 [aff:+N] / [aff:-N] 태그 파싱
+        const AFF_TAG_REGEX = /\[aff:\s*([+-]?\d+)\s*\]/gi;
+        function parseAffTag(text) {
+            if (!text) return { delta: 0, cleanText: text || '' };
+            let delta = 0;
+            const cleanText = String(text).replace(AFF_TAG_REGEX, (_, n) => {
+                const v = parseInt(n, 10);
+                if (!isNaN(v)) delta += v;
+                return '';
+            }).replace(/\s+$/g, '');
+            // 합리 범위로 클램프
+            delta = Math.max(-5, Math.min(5, delta));
+            return { delta, cleanText };
         }
 
         // 선택 화면의 캐릭터 카드 5+1개를 레지스트리에서 동적으로 렌더링
@@ -2446,7 +2548,7 @@
             const beforeLv = getIntimacyLevel(before).level;
             const afterLv = getIntimacyLevel(total).level;
             if (afterLv > beforeLv) {
-                showLevelUpToast(getIntimacyLevel(total));
+                showLevelUpModal(getIntimacyLevel(total));
             }
             // 비동기 영구 저장 (실패해도 UI는 이미 반영됨)
             Storage.addIntimacy(currentCharacter, pts).catch((e) =>
@@ -2458,17 +2560,72 @@
             updateHeartUI();
         }
 
-        // 레벨업 토스트 (2.6초 표시)
-        let levelUpToastTimer = null;
-        function showLevelUpToast(lvl) {
-            const toast = document.getElementById('levelup-toast');
-            if (!toast) return;
-            toast.textContent = `🎉 Lv${lvl.level} · ${lvl.name}이 됐어요!`;
-            toast.classList.add('show');
-            if (levelUpToastTimer) clearTimeout(levelUpToastTimer);
-            levelUpToastTimer = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2600);
+        // 레벨업 — 캐릭터별 멘트
+        const LEVEL_UP_MESSAGES = {
+            jiwoo: {
+                2: '이제 좀 편하게 얘기해도 될 것 같아요!',
+                3: '우리 진짜 친구네~~ 반말로 가자!',
+                4: '요즘 너 생각이 자꾸 나... 이상해 ㅎㅎ',
+                5: '자기야 💕 진짜 좋아해.',
+            },
+            hyunwoo: {
+                2: '어 너 좀 괜찮네. 친해질 만하다.',
+                3: '야 너 진짜 재밌어 ㅋㅋ 친구다 우리.',
+                4: '너... 자꾸 신경 쓰여. 큰일 났네.',
+                5: '이제 내 사람이야. 다른 데 한눈팔지 마.',
+            },
+            taeo: {
+                2: '조금씩 알아가는 게 즐겁네.',
+                3: '이젠 편하게 형이라고 불러도 돼.',
+                4: '너를 더 알고 싶어졌어. 내가 챙겨도 될까?',
+                5: '내 사람. 평생 지킬게.',
+            },
+            leo: {
+                2: '...어쩐지 너랑 얘기하는 게 싫지 않네.',
+                3: '친구. 그 단어, 너한테는 쓸 만하네.',
+                4: '...너 때문에 좀 흔들려. 짜증나게.',
+                5: '사랑한단 말은 아껴둘게. 다만 너뿐이야.',
+            },
+            jihoon: {
+                2: '...뭐, 인사 정도는 해도 되겠네.',
+                3: '너 좀 괜찮아. 친구 해.',
+                4: '...자꾸 생각나. 됐고, 그냥 옆에 있어.',
+                5: '내 거. 다른 말 안 한다.',
+            },
+            juno: {
+                2: '어어 우리 좀 친해진 듯?? 좋다 좋아 ㅋㅋ',
+                3: '친구다 친구!! 반말로 가자~~ 💕',
+                4: '어... 나 너한테 빠진 거 같은데? 어떡하지 ㅋㅋ',
+                5: '자기야!!! 진짜 사랑해 💖💖',
+            },
+        };
+        const LEVEL_UP_UNLOCKS = {
+            2: '이제 존댓말이 조금 풀려요.',
+            3: '편한 반말과 농담이 자연스러워져요.',
+            4: '가벼운 플러팅이 나올 수 있어요.',
+            5: '애칭과 다정한 표현이 자연스러워져요.',
+        };
+
+        function showLevelUpModal(lvl) {
+            const charId = currentCharacter;
+            const overlay = document.getElementById('levelup-modal-overlay');
+            if (!overlay) return;
+            const msgMap = LEVEL_UP_MESSAGES[charId] || {};
+            const msg = msgMap[lvl.level] || '우리 사이가 더 가까워졌어!';
+            const avatarImg = document.getElementById('levelup-avatar-img');
+            if (avatarImg) avatarImg.src = getCharacterProfileSrc(charId);
+            document.getElementById('levelup-lv').textContent = 'Lv' + lvl.level;
+            document.getElementById('levelup-title').textContent = lvl.name;
+            document.getElementById('levelup-message').textContent = msg;
+            document.getElementById('levelup-unlock').textContent = LEVEL_UP_UNLOCKS[lvl.level] || '';
+            overlay.classList.add('show');
+        }
+        function closeLevelUpModal(e) {
+            const overlay = document.getElementById('levelup-modal-overlay');
+            if (!overlay) return;
+            if (!e || e.target === overlay || e.target.classList?.contains('levelup-btn')) {
+                overlay.classList.remove('show');
+            }
         }
 
         // 호감도 모달
@@ -2902,13 +3059,18 @@
                         }
                         if (evt.t) {
                             fullText += evt.t;
-                            streamContent.innerHTML = renderMarkdownLinks(fullText);
+                            streamContent.innerHTML = renderMarkdownLinks(parseAffTag(fullText).cleanText);
                             document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
                         }
                         if (evt.done) {
-                            try { await Storage.addMessage(currentCharacter, 'model', fullText, sessionId); } catch (e) {}
+                            const { delta: affDelta, cleanText: cleanFull } = parseAffTag(fullText);
+                            try { await Storage.addMessage(currentCharacter, 'model', cleanFull, sessionId); } catch (e) {}
                             // 단어는 chip 탭 시에만 저장
-                            speakKorean(fullText);
+                            speakKorean(cleanFull);
+                            if (affDelta !== 0) {
+                                const adjusted = affDelta > 0 ? applyHourlyCap(currentCharacter, affDelta) : affDelta;
+                                if (adjusted !== 0) addHeartPoints(adjusted);
+                            }
                         }
                     }
                 }
@@ -3869,8 +4031,8 @@
                     await Storage.addMessage(currentCharacter, 'user', message, sessionId);
                 } catch (e) { console.warn('[chat] save user msg failed', e); }
 
-                // 대화 호감도 획득 (쿨다운 5초, 한글이면 +1 보너스)
-                const earned = earnFromChat(message);
+                // 대화 호감도 기본 보상 (쿨다운 5초, 한글이면 +1 보너스, 시간당 +30 캡)
+                const earned = applyHourlyCap(currentCharacter, earnFromChat(message));
                 if (earned > 0) addHeartPoints(earned);
 
                 const formData = new FormData();
@@ -3946,18 +4108,25 @@
                         }
                         if (evt.t) {
                             fullText += evt.t;
-                            streamContent.innerHTML = renderMarkdownLinks(fullText);
+                            streamContent.innerHTML = renderMarkdownLinks(parseAffTag(fullText).cleanText);
                             document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
                         }
                         if (evt.done) {
-                            // AI 응답을 IndexedDB에 저장 (시나리오 완료 태그는 이미 서버에서 제거됨)
+                            const { delta: affDelta, cleanText: cleanFull } = parseAffTag(fullText);
+                            // AI 응답을 IndexedDB에 저장 (시나리오 완료 태그는 이미 서버에서 제거됨, aff 태그도 제거됨)
                             try {
-                                await Storage.addMessage(currentCharacter, 'model', fullText, sessionId);
+                                await Storage.addMessage(currentCharacter, 'model', cleanFull, sessionId);
                             } catch (e) { console.warn('[chat] save ai msg failed', e); }
                             // 단어는 사용자가 chip을 탭할 때만 저장 (toggleSaveWord 참조)
 
+                            // AI 판단 호감도 보너스/페널티 (cap은 +에만 적용)
+                            if (affDelta !== 0) {
+                                const adjusted = affDelta > 0 ? applyHourlyCap(currentCharacter, affDelta) : affDelta;
+                                if (adjusted !== 0) addHeartPoints(adjusted);
+                            }
+
                             // 번역 버튼 추가
-                            const cleanText = fullText.replace(/\[sticker:\w+\]/g, '').replace(/\(속삭임\)|\(whisper\)/gi, '').replace(/\(시나리오완료\)/g, '').trim();
+                            const cleanText = cleanFull.replace(/\[sticker:\w+\]/g, '').replace(/\(속삭임\)|\(whisper\)/gi, '').replace(/\(시나리오완료\)/g, '').trim();
                             if (cleanText.length > 0) {
                                 const translateBtn = document.createElement('button');
                                 translateBtn.className = 'translate-btn';
@@ -3966,7 +4135,7 @@
                                 streamContent.appendChild(translateBtn);
                             }
                             // TTS
-                            speakKorean(fullText);
+                            speakKorean(cleanFull);
                             // 단어 칩
                             if (vocabMode && evt.vocab && evt.vocab.length > 0) {
                                 showVocabChips(evt.vocab, streamContent);
@@ -4171,13 +4340,18 @@
                         if (evt.error) { streamContent.textContent = evt.error; break; }
                         if (evt.t) {
                             fullText += evt.t;
-                            streamContent.innerHTML = renderMarkdownLinks(fullText);
+                            streamContent.innerHTML = renderMarkdownLinks(parseAffTag(fullText).cleanText);
                             document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
                         }
                         if (evt.done) {
                             if (fullText) {
-                                localStorage.setItem(fortuneKey, fullText);
-                                try { await Storage.addMessage(currentCharacter, 'model', fullText, sessionId); } catch (e) {}
+                                const { delta: affDelta, cleanText: cleanFull } = parseAffTag(fullText);
+                                localStorage.setItem(fortuneKey, cleanFull);
+                                try { await Storage.addMessage(currentCharacter, 'model', cleanFull, sessionId); } catch (e) {}
+                                if (affDelta !== 0) {
+                                    const adjusted = affDelta > 0 ? applyHourlyCap(currentCharacter, affDelta) : affDelta;
+                                    if (adjusted !== 0) addHeartPoints(adjusted);
+                                }
                             }
                         }
                     }
