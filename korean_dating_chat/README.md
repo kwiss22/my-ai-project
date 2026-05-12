@@ -20,13 +20,30 @@ python chatbot.py
 
 브라우저에서 http://localhost:8080 접속
 
-## 📦 배포 (Google App Engine)
+## 📦 배포 (Cloud Run)
 
 ```bash
-gcloud app deploy --quiet
+cd korean_dating_chat
+./deploy.sh
 ```
 
-배포 후 URL: `https://dating-chat-dot-cindylemclass.du.r.appspot.com`
+내부적으로 실행되는 명령:
+```bash
+gcloud run deploy kdating-chat \
+  --source . \
+  --region asia-northeast3 \
+  --allow-unauthenticated
+```
+
+배포 후 URL: `https://kdating-chat-515513943326.asia-northeast3.run.app`
+
+전제 조건:
+- `gcloud` CLI 설치 및 인증 완료 (`gcloud auth login`)
+- 프로젝트 설정 (`gcloud config set project <PROJECT_ID>`)
+- `GEMINI_API_KEY` 등 환경 변수는 Cloud Run 서비스에 이미 등록되어 있어야 함
+  (source-deploy는 기존 서비스의 env vars를 보존함)
+
+문제 시 Cloud Run 콘솔에서 이전 revision으로 traffic 100% rollback 가능.
 
 ## 🎮 사용 방법
 
@@ -45,7 +62,9 @@ korean_dating_chat/
 │   └── index.html      # 카카오톡 스타일 UI
 ├── static/             # 정적 파일
 ├── requirements.txt    # 의존성
-├── app.yaml           # App Engine 설정
+├── app.yaml           # App Engine 설정 (레거시)
+├── Dockerfile         # Cloud Run 컨테이너 정의
+├── deploy.sh          # Cloud Run 배포 스크립트
 └── .env               # 환경 변수
 ```
 
@@ -56,7 +75,7 @@ korean_dating_chat/
 - **TTS**: Google Cloud Text-to-Speech
 - **Translation**: Google Cloud Translation API
 - **Database**: Google Cloud Datastore
-- **Deployment**: Google App Engine
+- **Deployment**: Google Cloud Run (asia-northeast3)
 
 ## 🎭 캐릭터 정보
 
