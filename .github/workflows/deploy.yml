@@ -1,0 +1,45 @@
+name: Deploy to Cloud Run
+
+# Triggers
+# - push to main that touches the app or this workflow
+# - manual run from any branch
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'korean_dating_chat/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+env:
+  SERVICE: kdating-chat
+  REGION: asia-northeast3
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --source ./korean_dating_chat \
+            --region "$REGION" \
+            --allow-unauthenticated \
+            --quiet
+
+      - name: Show service URL
+        run: |
+          gcloud run services describe "$SERVICE" \
+            --region "$REGION" \
+            --format='value(status.url)'

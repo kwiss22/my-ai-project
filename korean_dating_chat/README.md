@@ -22,6 +22,11 @@ python chatbot.py
 
 ## 📦 배포 (Cloud Run)
 
+### 자동 배포 (권장)
+`main` 브랜치에 푸시되면 GitHub Actions가 자동으로 Cloud Run에 배포합니다.
+워크플로우: `.github/workflows/deploy.yml` (설정 가이드는 `.github/workflows/README.md`)
+
+### 수동 배포
 ```bash
 cd korean_dating_chat
 ./deploy.sh
