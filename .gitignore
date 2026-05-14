@@ -53,3 +53,6 @@ chat_history/
 # Temporary files
 *.tmp
 *.bak
+
+# Separate project(s) with their own .git — do not add as embedded repo
+Fassionmap/
