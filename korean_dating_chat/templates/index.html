@@ -1304,8 +1304,9 @@
             transform: translateY(8px);
         }
 
-        /* Hide BMC widget when any modal overlay is showing */
-        body:has([class*="overlay"].show) .bmc-floating {
+        /* Hide BMC widget when any modal overlay is showing (covers both class-based and id-based overlays) */
+        body:has([class*="overlay"].show) .bmc-floating,
+        body:has([id*="overlay"].show) .bmc-floating {
             opacity: 0;
             pointer-events: none;
             transform: translateY(8px);
@@ -2125,7 +2126,7 @@
                 type="text"
                 id="user-input"
                 placeholder="메시지를 입력하세요..."
-                onkeypress="handleKeyPress(event)"
+                onkeydown="handleKeyPress(event)"
             >
             <button class="send-btn" id="send-btn" onclick="sendMessage()">전송</button>
         </div>
@@ -2550,11 +2551,16 @@
             const total = before + pts;
             intimacyCache[currentCharacter] = total;
             updateHeartUI();
-            // 레벨업 감지 → 토스트
+            // 레벨업 감지 → 건너뛴 레벨이 있으면 각각 순차 모달 (한 번에 여러 단계 점프 시)
             const beforeLv = getIntimacyLevel(before).level;
             const afterLv = getIntimacyLevel(total).level;
             if (afterLv > beforeLv) {
-                showLevelUpModal(getIntimacyLevel(total));
+                // 단계별 임계값(0/10/30/70/150)을 이용해 각 레벨의 LevelInfo 객체를 가져옴
+                const thresholds = [0, 10, 30, 70, 150];
+                for (let lv = beforeLv + 1; lv <= afterLv; lv++) {
+                    const sampleHearts = thresholds[lv - 1] ?? thresholds[thresholds.length - 1];
+                    showLevelUpModal(getIntimacyLevel(sampleHearts));
+                }
             }
             // 비동기 영구 저장 (실패해도 UI는 이미 반영됨)
             Storage.addIntimacy(currentCharacter, pts).catch((e) =>
@@ -2612,10 +2618,32 @@
             5: '애칭과 다정한 표현이 자연스러워져요.',
         };
 
+        // 여러 레벨을 한 번에 건너뛰었을 때 차례대로 모달을 보여주기 위한 큐
+        const levelUpQueue = [];
+        let levelUpShowing = false;
+
         function showLevelUpModal(lvl) {
+            // 안전성: 숫자만 전달된 경우 LevelInfo 객체로 보정
+            if (typeof lvl === 'number') {
+                const thresholds = [0, 10, 30, 70, 150];
+                const hearts = thresholds[Math.max(0, Math.min(lvl, thresholds.length) - 1)];
+                lvl = getIntimacyLevel(hearts);
+            }
+            if (!lvl || typeof lvl.level !== 'number') return;
+            levelUpQueue.push(lvl);
+            if (!levelUpShowing) drainLevelUpQueue();
+        }
+
+        function drainLevelUpQueue() {
+            if (levelUpQueue.length === 0) {
+                levelUpShowing = false;
+                return;
+            }
+            const lvl = levelUpQueue.shift();
             const charId = currentCharacter;
             const overlay = document.getElementById('levelup-modal-overlay');
-            if (!overlay) return;
+            if (!overlay) { levelUpShowing = false; return; }
+            levelUpShowing = true;
             const msgMap = LEVEL_UP_MESSAGES[charId] || {};
             const msg = msgMap[lvl.level] || '우리 사이가 더 가까워졌어!';
             const avatarImg = document.getElementById('levelup-avatar-img');
@@ -2626,11 +2654,14 @@
             document.getElementById('levelup-unlock').textContent = LEVEL_UP_UNLOCKS[lvl.level] || '';
             overlay.classList.add('show');
         }
+
         function closeLevelUpModal(e) {
             const overlay = document.getElementById('levelup-modal-overlay');
             if (!overlay) return;
             if (!e || e.target === overlay || e.target.classList?.contains('levelup-btn')) {
                 overlay.classList.remove('show');
+                // 큐에 다음 레벨이 있으면 짧은 간격 후 이어서 표시
+                setTimeout(drainLevelUpQueue, 280);
             }
         }
 
@@ -3414,6 +3445,12 @@
             document.getElementById('mission-progress-bar').classList.remove('active');
             document.getElementById('daily-mission-banner').style.display = 'none';
 
+            // 진행 중인 /chat 스트림이 있으면 중단 (이전 응답이 새 시나리오에 섞이지 않게)
+            if (requestController) {
+                try { requestController.abort(); } catch (e) {}
+                requestController = null;
+            }
+
             // 채팅창 초기화
             document.getElementById('messages').innerHTML = '';
             sessionToken += 1;
@@ -3637,6 +3674,16 @@
                     requestController.abort();
                     requestController = null;
                 }
+                // 시나리오/미션 상태 초기화 — 새 캐릭터 대화에 이전 컨텍스트가 새지 않게
+                activeScenario = null;
+                activeMission = null;
+                const scenarioBanner = document.getElementById('scenario-banner');
+                if (scenarioBanner) scenarioBanner.classList.remove('active');
+                const missionBar = document.getElementById('mission-progress-bar');
+                if (missionBar) missionBar.classList.remove('active');
+                const missionBanner = document.getElementById('daily-mission-banner');
+                if (missionBanner) missionBanner.style.display = 'none';
+
                 document.getElementById('messages').innerHTML = '';
                 document.getElementById('character-selection').style.display = 'block';
                 document.getElementById('lang-toggle').style.display = 'flex';
@@ -4064,9 +4111,10 @@
 
             if (!message) return;
 
-            // 중복 전송 방지: 이전 요청이 살아있으면 취소
+            // 중복 전송 방지: 이전 요청이 살아있으면 취소 (sessionToken 도 함께 올려 이전 핸들러 무력화)
             if (requestController) {
                 try { requestController.abort(); } catch (e) {}
+                sessionToken += 1;
             }
             const sendBtn = document.getElementById('send-btn');
             if (sendBtn) sendBtn.disabled = true;
@@ -4133,7 +4181,11 @@
                     throw new Error(errData.error || '서버 응답에 문제가 있어요.');
                 }
 
-                if (tokenAtSend !== sessionToken) return;
+                if (tokenAtSend !== sessionToken) {
+                    typingIndicator.remove();
+                    document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                    return;
+                }
 
                 // Typing indicator 제거 + 빈 AI 버블 생성
                 typingIndicator.remove();
@@ -4819,9 +4871,18 @@
 
         const VAPID_KEY = "BA1vx3DRJXZ47uBRFLX_ixsAtPxjsxG0IafBODQwIm8892wysxigzTfOL23V3k_LVe3eA4RcCYoIfoTJuk6EN8I";
 
-        // Firebase 초기화
-        firebase.initializeApp(FIREBASE_CONFIG);
-        const fcmMessaging = firebase.messaging();
+        // Firebase 초기화 — CDN 실패/광고차단 시에도 앱 흐름이 멈추지 않게 가드
+        let fcmMessaging = null;
+        try {
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(FIREBASE_CONFIG);
+                fcmMessaging = firebase.messaging();
+            } else {
+                console.warn('[firebase] SDK not loaded — push notifications disabled');
+            }
+        } catch (e) {
+            console.warn('[firebase] init failed — push notifications disabled', e);
+        }
 
         // 페이지 로드 시 알림 상태 확인
         async function checkNotificationStatus() {
@@ -4857,6 +4918,10 @@
                     registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
                 }
 
+                if (!fcmMessaging) {
+                    console.warn('[Push] FCM disabled — skipping token registration');
+                    return;
+                }
                 fcmToken = await fcmMessaging.getToken({
                     vapidKey: VAPID_KEY,
                     serviceWorkerRegistration: registration
@@ -4881,12 +4946,14 @@
         }
 
         // 포그라운드 메시지 처리 (앱이 열려 있을 때 → 채팅 버블로 표시)
-        fcmMessaging.onMessage((payload) => {
-            console.log('[Push] Foreground message:', payload);
-            if (payload.notification && payload.notification.body) {
-                addMessage(payload.notification.body, false);
-            }
-        });
+        if (fcmMessaging) {
+            fcmMessaging.onMessage((payload) => {
+                console.log('[Push] Foreground message:', payload);
+                if (payload.notification && payload.notification.body) {
+                    addMessage(payload.notification.body, false);
+                }
+            });
+        }
 
         // 🔮 Auto-fortune: 알림 클릭 → 자동 운세 트리거
         let pendingFortune = false;
