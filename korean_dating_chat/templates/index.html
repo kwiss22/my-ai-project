@@ -45,6 +45,46 @@
             box-sizing: border-box;
         }
 
+        /* 접근성: 키보드 포커스 인디케이터.
+           마우스 사용자에게는 보이지 않고 (`:focus-visible`), 키보드 / 스크린리더 사용자에게만 표시. */
+        :focus { outline: none; }
+        :focus-visible {
+            outline: 3px solid #f093fb;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+        .scenario-card:focus-visible,
+        .character-card:focus-visible {
+            outline: 3px solid #f093fb;
+            outline-offset: 3px;
+        }
+        .scenario-card.locked:focus-visible {
+            outline-color: #aaa;
+        }
+        /* 모달 닫기 ×버튼 포커스가 잘 보이도록 */
+        .modal-close:focus-visible,
+        .share-modal-close:focus-visible {
+            outline: 3px solid #f093fb;
+            outline-offset: 1px;
+        }
+        /* prefers-reduced-motion: 사용자가 OS에서 모션 감소 켜면 모든 트랜지션/애니메이션을 줄임 */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+        /* 스크린리더 전용 텍스트 유틸 */
+        .sr-only {
+            position: absolute !important;
+            width: 1px; height: 1px;
+            padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0, 0, 0, 0);
+            white-space: nowrap; border: 0;
+        }
+
         :root {
             --kakao-yellow: #FEE500;
             --kakao-brown: #3C1E1E;
@@ -2023,19 +2063,19 @@
             </div>
             <div class="header-buttons">
                 <!-- 호감도 카운터 (클릭 → 진행도 모달) -->
-                <div id="heart-counter" title="호감도" onclick="openIntimacyModal()">
+                <div id="heart-counter" title="호감도" role="button" tabindex="0" aria-label="호감도 진행 상황 보기" onclick="openIntimacyModal()">
                     <span id="heart-level-badge">Lv1</span>
-                    ❤️ <span id="heart-count">0</span>
+                    <span aria-hidden="true">❤️</span> <span id="heart-count">0</span>
                 </div>
                 <!-- 대화기록 -->
-                <button class="header-btn icon-btn" onclick="openHistoryModal()" title="대화 기록">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button class="header-btn icon-btn" onclick="openHistoryModal()" title="대화 기록" aria-label="대화 기록 열기">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                 </button>
                 <!-- 더보기 (⋮) -->
-                <button class="header-btn icon-btn" onclick="openNavSheet()" title="더보기">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <button class="header-btn icon-btn" onclick="openNavSheet()" title="더보기" aria-label="더보기 메뉴 열기">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
                         <circle cx="12" cy="5" r="1.2" fill="currentColor"/>
                         <circle cx="12" cy="12" r="1.2" fill="currentColor"/>
                         <circle cx="12" cy="19" r="1.2" fill="currentColor"/>
@@ -2091,10 +2131,10 @@
         </div>
 
         <!-- 미션 성공 오버레이 -->
-        <div id="mission-success-overlay">
+        <div id="mission-success-overlay" role="alertdialog" aria-modal="true" aria-labelledby="mission-success-title" aria-hidden="true">
             <div class="mission-success-card">
                 <div class="mission-success-emoji">🎉</div>
-                <div class="mission-success-title">미션 성공!</div>
+                <div class="mission-success-title" id="mission-success-title">미션 성공!</div>
                 <div id="success-msg" style="font-size:13px; color:#667eea; margin-bottom:6px;"></div>
                 <div class="mission-success-points">❤️ +<span id="success-points">0</span></div>
                 <div class="mission-success-total">누적 포인트: <strong id="success-total">0</strong></div>
@@ -2115,35 +2155,38 @@
             </button>
         </div>
 
-        <div class="messages" id="messages"></div>
+        <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions" aria-label="대화 기록"></div>
 
         <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
         <div class="input-area">
             <div class="sticker-picker-wrapper">
-                <button class="sticker-picker-btn" id="sticker-picker-btn" onclick="toggleStickerPicker()" title="스티커">😊</button>
-                <div class="sticker-picker-panel" id="sticker-picker-panel">
+                <button class="sticker-picker-btn" id="sticker-picker-btn" onclick="toggleStickerPicker()" title="스티커" aria-label="스티커 선택" aria-haspopup="true" aria-expanded="false">😊</button>
+                <div class="sticker-picker-panel" id="sticker-picker-panel" role="dialog" aria-label="스티커 선택">
                     <div class="sticker-picker-grid" id="sticker-picker-grid"></div>
                 </div>
             </div>
+            <label for="user-input" class="sr-only">메시지 입력</label>
             <input
                 type="text"
                 id="user-input"
                 placeholder="메시지를 입력하세요..."
                 onkeydown="handleKeyPress(event)"
+                aria-label="메시지 입력"
+                autocomplete="off"
             >
-            <button class="send-btn" id="send-btn" onclick="sendMessage()">전송</button>
+            <button class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="메시지 전송">전송</button>
         </div>
     </div>
 
     <!-- =====================
          단어장 모달
     ===================== -->
-    <div class="modal-overlay" id="vocab-modal-overlay" onclick="closeVocabModal(event)">
+    <div class="modal-overlay" id="vocab-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="vocab-modal-title" aria-hidden="true" onclick="closeVocabModal(event)">
         <div class="modal-sheet">
             <div class="modal-header">
-                <h3>📚 내 단어장 <span id="vocab-count-badge" style="font-size:13px;color:#f093fb;font-weight:700;"></span></h3>
-                <button class="modal-close" onclick="closeVocabModal()">&times;</button>
+                <h3 id="vocab-modal-title">📚 내 단어장 <span id="vocab-count-badge" style="font-size:13px;color:#f093fb;font-weight:700;"></span></h3>
+                <button class="modal-close" aria-label="단어장 닫기" onclick="closeVocabModal()">&times;</button>
             </div>
             <div style="padding: 0 20px;">
                 <div class="vocab-tabs">
@@ -2167,11 +2210,11 @@
     <!-- =====================
          설정 모달
     ===================== -->
-    <div class="modal-overlay" id="settings-modal-overlay" onclick="closeSettingsModal(event)">
+    <div class="modal-overlay" id="settings-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" aria-hidden="true" onclick="closeSettingsModal(event)">
         <div class="modal-sheet">
             <div class="modal-header">
-                <h3>⚙️ 설정</h3>
-                <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+                <h3 id="settings-modal-title">⚙️ 설정</h3>
+                <button class="modal-close" aria-label="설정 닫기" onclick="closeSettingsModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="settings-row">
@@ -2202,9 +2245,9 @@
          대화 기록 모달
     ===================== -->
     <!-- 네비게이션 바텀시트 -->
-    <div class="nav-sheet-overlay" id="nav-sheet-overlay" onclick="closeNavSheet(event)">
+    <div class="nav-sheet-overlay" id="nav-sheet-overlay" role="dialog" aria-modal="true" aria-label="메뉴" aria-hidden="true" onclick="closeNavSheet(event)">
         <div class="nav-sheet" id="nav-sheet">
-            <div class="nav-sheet-handle"></div>
+            <div class="nav-sheet-handle" aria-hidden="true"></div>
 
             <button class="nav-sheet-item" onclick="closeNavSheet(); openShareCard()">
                 <div class="nav-icon" style="background:#e8f5e9;">📸</div>
@@ -2259,11 +2302,11 @@
     </div>
 
     <!-- ===================== 시나리오 선택 시트 ===================== -->
-    <div class="scenario-sheet-overlay" id="scenario-sheet-overlay" onclick="closeScenarioSheet(event)">
+    <div class="scenario-sheet-overlay" id="scenario-sheet-overlay" role="dialog" aria-modal="true" aria-labelledby="scenario-sheet-title" aria-hidden="true" onclick="closeScenarioSheet(event)">
         <div class="scenario-sheet" id="scenario-sheet">
-            <div class="nav-sheet-handle"></div>
+            <div class="nav-sheet-handle" aria-hidden="true"></div>
             <div class="scenario-sheet-header">
-                <div class="scenario-sheet-title">🎭 시나리오 모드</div>
+                <div class="scenario-sheet-title" id="scenario-sheet-title">🎭 시나리오 모드</div>
                 <div class="scenario-sheet-sub">상황을 선택하면 새 대화가 시작돼요</div>
             </div>
             <div class="scenario-grid" id="scenario-grid"></div>
@@ -2272,10 +2315,10 @@
     </div>
 
     <!-- ===================== 시나리오 완료 오버레이 ===================== -->
-    <div id="scenario-complete-overlay">
+    <div id="scenario-complete-overlay" role="alertdialog" aria-modal="true" aria-labelledby="scenario-complete-title" aria-hidden="true">
         <div class="scenario-complete-card">
-            <div class="scenario-complete-emoji" id="scenario-complete-emoji">🎉</div>
-            <div class="scenario-complete-title">시나리오 클리어!</div>
+            <div class="scenario-complete-emoji" id="scenario-complete-emoji" aria-hidden="true">🎉</div>
+            <div class="scenario-complete-title" id="scenario-complete-title">시나리오 클리어!</div>
             <div class="scenario-complete-name" id="scenario-complete-name">고백 연습</div>
             <div class="scenario-complete-desc" id="scenario-complete-desc">완벽했어요! 진짜 고백도 이렇게 하면 돼요 💕</div>
             <div class="scenario-complete-btns">
@@ -2286,11 +2329,11 @@
     </div>
 
     <!-- ===================== 공유 카드 모달 ===================== -->
-    <div class="share-modal-overlay" id="share-modal-overlay" onclick="closeShareCard(event)">
+    <div class="share-modal-overlay" id="share-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="share-modal-title" aria-hidden="true" onclick="closeShareCard(event)">
         <div class="share-modal" id="share-modal">
             <div class="share-modal-header">
-                <h3>📸 공유 카드</h3>
-                <button class="share-modal-close" onclick="closeShareCard()">×</button>
+                <h3 id="share-modal-title">📸 공유 카드</h3>
+                <button class="share-modal-close" aria-label="공유 카드 닫기" onclick="closeShareCard()">×</button>
             </div>
             <!-- 메시지 수 선택 -->
             <div class="share-msg-count">
@@ -2323,18 +2366,18 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="history-modal-overlay" onclick="closeHistoryModal(event)">
+    <div class="modal-overlay" id="history-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="history-modal-title" aria-hidden="true" onclick="closeHistoryModal(event)">
         <div class="modal-sheet" style="max-height: 85vh; display: flex; flex-direction: column;">
             <!-- 목록 뷰 -->
             <div id="history-list-view" style="display: flex; flex-direction: column; height: 100%;">
                 <div class="modal-header" style="flex-shrink: 0;">
-                    <h3>🕐 대화 기록</h3>
+                    <h3 id="history-modal-title">🕐 대화 기록</h3>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <button onclick="closeHistoryModal(); confirmNewChat()"
                             style="background:#FEE500; border:none; padding:6px 14px; border-radius:16px; font-size:12px; font-weight:700; cursor:pointer; color:#333;">
                             + 새 대화
                         </button>
-                        <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+                        <button class="modal-close" aria-label="대화 기록 닫기" onclick="closeHistoryModal()">&times;</button>
                     </div>
                 </div>
                 <div class="modal-body" id="history-list-content" style="overflow-y: auto;">
@@ -2357,11 +2400,11 @@
     </div>
 
     <!-- 호감도 모달 -->
-    <div class="modal-overlay" id="intimacy-modal-overlay" onclick="closeIntimacyModal(event)">
+    <div class="modal-overlay" id="intimacy-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="intimacy-modal-title" aria-hidden="true" onclick="closeIntimacyModal(event)">
         <div class="modal-sheet modal-box" style="max-height: 80vh; overflow-y: auto;">
             <div class="modal-header">
-                <h3>❤️ 호감도</h3>
-                <button class="modal-close" onclick="closeIntimacyModal()">&times;</button>
+                <h3 id="intimacy-modal-title">❤️ 호감도</h3>
+                <button class="modal-close" aria-label="호감도 닫기" onclick="closeIntimacyModal()">&times;</button>
             </div>
             <div class="modal-body" style="padding: 14px 22px 22px;">
                 <div class="intimacy-current">
@@ -2384,9 +2427,9 @@
     </div>
 
     <!-- 레벨업 풀스크린 모달 -->
-    <div id="levelup-modal-overlay" onclick="closeLevelUpModal(event)">
+    <div id="levelup-modal-overlay" role="alertdialog" aria-modal="true" aria-labelledby="levelup-title" aria-hidden="true" onclick="closeLevelUpModal(event)">
         <div class="levelup-card" onclick="event.stopPropagation()">
-            <div class="levelup-confetti">🎉</div>
+            <div class="levelup-confetti" aria-hidden="true">🎉</div>
             <div class="levelup-avatar"><img id="levelup-avatar-img" src="" alt=""></div>
             <div class="levelup-lv" id="levelup-lv">Lv2</div>
             <div class="levelup-title" id="levelup-title">친해지는 중</div>
@@ -2517,11 +2560,12 @@
                 const c = CHARACTERS[id];
                 const infoText = isKorean ? c.info : c.infoEn;
                 const badge = c.group ? `<div class="hwarang-badge">${c.group}</div>` : '';
+                const a11yLabel = `${c.name} 선택 — ${infoText.replace(/\s+/g, ' ').trim()}`;
                 return `
-                    <div class="character-card ${id}" onclick="selectCharacter('${id}')">
+                    <div class="character-card ${id}" onclick="selectCharacter('${id}')" role="button" tabindex="0" aria-label="${a11yLabel}">
                         ${badge}
                         <div class="character-avatar">
-                            <img src="${getCharacterProfileSrc(id)}" alt="${c.name}">
+                            <img src="${getCharacterProfileSrc(id)}" alt="">
                         </div>
                         <div class="character-name">${c.name}<br>${c.nameRoman}</div>
                         <div class="character-info" id="${id}-info">${infoText}</div>
@@ -2983,6 +3027,7 @@
             if (isOpen) {
                 panel.classList.remove('show');
                 btn.classList.remove('active');
+                btn.setAttribute('aria-expanded', 'false');
                 return;
             }
 
@@ -3010,12 +3055,17 @@
 
             panel.classList.add('show');
             btn.classList.add('active');
+            btn.setAttribute('aria-expanded', 'true');
         }
 
         async function sendSticker(stickerId) {
             // 패널 닫기
             document.getElementById('sticker-picker-panel').classList.remove('show');
-            document.getElementById('sticker-picker-btn').classList.remove('active');
+            const _spbtn = document.getElementById('sticker-picker-btn');
+            if (_spbtn) {
+                _spbtn.classList.remove('active');
+                _spbtn.setAttribute('aria-expanded', 'false');
+            }
 
             const sticker = STICKERS[stickerId];
             if (!sticker) return;
@@ -3150,7 +3200,10 @@
             const btn = document.getElementById('sticker-picker-btn');
             if (panel && !panel.contains(e.target) && e.target !== btn) {
                 panel.classList.remove('show');
-                btn.classList.remove('active');
+                if (btn) {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-expanded', 'false');
+                }
             }
         });
 
@@ -3425,10 +3478,13 @@
                 const onclick = locked
                     ? `onclick="onLockedScenarioClick(event, ${s.min_level})"`
                     : `onclick="closeScenarioSheet(); startScenario('${s.id}')"`;
+                const a11yLabel = locked
+                    ? `${s.title} — 레벨 ${s.min_level}부터 사용 가능`
+                    : `${s.title} 시나리오 시작: ${s.desc}`;
                 return `
-                    <div class="scenario-card${locked ? ' locked' : ''}" ${onclick}>
+                    <div class="scenario-card${locked ? ' locked' : ''}" ${onclick} role="button" tabindex="0" aria-label="${a11yLabel}"${locked ? ' aria-disabled="true"' : ''}>
                         ${lockBadge}
-                        <div class="scenario-card-emoji">${s.emoji}</div>
+                        <div class="scenario-card-emoji" aria-hidden="true">${s.emoji}</div>
                         <div class="scenario-card-title">${s.title}</div>
                         <div class="scenario-card-desc">${s.desc}</div>
                     </div>
@@ -4931,6 +4987,122 @@
                 }
             }
         });
+
+        // 접근성: role="button" + tabindex 가 붙은 div(시나리오 카드/캐릭터 카드 등)는
+        // 키보드에서 native button 처럼 동작해야 한다.  Enter / Space 키로 click 트리거.
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const t = e.target;
+            if (!t || !t.getAttribute) return;
+            if (t.getAttribute('role') !== 'button') return;
+            if (t.tagName === 'BUTTON' || t.tagName === 'A') return;
+            if (t.getAttribute('aria-disabled') === 'true') {
+                // 잠긴 카드도 click 핸들러(onLockedScenarioClick)는 호출해야 흔들림 + hint 나옴
+                e.preventDefault();
+                t.click();
+                return;
+            }
+            e.preventDefault();
+            t.click();
+        });
+
+        // 접근성: 모달 focus trap + 트리거 포커스 복원 + aria-hidden 동기화.
+        // 10개 모달 각각의 open/close 콜사이트를 건드리지 않고, MutationObserver 로
+        // .show 클래스 토글을 감지해 처리한다.
+        (function setupModalA11y() {
+            const overlayIds = [
+                'levelup-modal-overlay',
+                'mission-success-overlay',
+                'scenario-complete-overlay',
+                'share-modal-overlay',
+                'vocab-modal-overlay',
+                'settings-modal-overlay',
+                'intimacy-modal-overlay',
+                'history-modal-overlay',
+                'scenario-sheet-overlay',
+                'nav-sheet-overlay',
+            ];
+            // 각 모달에 대해 마지막 트리거 엘리먼트를 따로 저장(중첩 열림은 드물지만 안전).
+            const triggerByOverlay = new Map();
+
+            function isVisible(el) {
+                if (!el) return false;
+                if (el.disabled) return false;
+                if (el.getAttribute && el.getAttribute('aria-hidden') === 'true') return false;
+                const rects = el.getClientRects();
+                return rects.length > 0;
+            }
+
+            function focusables(root) {
+                const sel = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [role="button"]:not([aria-disabled="true"])';
+                return Array.from(root.querySelectorAll(sel)).filter(isVisible);
+            }
+
+            function topmostOpenOverlay() {
+                // 우선순위: 가장 나중에 열린 alertdialog/dialog 가 보통 위에 있다.  scenarioComplete/levelup 등은
+                // 시각적으로 다른 모달 위에 뜨도록 z-index 가 높음.  show 상태 + DOM 순서 역순으로 검사.
+                for (let i = overlayIds.length - 1; i >= 0; i--) {
+                    const el = document.getElementById(overlayIds[i]);
+                    if (el && el.classList.contains('show')) return el;
+                }
+                return null;
+            }
+
+            // Tab 트랩
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Tab') return;
+                const overlay = topmostOpenOverlay();
+                if (!overlay) return;
+                const f = focusables(overlay);
+                if (f.length === 0) { e.preventDefault(); return; }
+                const first = f[0];
+                const last = f[f.length - 1];
+                const active = document.activeElement;
+                // 포커스가 모달 밖으로 새어 나갔으면 다시 끌어옴
+                if (!overlay.contains(active)) {
+                    first.focus();
+                    e.preventDefault();
+                    return;
+                }
+                if (e.shiftKey && active === first) {
+                    last.focus();
+                    e.preventDefault();
+                } else if (!e.shiftKey && active === last) {
+                    first.focus();
+                    e.preventDefault();
+                }
+            });
+
+            overlayIds.forEach((id) => {
+                const overlay = document.getElementById(id);
+                if (!overlay) return;
+                const observer = new MutationObserver(() => {
+                    const shown = overlay.classList.contains('show');
+                    overlay.setAttribute('aria-hidden', shown ? 'false' : 'true');
+                    if (shown) {
+                        // 모달이 막 열림: 트리거 저장 + 첫 포커서블에 포커스
+                        triggerByOverlay.set(id, document.activeElement);
+                        // setTimeout 0 — show 클래스 변경 → 트랜지션 / display 적용 후 포커스
+                        setTimeout(() => {
+                            const f = focusables(overlay);
+                            // 첫 번째가 닫기 버튼이면 그 다음으로 (사용자가 모달 내용을 먼저 듣게)
+                            const target = f.find(el => !el.classList.contains('modal-close') && !el.classList.contains('share-modal-close')) || f[0];
+                            if (target) {
+                                try { target.focus({ preventScroll: true }); } catch (e) { try { target.focus(); } catch (e2) {} }
+                            }
+                        }, 30);
+                    } else {
+                        // 닫힘: 트리거로 포커스 복원
+                        const trigger = triggerByOverlay.get(id);
+                        triggerByOverlay.delete(id);
+                        if (trigger && document.body.contains(trigger) && isVisible(trigger)) {
+                            try { trigger.focus({ preventScroll: true }); } catch (e) {}
+                        }
+                    }
+                });
+                observer.observe(overlay, { attributes: true, attributeFilter: ['class'] });
+            });
+        })();
 
         // ==========================================
         // Push Notification Setup
