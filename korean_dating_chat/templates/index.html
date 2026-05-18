@@ -1747,6 +1747,10 @@
             display: grid; grid-template-columns: 1fr 1fr;
             gap: 10px; padding: 14px 16px;
         }
+        /* 홀수 개일 때 마지막 카드는 두 칸 가로질러 가운데 정렬되어 보이게 */
+        .scenario-grid > .scenario-card:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
+        }
         .scenario-card {
             background: #fafafa; border-radius: 16px;
             padding: 16px 14px; cursor: pointer;
@@ -3016,8 +3020,18 @@
             const sticker = STICKERS[stickerId];
             if (!sticker) return;
 
+            // 진행 중인 /chat 요청은 abort + sessionToken 증가 (sendMessage와 동일 패턴)
+            if (requestController) {
+                try { requestController.abort(); } catch (e) {}
+                sessionToken += 1;
+            }
+
             // 유저 채팅에 스티커 표시
             addMessage(`[sticker:${stickerId}]`, true);
+
+            // 헤더 상태: 입력 중...
+            const headerStatus = document.getElementById('header-status');
+            if (headerStatus) headerStatus.innerHTML = '<span class="typing-dot-sm"></span><span class="typing-dot-sm"></span><span class="typing-dot-sm"></span>';
 
             // AI에게 스티커 설명 전송
             const emotion = stickerId.split('_').slice(1).join('_');
@@ -3063,7 +3077,11 @@
 
                 clearTimeout(timeoutId);
 
-                if (tokenAtSend !== sessionToken) return;
+                if (tokenAtSend !== sessionToken) {
+                    typingIndicator.remove();
+                    if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span>온라인';
+                    return;
+                }
 
                 if (!response.ok) {
                     const errData = await response.json().catch(() => ({}));
@@ -3071,6 +3089,7 @@
                 }
 
                 typingIndicator.remove();
+                if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span>온라인';
 
                 // SSE 스트림 파싱 (sendMessage와 동일 패턴)
                 const { contentDiv: streamContent } = createStreamBubble();
@@ -3113,6 +3132,7 @@
                 }
             } catch (error) {
                 typingIndicator.remove();
+                if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span>온라인';
                 console.error('Send sticker error:', error);
                 if (error.name === 'AbortError') {
                     addMessage('응답이 지연되고 있어요. 잠시 후 다시 시도해주세요.', false);
@@ -3202,7 +3222,8 @@
                         if (prior && prior.length > 0) {
                             hadPriorMessages = true;
                             prior.forEach((m) => {
-                                addMessage(m.text, m.role === 'user');
+                                // 히스토리 복원: TTS 자동 재생을 건너뛰어야 입장 시 30개 메시지가 동시 발음되는 사고를 막음
+                                addMessage(m.text, m.role === 'user', { silent: true });
                             });
                         }
                     } catch (e) { console.warn('[history] restore failed', e); }
@@ -3968,6 +3989,22 @@
         // 새 대화 시작
         function confirmNewChat() {
             if (!confirm('현재 대화를 초기화하고 새로 시작할까요?')) return;
+            // 진행 중인 요청·시나리오·미션 정리
+            if (requestController) {
+                try { requestController.abort(); } catch (e) {}
+                requestController = null;
+            }
+            sessionToken += 1;
+            activeScenario = null;
+            activeMission = null;
+            sessionId = Storage.todayKey();
+            const scenarioBanner = document.getElementById('scenario-banner');
+            if (scenarioBanner) scenarioBanner.classList.remove('active');
+            const missionBar = document.getElementById('mission-progress-bar');
+            if (missionBar) missionBar.classList.remove('active');
+            const missionBanner = document.getElementById('daily-mission-banner');
+            if (missionBanner) missionBanner.style.display = 'none';
+
             fetch('/new_session', { method: 'POST' }).catch(() => {});
             document.getElementById('messages').innerHTML = '';
 
@@ -4401,6 +4438,12 @@
             const mbtiPart = mbti ? `, MBTI: ${mbti}` : '';
             const fortuneMsg = `오늘의 운세를 봐주세요. 내 생년월일: ${birthday} (${birthYear}년생, ${zodiac}, ${chineseZodiac}${mbtiPart})`;
 
+            // 진행 중인 /chat 요청은 abort + sessionToken 증가 (운세 요청과 일반 chat이 섞이지 않게)
+            if (requestController) {
+                try { requestController.abort(); } catch (e) {}
+                sessionToken += 1;
+            }
+
             fortuneBtn.disabled = true;
             const typingIndicator = showTypingIndicator();
 
@@ -4680,7 +4723,9 @@
             return { messageDiv, contentDiv };
         }
 
-        function addMessage(content, isUser) {
+        // options.silent = true 면 TTS 자동 재생을 건너뜀 (히스토리 복원 시 사용).
+        function addMessage(content, isUser, options) {
+            const opts = options || {};
             const messagesDiv = document.getElementById('messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
@@ -4734,7 +4779,7 @@
                 }
 
                 // 한국어 TTS 자동 재생 (원본 텍스트 전달 - 백엔드에서 처리)
-                speakKorean(content);
+                if (!opts.silent) speakKorean(content);
             }
 
             const timeDiv = document.createElement('div');
@@ -4854,6 +4899,38 @@
             if (event.isComposing || event.keyCode === 229) return;
             sendMessage();
         }
+
+        // 전역 ESC: 가장 위에 열려 있는 모달/시트를 닫는다.
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') return;
+            // 입력창 포커스 상태에서 ESC는 입력창 blur로 처리하고 모달은 그대로 둠
+            const ae = document.activeElement;
+            if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) {
+                ae.blur();
+                return;
+            }
+            // 닫기 우선순위 (가장 위에 보이는 것부터)
+            const closers = [
+                ['levelup-modal-overlay',         closeLevelUpModal],
+                ['mission-success-overlay',       closeMissionSuccess],
+                ['scenario-complete-overlay',     closeScenarioComplete],
+                ['share-modal-overlay',           closeShareCard],
+                ['vocab-modal-overlay',           closeVocabModal],
+                ['settings-modal-overlay',        closeSettingsModal],
+                ['intimacy-modal-overlay',        closeIntimacyModal],
+                ['history-modal-overlay',         closeHistoryModal],
+                ['scenario-sheet-overlay',        closeScenarioSheet],
+                ['nav-sheet-overlay',             closeNavSheet],
+            ];
+            for (const [id, fn] of closers) {
+                const el = document.getElementById(id);
+                if (el && el.classList.contains('show') && typeof fn === 'function') {
+                    fn();
+                    event.preventDefault();
+                    return;
+                }
+            }
+        });
 
         // ==========================================
         // Push Notification Setup

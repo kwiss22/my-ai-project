@@ -46,7 +46,7 @@ print(f"GEMINI_API_KEY: {'OK' if GEMINI_API_KEY else 'MISSING'}")
 if not GEMINI_API_KEY:
     raise ValueError("ERROR: GEMINI_API_KEY is not set! Check .env file.")
 
-print(f"API_KEY (first 10 chars): {GEMINI_API_KEY[:10]}...")
+# API 키는 로그에 남기지 않는다 (Cloud Run 로그 접근자가 곧 키 접근자가 되는 사고 방지)
 print(f"GEMINI_MODEL: {GEMINI_MODEL}")
 print(f"GEMINI_FAST_MODEL: {GEMINI_FAST_MODEL}")
 print(f"ENABLE_VOCAB_EXTRACTION: {ENABLE_VOCAB_EXTRACTION} (min chars: {VOCAB_MIN_CHARS})")
@@ -1645,8 +1645,31 @@ def chat():
     except Exception:
         history = []
 
+    # 히스토리 항목 검증: 모델에 전달하기 전 형식과 역할을 모두 강제한다.
+    # 잘못된 항목을 통째로 버려서 SDK 호출 충돌·role 위조(예: 'system' 가장)·payload 폭주를 막는다.
+    sanitized_history = []
+    for entry in history[-30:]:  # 최대 30개만 인정
+        if not isinstance(entry, dict):
+            continue
+        role = entry.get('role')
+        if role not in ('user', 'model'):
+            continue
+        parts = entry.get('parts')
+        if not isinstance(parts, list) or not parts:
+            continue
+        clean_parts = []
+        for p in parts[:4]:  # 한 turn 당 최대 4 part
+            if isinstance(p, dict) and isinstance(p.get('text'), str):
+                clean_parts.append({'text': p['text'][:4000]})  # 4KB cap
+        if clean_parts:
+            sanitized_history.append({'role': role, 'parts': clean_parts})
+    history = sanitized_history
+
     if not user_message:
         return jsonify({'error': '메시지를 입력해주세요.'}), 400
+    # 메시지 길이 cap: 토큰 폭주·과금 사고 방지
+    if len(user_message) > 4000:
+        user_message = user_message[:4000]
 
     system_instruction = get_system_prompt(character, user_profile, scenario_id, intimacy_level)
 
@@ -1803,8 +1826,8 @@ def text_to_speech():
         return jsonify({'error': 'Azure Speech가 초기화되지 않았습니다'}), 500
 
     try:
-        data = request.get_json()
-        text = data.get('text', '')
+        data = request.get_json(silent=True) or {}
+        text = str(data.get('text', ''))[:2000]  # 길이 cap (Azure 비용·지연 폭주 방지)
         language = data.get('language', 'ko-KR')
         character = data.get('character', 'jiwoo')
         if character not in VALID_CHARACTERS:
@@ -1916,7 +1939,7 @@ def translate_text():
         return jsonify({'error': 'Translation 클라이언트가 초기화되지 않았습니다'}), 500
 
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         text = data.get('text', '')
 
         if not text:
@@ -2148,9 +2171,11 @@ def firebase_sw():
 def register_push():
     """FCM 토큰 등록/업데이트"""
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         token = data.get('token')
         character = data.get('character', 'jiwoo')
+        if character not in VALID_CHARACTERS:
+            character = 'jiwoo'
 
         if not token:
             return jsonify({'error': 'No token provided'}), 400
@@ -2159,8 +2184,10 @@ def register_push():
             return jsonify({'error': 'Datastore not available'}), 500
 
         # 기존 토큰 확인 (upsert)
+        # 신 PropertyFilter API: google-cloud-datastore >= 2.17에서 add_filter 위치 인자는 deprecated
+        from google.cloud.datastore.query import PropertyFilter
         query = ds_client.query(kind='PushSubscription')
-        query.add_filter('token', '=', token)
+        query.add_filter(filter=PropertyFilter('token', '=', token))
         existing = list(query.fetch(limit=1))
 
         if existing:
@@ -2201,9 +2228,10 @@ def send_scheduled_notifications():
         if not firebase_app:
             return jsonify({'error': 'Firebase not initialized'}), 500
 
-        # 활성 구독자 조회
+        # 활성 구독자 조회 (PropertyFilter API: 라이브러리 업데이트 호환성)
+        from google.cloud.datastore.query import PropertyFilter
         query = ds_client.query(kind='PushSubscription')
-        query.add_filter('active', '=', True)
+        query.add_filter(filter=PropertyFilter('active', '=', True))
         subscriptions = list(query.fetch())
 
         sent_count = 0
