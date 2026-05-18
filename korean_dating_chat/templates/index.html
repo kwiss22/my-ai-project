@@ -556,6 +556,39 @@
             cursor: not-allowed;
         }
 
+        /* 음성 입력 버튼 — 입력창이 비어 있을 때 전송 버튼 자리에 표시.
+           녹음 중에는 빨간색 + pulse. */
+        .voice-btn {
+            background: var(--kakao-yellow);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 22px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, background 0.25s;
+            flex-shrink: 0;
+            color: #3C1E1E;
+        }
+        .voice-btn:hover { transform: scale(1.05); }
+        .voice-btn:active { transform: scale(0.95); }
+        .voice-btn.recording {
+            background: #ff5252;
+            color: white;
+            animation: voicePulse 1.2s ease-in-out infinite;
+        }
+        @keyframes voicePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.55); }
+            50%      { box-shadow: 0 0 0 10px rgba(255, 82, 82, 0); }
+        }
+        /* 녹음 중 입력창에 visual cue */
+        .input-area input.recording-glow {
+            border-color: #ff5252;
+            background: #fff5f5;
+        }
+
         /* Typing indicator */
         .typing-indicator {
             display: none;
@@ -2172,10 +2205,21 @@
                 id="user-input"
                 placeholder="메시지를 입력하세요..."
                 onkeydown="handleKeyPress(event)"
+                oninput="updateInputButtonState()"
                 aria-label="메시지 입력"
                 autocomplete="off"
             >
-            <button class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="메시지 전송">전송</button>
+            <!-- 입력창 비어 있을 때만 보이는 음성 입력 버튼 -->
+            <button class="voice-btn" id="voice-btn" type="button" onclick="toggleVoiceInput()" aria-label="음성 입력 시작" aria-pressed="false" title="음성으로 입력">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="3" width="6" height="11" rx="3"/>
+                    <path d="M5 11a7 7 0 0 0 14 0"/>
+                    <line x1="12" y1="18" x2="12" y2="22"/>
+                    <line x1="9" y1="22" x2="15" y2="22"/>
+                </svg>
+            </button>
+            <!-- 입력창에 텍스트가 있을 때만 보이는 전송 버튼 -->
+            <button class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="메시지 전송" style="display:none;">전송</button>
         </div>
     </div>
 
@@ -4215,6 +4259,10 @@
             // 내 메시지 표시
             addMessage(message, true);
             input.value = '';
+            // 음성/전송 토글 상태도 함께 갱신
+            try { updateInputButtonState(); } catch (e) {}
+            // 음성 placeholder 가이드를 기본 placeholder 로 복원
+            input.placeholder = '메시지를 입력하세요...';
 
             // 헤더 상태: 입력 중...
             document.getElementById('header-status').innerHTML = '<span class="typing-dot-sm"></span><span class="typing-dot-sm"></span><span class="typing-dot-sm"></span>';
@@ -5048,6 +5096,127 @@
             if (event.isComposing || event.keyCode === 229) return;
             sendMessage();
         }
+
+        // 입력창 비어 있으면 🎤 버튼, 있으면 전송 버튼 (WhatsApp 스타일 토글).
+        // input 이벤트 + sendMessage 직후에 호출.
+        function updateInputButtonState() {
+            const input = document.getElementById('user-input');
+            const sendBtn = document.getElementById('send-btn');
+            const voiceBtn = document.getElementById('voice-btn');
+            if (!input || !sendBtn || !voiceBtn) return;
+            const hasText = input.value.trim().length > 0;
+            sendBtn.style.display = hasText ? 'inline-flex' : 'none';
+            voiceBtn.style.display = hasText ? 'none' : 'inline-flex';
+        }
+
+        // === 음성 입력 (Web Speech API / webkitSpeechRecognition) ===
+        // 한국어 인식 — Chrome (desktop / Android), Safari iOS 14.1+ 지원.
+        // 미지원 브라우저 (Firefox 등): 토스트로 안내하고 종료.
+        let _recognition = null;
+        let _recognitionActive = false;
+
+        function _ensureRecognition() {
+            if (_recognition) return _recognition;
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) return null;
+            const r = new SR();
+            r.lang = 'ko-KR';
+            r.interimResults = true;   // 중간 결과로 라이브 transcription
+            r.continuous = false;       // 한 번 말하고 멈추면 자동 종료
+            r.maxAlternatives = 1;
+
+            r.onresult = (event) => {
+                let interim = '';
+                let finalText = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) finalText += transcript;
+                    else interim += transcript;
+                }
+                const input = document.getElementById('user-input');
+                if (!input) return;
+                const combined = (finalText + interim).trim();
+                if (combined) input.value = combined;
+                updateInputButtonState();
+            };
+
+            r.onerror = (event) => {
+                _recognitionActive = false;
+                _setVoiceBtnRecording(false);
+                // 'aborted' 는 사용자가 명시적으로 stop() 했을 때도 발생 — 토스트 X
+                if (event.error === 'aborted') return;
+                const map = {
+                    'not-allowed':         '마이크 권한이 차단됐어요. 주소 표시줄에서 허용해주세요.',
+                    'service-not-allowed': '브라우저가 마이크 접근을 차단했어요.',
+                    'no-speech':           '음성이 감지되지 않았어요. 다시 시도해주세요.',
+                    'audio-capture':       '마이크를 찾을 수 없어요.',
+                    'network':             '네트워크 문제로 음성 인식을 못 했어요.',
+                };
+                showToast(map[event.error] || '음성 인식에 실패했어요.');
+            };
+
+            r.onend = () => {
+                _recognitionActive = false;
+                _setVoiceBtnRecording(false);
+            };
+
+            _recognition = r;
+            return r;
+        }
+
+        function _setVoiceBtnRecording(on) {
+            const btn = document.getElementById('voice-btn');
+            const input = document.getElementById('user-input');
+            if (btn) {
+                btn.classList.toggle('recording', on);
+                btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+                btn.setAttribute('aria-label', on ? '음성 입력 중지' : '음성 입력 시작');
+            }
+            if (input) {
+                input.classList.toggle('recording-glow', on);
+                if (!on) {
+                    // 녹음 종료 시 placeholder 복원 (가이드 placeholder 가 남아있을 수 있음)
+                    input.placeholder = '메시지를 입력하세요...';
+                }
+            }
+        }
+
+        function toggleVoiceInput() {
+            const r = _ensureRecognition();
+            if (!r) {
+                showToast('이 브라우저는 음성 입력을 지원하지 않아요. Chrome이나 Safari를 사용해주세요.');
+                return;
+            }
+            if (_recognitionActive) {
+                try { r.stop(); } catch (e) { /* idempotent */ }
+                return;
+            }
+            // 진행 중인 TTS는 중단 (자기 음성을 모델 음성과 함께 듣는 사고 방지)
+            try {
+                if (window._ttsCurrentAudio && !_ttsCurrentAudio.paused) _ttsCurrentAudio.pause();
+            } catch (e) {}
+            try {
+                r.start();
+                _recognitionActive = true;
+                _setVoiceBtnRecording(true);
+                // 입력창 placeholder 를 잠시 가이드로
+                const input = document.getElementById('user-input');
+                if (input && !input.value) input.placeholder = '듣고 있어요... 말해보세요';
+            } catch (e) {
+                // start() 가 이미 진행 중일 때 던지는 InvalidStateError — 그냥 stop 시도
+                try { r.stop(); } catch (_) {}
+                _recognitionActive = false;
+                _setVoiceBtnRecording(false);
+                console.warn('SpeechRecognition.start failed:', e);
+            }
+        }
+
+        // 페이지가 백그라운드로 가면 녹음 자동 중지 (마이크 LED 켜진 채 두지 않기)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && _recognitionActive && _recognition) {
+                try { _recognition.stop(); } catch (e) {}
+            }
+        });
 
         // 전역 ESC: 가장 위에 열려 있는 모달/시트를 닫는다.
         document.addEventListener('keydown', (event) => {
