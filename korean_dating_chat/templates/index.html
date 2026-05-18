@@ -4875,28 +4875,77 @@
                 return;
             }
 
+            // 인라인 로딩 상태
+            const loading = document.createElement('div');
+            loading.className = 'translation';
+            loading.textContent = '번역 중...';
+            loading.style.opacity = '0.6';
+            contentDiv.appendChild(loading);
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
+
             try {
                 const response = await fetch('/translate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: koreanText })
+                    body: JSON.stringify({ text: koreanText }),
+                    signal: controller.signal,
                 });
+                clearTimeout(timeoutId);
 
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
+                loading.remove();
 
-                if (data.translatedText) {
+                if (response.ok && data.translatedText) {
                     const translationDiv = document.createElement('div');
                     translationDiv.className = 'translation';
                     translationDiv.textContent = data.translatedText;
                     contentDiv.appendChild(translationDiv);
+                } else {
+                    const err = document.createElement('div');
+                    err.className = 'translation';
+                    err.style.color = '#c62828';
+                    err.style.cursor = 'pointer';
+                    err.textContent = (data.error || '번역에 실패했어요') + ' (탭하면 다시 시도)';
+                    err.onclick = () => { err.remove(); translateMessage(contentDiv, koreanText); };
+                    contentDiv.appendChild(err);
                 }
             } catch (error) {
-                console.error('Translation error:', error);
+                clearTimeout(timeoutId);
+                loading.remove();
+                const err = document.createElement('div');
+                err.className = 'translation';
+                err.style.color = '#c62828';
+                err.style.cursor = 'pointer';
+                err.textContent = (error.name === 'AbortError'
+                    ? '번역이 너무 오래 걸려요. 탭하면 다시 시도'
+                    : '번역 요청에 실패했어요. 탭하면 다시 시도');
+                err.onclick = () => { err.remove(); translateMessage(contentDiv, koreanText); };
+                contentDiv.appendChild(err);
+                console.warn('Translation error:', error);
             }
         }
 
-        // 한국어 TTS
+        // 한국어 TTS — 연속 실패 시 5분 silence (Azure 다운 / 키 회전 / 네트워크 단절 시 매 메시지마다 5초씩 빈 호출 방지)
+        let _ttsConsecutiveFailures = 0;
+        let _ttsDisabledUntil = 0;
+        let _ttsCurrentAudio = null;
         async function speakKorean(text) {
+            const now = Date.now();
+            if (now < _ttsDisabledUntil) {
+                // 쿨다운 중 — 호출 자체를 스킵
+                return;
+            }
+            // 이전 TTS가 아직 재생 중이면 중단(빠른 연속 메시지 대비)
+            if (_ttsCurrentAudio && !_ttsCurrentAudio.paused) {
+                try { _ttsCurrentAudio.pause(); } catch (e) {}
+                _ttsCurrentAudio = null;
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
             try {
                 const response = await fetch('/tts', {
                     method: 'POST',
@@ -4904,31 +4953,75 @@
                     body: JSON.stringify({
                         text: text,
                         language: 'ko-KR',
-                        character: currentCharacter
-                    })
+                        character: currentCharacter,
+                    }),
+                    signal: controller.signal,
+                });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    _ttsConsecutiveFailures += 1;
+                    // 503/500 등 3회 연속 실패 → 5분 silence
+                    if (_ttsConsecutiveFailures >= 3) {
+                        _ttsDisabledUntil = Date.now() + 5 * 60 * 1000;
+                        _ttsConsecutiveFailures = 0;
+                        console.warn('[TTS] disabled for 5 min after 3 consecutive failures');
+                    }
+                    return;
+                }
+
+                const data = await response.json().catch(() => null);
+                if (!data || !data.audio) {
+                    _ttsConsecutiveFailures += 1;
+                    return;
+                }
+
+                // 성공 — 실패 카운터 리셋
+                _ttsConsecutiveFailures = 0;
+
+                const audioBytes = atob(data.audio);
+                const arrayBuffer = new ArrayBuffer(audioBytes.length);
+                const uint8Array = new Uint8Array(arrayBuffer);
+                for (let i = 0; i < audioBytes.length; i++) {
+                    uint8Array[i] = audioBytes.charCodeAt(i);
+                }
+
+                const blob = new Blob([uint8Array], { type: 'audio/mp3' });
+                const audioUrl = URL.createObjectURL(blob);
+                const audio = new Audio(audioUrl);
+                _ttsCurrentAudio = audio;
+
+                // audio.play() 는 Promise — 브라우저 자동재생 정책으로 reject 가능 (사용자 제스처 전).  catch 필수.
+                audio.play().catch((err) => {
+                    if (err && err.name === 'NotAllowedError') {
+                        // 자동재생 차단 — 카운터에는 영향 없음 (이건 환경 문제, 서버 문제 아님)
+                        console.warn('[TTS] autoplay blocked:', err.message);
+                    } else {
+                        console.warn('[TTS] play() failed:', err);
+                    }
+                    URL.revokeObjectURL(audioUrl);
                 });
 
-                const data = await response.json();
-
-                if (data.audio) {
-                    const audioBytes = atob(data.audio);
-                    const arrayBuffer = new ArrayBuffer(audioBytes.length);
-                    const uint8Array = new Uint8Array(arrayBuffer);
-                    for (let i = 0; i < audioBytes.length; i++) {
-                        uint8Array[i] = audioBytes.charCodeAt(i);
-                    }
-
-                    const blob = new Blob([uint8Array], { type: 'audio/mp3' });
-                    const audioUrl = URL.createObjectURL(blob);
-                    const audio = new Audio(audioUrl);
-                    audio.play();
-
-                    audio.onended = () => {
-                        URL.revokeObjectURL(audioUrl);
-                    };
-                }
+                audio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                    if (_ttsCurrentAudio === audio) _ttsCurrentAudio = null;
+                };
+                audio.onerror = () => {
+                    URL.revokeObjectURL(audioUrl);
+                    if (_ttsCurrentAudio === audio) _ttsCurrentAudio = null;
+                };
             } catch (error) {
-                console.error('TTS error:', error);
+                clearTimeout(timeoutId);
+                _ttsConsecutiveFailures += 1;
+                if (_ttsConsecutiveFailures >= 3) {
+                    _ttsDisabledUntil = Date.now() + 5 * 60 * 1000;
+                    _ttsConsecutiveFailures = 0;
+                    console.warn('[TTS] disabled for 5 min after 3 consecutive failures');
+                }
+                // AbortError(타임아웃)는 정상 동작, 콘솔에 굳이 표기 안 함
+                if (error.name !== 'AbortError') {
+                    console.warn('[TTS] error:', error.message);
+                }
             }
         }
 

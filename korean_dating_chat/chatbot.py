@@ -82,6 +82,21 @@ try:
         azure_speech_config.set_speech_synthesis_output_format(
             speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3
         )
+        # 네트워크가 죽거나 Azure region이 일시 다운돼도 SSE 응답이 묶이지 않도록
+        # 연결 단계 타임아웃을 짧게 설정 (기본은 ~60s).
+        try:
+            azure_speech_config.set_property(
+                speechsdk.PropertyId.SpeechServiceConnection_RecoMode,  # 더미 — 일부 SDK 버전 호환
+                'INTERACTIVE',
+            )
+        except Exception:
+            pass
+        # connection / receive timeouts (밀리초). 일부 SDK 버전은 string property로 노출.
+        try:
+            azure_speech_config.set_property_by_name('SpeechServiceConnection_RecvTimeoutMs', '12000')
+            azure_speech_config.set_property_by_name('SpeechServiceConnection_SendTimeoutMs', '8000')
+        except Exception:
+            pass
         print(f"[STARTUP] OK - Azure Speech 초기화 성공 (Region: {AZURE_SPEECH_REGION})")
     else:
         print("[WARNING] AZURE_SPEECH_KEY가 설정되지 않았습니다")
@@ -129,17 +144,43 @@ except Exception as e:
     print(f"[WARNING] Google Sheets 초기화 실패: {str(e)}")
     gs_client = None
 
-def save_to_google_sheet(user_text, bot_text, character_name):
-    """사용자 입력과 AI 응답을 Google Sheets에 기록"""
+# Sheets 로깅은 외부 API(약 200–2000ms, 가끔 30s+ 타임아웃)다.
+# /chat 응답 사이클에서 직접 호출하면 SSE 'done' 이벤트가 지연되므로
+# 작은 백그라운드 스레드 풀에 떠넘긴다.  실패해도 사용자 경로엔 영향 없음.
+import concurrent.futures as _futures
+_sheets_executor = _futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix='sheets-log')
+
+def _do_save_to_google_sheet(user_text, bot_text, character_name):
     if not gs_client:
         return
     try:
         sheet = gs_client.open(GOOGLE_SHEET_NAME).sheet1
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        sheet.append_row([timestamp, character_name, user_text, bot_text])
+        # 시트에 들어가는 텍스트 길이 cap — gspread는 큰 셀에서 잦은 timeout
+        sheet.append_row([
+            timestamp,
+            character_name[:50],
+            user_text[:1000],
+            bot_text[:2000],
+        ])
         print(f"[Google Sheets] OK - 로그 저장 완료")
     except Exception as e:
-        print(f"[Google Sheets] ERROR - 로그 저장 실패: {str(e)}")
+        # 절대 raise 하지 않음 — caller(/chat)와 끊긴 백그라운드 스레드
+        print(f"[Google Sheets] ERROR - 로그 저장 실패: {str(e)[:200]}")
+
+def save_to_google_sheet(user_text, bot_text, character_name):
+    """사용자 입력과 AI 응답을 Google Sheets에 기록 (비차단).
+
+    /chat 응답 경로에서 호출하므로 절대 동기적으로 외부 호출을 하면 안 됨.
+    풀이 가득 차면 조용히 드롭(과부하 보호).
+    """
+    if not gs_client:
+        return
+    try:
+        _sheets_executor.submit(_do_save_to_google_sheet, user_text, bot_text, character_name)
+    except RuntimeError:
+        # executor shutdown 중이거나 큐 가득 — 사용자 경로엔 무영향이므로 드롭
+        pass
 
 # ==========================================
 # [캐릭터 페르소나] 시스템 프롬프트
@@ -1538,6 +1579,33 @@ def _is_unavailable_error(err):
     )
 
 
+def _with_transient_retry(fn, *, attempts=3, base_delay=0.4, op_name='op'):
+    """일시 장애(5xx, 일부 429)에 대해 지수 백오프 재시도.
+
+    재시도 가능: _is_unavailable_error → 항상 / _is_quota_error → 첫 번째만
+    그 외 예외는 즉시 raise (호출자의 catch-all 처리).
+    스트리밍 호출에는 사용 금지 — 부분 응답을 중복 발송하게 됨.
+    """
+    import time as _t
+    last = None
+    for i in range(attempts):
+        try:
+            return fn()
+        except Exception as e:
+            last = e
+            transient = _is_unavailable_error(e)
+            quota_retry = _is_quota_error(e) and i == 0
+            if not (transient or quota_retry):
+                raise
+            if i == attempts - 1:
+                break
+            delay = base_delay * (2 ** i)
+            print(f"[{op_name}] transient error (attempt {i+1}/{attempts}): {str(e)[:200]} — retry in {delay:.1f}s")
+            _t.sleep(delay)
+    # 모든 시도 소진
+    raise last
+
+
 def extract_vocab_from_response(ai_response, user_level='intermediate'):
     """AI 응답에서 어려운 단어 최대 3개 추출 → [{word, meaning, romanization}]
 
@@ -1918,29 +1986,35 @@ def text_to_speech():
             })
         elif result.reason == speechsdk.ResultReason.Canceled:
             cancellation = result.cancellation_details
-            print(f"[TTS] 취소됨: {cancellation.reason}")
+            # cancellation.reason / error_details 는 region/구독/내부 메시지를 포함할 수 있어
+            # 클라이언트에는 일반 메시지만 전달하고 상세는 서버 로그에 기록.
+            print(f"[TTS] 취소됨: reason={cancellation.reason}")
             if cancellation.reason == speechsdk.CancellationReason.Error:
-                print(f"[TTS] 에러: {cancellation.error_details}")
-            return jsonify({'error': f'TTS 실패: {cancellation.reason}'}), 500
+                print(f"[TTS] 에러 상세: {cancellation.error_details}")
+            return jsonify({'error': '음성 합성에 실패했어요. 잠시 후 다시 시도해주세요.'}), 503
         else:
             print(f"[TTS] 예상치 못한 결과: {result.reason}")
-            return jsonify({'error': f'TTS 실패: 예상치 못한 결과'}), 500
+            return jsonify({'error': '음성 합성에 실패했어요.'}), 500
 
     except Exception as e:
-        print(f"[ERROR] TTS 오류: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        print(f"[TTS] ERROR: {str(e)[:300]}")
+        return jsonify({'error': '음성 합성 중 오류가 발생했어요.'}), 500
 
 @app.route('/translate', methods=['POST'])
 def translate_text():
-    """한국어 → 영어 번역"""
+    """한국어 → 영어 번역.
+
+    Robustness:
+    - 입력 텍스트 3000자 cap (Google Translate 길이 제한 + 비용)
+    - 5xx / 일부 429에 한해 지수 백오프 재시도
+    - 사용자에게 일반 에러 메시지만 반환, 상세는 서버 로그
+    """
     if not translate_client:
-        return jsonify({'error': 'Translation 클라이언트가 초기화되지 않았습니다'}), 500
+        return jsonify({'error': '번역 기능이 일시적으로 비활성화되어 있어요.'}), 503
 
     try:
         data = request.get_json(silent=True) or {}
-        text = data.get('text', '')
+        text = str(data.get('text', ''))[:3000]
 
         if not text:
             return jsonify({'error': 'No text provided'}), 400
@@ -1950,25 +2024,33 @@ def translate_text():
         if not text:
             return jsonify({'error': 'No translatable text'}), 400
 
-        # 한국어 → 영어 번역
-        result = translate_client.translate(
-            text,
-            target_language='en',
-            source_language='ko'
+        # 한국어 → 영어 번역 (transient retry 적용)
+        result = _with_transient_retry(
+            lambda: translate_client.translate(
+                text,
+                target_language='en',
+                source_language='ko'
+            ),
+            attempts=3,
+            base_delay=0.4,
+            op_name='Translate',
         )
 
-        translated_text = result['translatedText']
+        translated_text = str(result.get('translatedText', ''))[:6000]
 
         return jsonify({
             'translatedText': translated_text,
-            'originalText': text
+            'originalText': text,
         })
 
     except Exception as e:
-        print(f"[ERROR] Translation 오류: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        # 상세는 서버 로그에만 기록 (Google Cloud auth 메시지에는 프로젝트 ID / 키 흔적이 섞이는 경우가 있음)
+        print(f"[Translate] ERROR: {str(e)[:300]}")
+        if _is_unavailable_error(e):
+            return jsonify({'error': '번역 서버가 잠시 바빠요. 잠시 후 다시 시도해주세요.'}), 503
+        if _is_quota_error(e):
+            return jsonify({'error': '번역 사용량 한도에 도달했어요. 잠시 뒤 다시 시도해주세요.'}), 429
+        return jsonify({'error': '번역 중 오류가 발생했어요.'}), 500
 
 # ==========================================
 # [푸시 알림] 캐릭터별 시간대별 메시지 템플릿
@@ -2214,92 +2296,118 @@ def register_push():
 # ==========================================
 @app.route('/send-scheduled-notifications', methods=['POST'])
 def send_scheduled_notifications():
-    """Cloud Scheduler가 호출하는 알림 발송 엔드포인트"""
+    """Cloud Scheduler가 호출하는 알림 발송 엔드포인트.
+
+    Robustness:
+    - 메시지 빌드 단계를 try/except 로 감싸 한 구독자 데이터 오류가 전체를 막지 않음
+    - FCM 호출은 send_each() 배치(최대 500개 / 호출)로 대체 — 5xx 시 재시도, 메시지당 round-trip 제거
+    - Datastore 비활성화 처리도 부분 실패 허용
+    """
     try:
-        data = request.get_json() or {}
+        data = request.get_json(silent=True) or {}
         time_slot = data.get('time_slot', 'morning')
 
         if time_slot not in ['morning', 'lunch', 'night', 'fortune']:
             return jsonify({'error': 'Invalid time_slot'}), 400
 
         if not ds_client:
-            return jsonify({'error': 'Datastore not available'}), 500
+            return jsonify({'error': 'Datastore not available'}), 503
 
         if not firebase_app:
-            return jsonify({'error': 'Firebase not initialized'}), 500
+            return jsonify({'error': 'Firebase not initialized'}), 503
 
-        # 활성 구독자 조회 (PropertyFilter API: 라이브러리 업데이트 호환성)
         from google.cloud.datastore.query import PropertyFilter
-        query = ds_client.query(kind='PushSubscription')
-        query.add_filter(filter=PropertyFilter('active', '=', True))
-        subscriptions = list(query.fetch())
+        try:
+            query = ds_client.query(kind='PushSubscription')
+            query.add_filter(filter=PropertyFilter('active', '=', True))
+            subscriptions = list(query.fetch())
+        except Exception as e:
+            print(f"[Push] Datastore query failed: {str(e)[:200]}")
+            return jsonify({'error': 'Datastore query failed'}), 503
+
+        # 토큰별로 메시지 빌드. 빌드 실패 항목은 스킵.
+        messages_to_send = []
+        sub_keys_by_token = {}
+        for sub in subscriptions:
+            try:
+                token = sub.get('token')
+                if not token:
+                    continue
+                character = sub.get('character', 'jiwoo')
+                if character not in NOTIFICATION_MESSAGES:
+                    character = 'jiwoo'
+                msg_template = random.choice(NOTIFICATION_MESSAGES[character][time_slot])
+                base_url = 'https://kdating-chat-515513943326.asia-northeast3.run.app'
+                icon_url = f'{base_url}/static/{character}_profile.png'
+                notification_link = f'{base_url}?fortune=true' if time_slot == 'fortune' else base_url
+                messages_to_send.append(messaging.Message(
+                    notification=messaging.Notification(
+                        title=msg_template['title'],
+                        body=msg_template['body'],
+                    ),
+                    webpush=messaging.WebpushConfig(
+                        notification=messaging.WebpushNotification(
+                            icon=icon_url,
+                            tag=f'kdating-{time_slot}',
+                            renotify=True,
+                        ),
+                        fcm_options=messaging.WebpushFCMOptions(link=notification_link)
+                    ),
+                    token=token,
+                ))
+                sub_keys_by_token[token] = sub.key
+            except Exception as e:
+                print(f"[Push] skip subscription (build error): {str(e)[:120]}")
 
         sent_count = 0
         failed_count = 0
         invalid_tokens = []
-        errors = []
 
-        for sub in subscriptions:
-            token = sub.get('token')
-            character = sub.get('character', 'jiwoo')
-
-            if character not in NOTIFICATION_MESSAGES:
-                character = 'jiwoo'
-
-            # 랜덤 메시지 선택
-            messages = NOTIFICATION_MESSAGES[character][time_slot]
-            msg_template = random.choice(messages)
-
-            # icon은 절대 HTTPS URL로 설정
-            base_url = 'https://kdating-chat-515513943326.asia-northeast3.run.app'
-            icon_url = f'{base_url}/static/{character}_profile.png'
-            notification_link = f'{base_url}?fortune=true' if time_slot == 'fortune' else base_url
-
-            message = messaging.Message(
-                notification=messaging.Notification(
-                    title=msg_template['title'],
-                    body=msg_template['body'],
-                ),
-                webpush=messaging.WebpushConfig(
-                    notification=messaging.WebpushNotification(
-                        icon=icon_url,
-                        tag=f'kdating-{time_slot}',
-                        renotify=True,
-                    ),
-                    fcm_options=messaging.WebpushFCMOptions(
-                        link=notification_link
-                    )
-                ),
-                token=token,
-            )
-
+        # send_each: 한 번에 최대 500개씩 배치 전송. 5xx 일부엔 SDK가 자체 재시도.
+        BATCH = 500
+        for start in range(0, len(messages_to_send), BATCH):
+            chunk = messages_to_send[start:start + BATCH]
             try:
-                msg_id = messaging.send(message)
-                sent_count += 1
-            except messaging.UnregisteredError:
-                invalid_tokens.append(sub.key)
-                failed_count += 1
-                errors.append('UnregisteredError - token expired')
+                response = messaging.send_each(chunk)
             except Exception as e:
+                # 배치 전체가 실패하면 다음 배치라도 시도
+                print(f"[Push] batch send failed (chunk {start}): {str(e)[:200]}")
+                failed_count += len(chunk)
+                continue
+            for i, resp in enumerate(response.responses):
+                if resp.success:
+                    sent_count += 1
+                    continue
                 failed_count += 1
-                errors.append(str(e))
+                err = resp.exception
+                # UnregisteredError 또는 InvalidArgument → 토큰 만료, 비활성화 대상
+                if isinstance(err, messaging.UnregisteredError) or (
+                    err is not None and 'registration-token-not-registered' in str(err).lower()
+                ):
+                    key = sub_keys_by_token.get(chunk[i].token)
+                    if key is not None:
+                        invalid_tokens.append(key)
 
-        # 무효 토큰 비활성화
+        # 무효 토큰 비활성화. 한 건 실패가 전체를 막지 않게.
+        cleaned = 0
         for key in invalid_tokens:
-            entity = ds_client.get(key)
-            if entity:
-                entity['active'] = False
-                ds_client.put(entity)
+            try:
+                entity = ds_client.get(key)
+                if entity:
+                    entity['active'] = False
+                    ds_client.put(entity)
+                    cleaned += 1
+            except Exception as e:
+                print(f"[Push] cleanup failed for {key}: {str(e)[:120]}")
 
-        print(f"[Push] 발송 완료: sent={sent_count}, failed={failed_count}, cleaned={len(invalid_tokens)}")
+        print(f"[Push] 발송 완료: sent={sent_count}, failed={failed_count}, cleaned={cleaned}/{len(invalid_tokens)}")
 
         return jsonify({
             'success': True,
             'sent': sent_count,
             'failed': failed_count,
-            'cleaned_tokens': len(invalid_tokens),
+            'cleaned_tokens': cleaned,
             'total_subscriptions': len(subscriptions),
-            'errors': errors
         })
 
     except Exception as e:
