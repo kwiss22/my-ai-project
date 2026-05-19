@@ -177,6 +177,31 @@
             background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
         }
 
+        /* 원화 WONHWA 5인 - 세속오계 여성 시각 재해석.
+           룩북 팔레트를 카드 그라데이션으로 옮긴 것 — 화랑 페어와 컬러 가족이지만 변주. */
+        .character-card.sua {
+            /* 충, 다크 + 골드 (태오 페어) */
+            background: linear-gradient(135deg, #2a2a3e 0%, #c9a14a 100%);
+        }
+        .character-card.minseo {
+            /* 택, 라이트 그레이 + 오이스터 화이트 (레오 페어) */
+            background: linear-gradient(135deg, #f4f4f4 0%, #c0c0c0 100%);
+            color: #222;
+        }
+        .character-card.serin {
+            /* 용, 다크 + 크림슨 (신규 컬러) */
+            background: linear-gradient(135deg, #1a1010 0%, #8b1a1a 100%);
+        }
+        .character-card.harin {
+            /* 신, 다크 + 쿨 블루실버 (지훈 페어) */
+            background: linear-gradient(135deg, #2a2f3a 0%, #5a6a7a 100%);
+        }
+        .character-card.yuna {
+            /* 효, 파스텔 핑크 + 크림 (주노 페어) */
+            background: linear-gradient(135deg, #fff0e8 0%, #f8b5c8 100%);
+            color: #3a1a2a;
+        }
+
         .character-card .hwarang-badge {
             position: absolute;
             top: 8px;
@@ -188,7 +213,12 @@
             border-radius: 10px;
             letter-spacing: 0.5px;
         }
-        .character-card.leo .hwarang-badge { background: rgba(0,0,0,0.35); }
+        .character-card.leo .hwarang-badge,
+        .character-card.minseo .hwarang-badge,
+        .character-card.yuna .hwarang-badge {
+            /* 라이트 카드는 배지를 어둡게 */
+            background: rgba(0,0,0,0.35);
+        }
 
         .character-avatar {
             font-size: 80px;
@@ -2072,8 +2102,8 @@
             <!-- Character cards are rendered dynamically from CHARACTERS registry (see renderCharacterCards()) -->
         </div>
         <p style="margin-top: 28px; margin-bottom: 0; font-size: 13px; color: #555; line-height: 1.7; background: rgba(0,0,0,0.05); padding: 12px 16px; border-radius: 8px;" id="s3-disclaimer">
-            지우, 현우, 화랑(HWARANG) 멤버들은 모두 AI 캐릭터입니다. 모든 대화는 허구이며, 실제 만남은 이루어지지 않습니다.<br>
-            Jiwoo and Hyunwoo are AI characters. All conversations are fictional role-play.
+            지우, 화랑(HWARANG), 원화(WONHWA) 멤버들은 모두 AI 캐릭터입니다. 모든 대화는 허구이며, 실제 만남은 이루어지지 않습니다.<br>
+            Jiwoo and the members of HWARANG and WONHWA are AI characters. All conversations are fictional role-play.
         </p>
         <p style="margin-top:12px; font-size:12px; color:#aaa; text-align:center;">
             <a href="/privacy" target="_blank" style="color:#aaa; text-decoration:underline;">개인정보처리방침</a>
@@ -2496,28 +2526,40 @@
         // ==========================================
         const CHARACTERS = {
             jiwoo:   { name: '지우', nameRoman: 'Jiwoo', info: '22세 · 이대 재학중', infoEn: '22 · Ewha University student', tagline: '', group: null,      color: '#ff6b9d', initial: '지' },
-            hyunwoo: { name: '현우', nameRoman: 'Hyunwoo', info: '23세 · 화랑 메인보컬', infoEn: '23 · HWARANG Main Vocal', tagline: '임전무퇴 · 退', group: 'HWARANG', color: '#e53935', initial: '현' },
+            // 화랑 HWARANG 5인
             taeo:    { name: '태오', nameRoman: 'Tae-o', info: '26세 · 화랑 리더',      infoEn: '26 · HWARANG Leader',      tagline: '사군이충 · 忠', group: 'HWARANG', color: '#d4a017', initial: '태' },
             leo:     { name: '레오', nameRoman: 'Leo',   info: '24세 · 화랑 비주얼',    infoEn: '24 · HWARANG Visual',      tagline: '살생유택 · 擇', group: 'HWARANG', color: '#9e9e9e', initial: '레' },
             jihoon:  { name: '지훈', nameRoman: 'Ji-hoon', info: '22세 · 화랑 메인래퍼', infoEn: '22 · HWARANG Main Rapper', tagline: '교우이신 · 信', group: 'HWARANG', color: '#2a2a2a', initial: '지' },
             juno:    { name: '주노', nameRoman: 'Ju-no', info: '20세 · 화랑 막내',     infoEn: '20 · HWARANG Maknae',      tagline: '사친이효 · 孝', group: 'HWARANG', color: '#1976d2', initial: '주' },
+            hyunwoo: { name: '현우', nameRoman: 'Hyunwoo', info: '23세 · 화랑 메인댄서', infoEn: '23 · HWARANG Main Dancer', tagline: '임전무퇴 · 勇', group: 'HWARANG', color: '#e53935', initial: '현' },
+            // 원화 WONHWA 5인 — 화랑의 자매 걸그룹
+            sua:     { name: '수아', nameRoman: 'Sua',    info: '26세 · 원화 리더',      infoEn: '26 · WONHWA Leader',      tagline: '사군이충 · 忠', group: 'WONHWA', color: '#c9a14a', initial: '수' },
+            minseo:  { name: '민서', nameRoman: 'Minseo', info: '24세 · 원화 비주얼',    infoEn: '24 · WONHWA Visual',      tagline: '살생유택 · 擇', group: 'WONHWA', color: '#c0c0c0', initial: '민' },
+            serin:   { name: '세린', nameRoman: 'Serin',  info: '23세 · 원화 리드댄서',  infoEn: '23 · WONHWA Lead Dancer', tagline: '임전무퇴 · 勇', group: 'WONHWA', color: '#8b1a1a', initial: '세' },
+            harin:   { name: '하린', nameRoman: 'Harin',  info: '22세 · 원화 메인래퍼',  infoEn: '22 · WONHWA Main Rapper', tagline: '교우이신 · 信', group: 'WONHWA', color: '#5a6a7a', initial: '하' },
+            yuna:    { name: '유나', nameRoman: 'Yuna',   info: '20세 · 원화 막내',      infoEn: '20 · WONHWA Maknae',      tagline: '사친이효 · 孝', group: 'WONHWA', color: '#f8b5c8', initial: '유' },
         };
         const CHARACTER_IDS = Object.keys(CHARACTERS);
         // PNG 프로필 파일이 실제 존재하는 캐릭터 목록. 나머지는 SVG placeholder 사용.
-        const CHARACTERS_WITH_PNG = new Set(['jiwoo', 'hyunwoo', 'taeo', 'leo', 'jihoon', 'juno']);
+        // 원화 5명: 사용자가 static/<id>_profile.png 에 저장하면 자동 표시. 미저장 시 img.onerror 가 SVG 폴백.
+        const CHARACTERS_WITH_PNG = new Set(['jiwoo', 'hyunwoo', 'taeo', 'leo', 'jihoon', 'juno', 'sua', 'minseo', 'serin', 'harin', 'yuna']);
 
         function getCharacterName(id) {
             return (CHARACTERS[id] || CHARACTERS.jiwoo).name;
         }
-        function getCharacterProfileSrc(id) {
+        // 라이트 카드(이니셜 위 어두운 글씨가 자연스러운 멤버들) — SVG placeholder 폰트 색 분기용
+        const LIGHT_CARDS = new Set(['leo', 'minseo', 'yuna']);
+        function getCharacterSvgPlaceholder(id) {
             const c = CHARACTERS[id] || CHARACTERS.jiwoo;
-            if (CHARACTERS_WITH_PNG.has(id)) return `/static/${id}_profile.png`;
-            // SVG placeholder: 오방색 + 한글 이니셜
             const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'>
                 <rect width='120' height='120' fill='${c.color}'/>
-                <text x='60' y='78' font-size='62' font-family='system-ui,sans-serif' fill='${id === 'leo' ? '#222' : 'white'}' text-anchor='middle' font-weight='700'>${c.initial}</text>
+                <text x='60' y='78' font-size='62' font-family='system-ui,sans-serif' fill='${LIGHT_CARDS.has(id) ? '#222' : 'white'}' text-anchor='middle' font-weight='700'>${c.initial}</text>
             </svg>`;
             return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        }
+        function getCharacterProfileSrc(id) {
+            if (CHARACTERS_WITH_PNG.has(id)) return `/static/${id}_profile.png`;
+            return getCharacterSvgPlaceholder(id);
         }
 
         let currentCharacter = 'jiwoo';
@@ -2605,11 +2647,13 @@
                 const infoText = isKorean ? c.info : c.infoEn;
                 const badge = c.group ? `<div class="hwarang-badge">${c.group}</div>` : '';
                 const a11yLabel = `${c.name} 선택 — ${infoText.replace(/\s+/g, ' ').trim()}`;
+                // data-char 로 id 만 표기. onerror 핸들러는 아래서 addEventListener 로 부착
+                // (data URI SVG 의 single quote 가 인라인 onerror string 을 깨는 걸 방지).
                 return `
                     <div class="character-card ${id}" onclick="selectCharacter('${id}')" role="button" tabindex="0" aria-label="${a11yLabel}">
                         ${badge}
                         <div class="character-avatar">
-                            <img src="${getCharacterProfileSrc(id)}" alt="">
+                            <img src="${getCharacterProfileSrc(id)}" alt="" data-char="${id}">
                         </div>
                         <div class="character-name">${c.name}<br>${c.nameRoman}</div>
                         <div class="character-info" id="${id}-info">${infoText}</div>
@@ -2617,6 +2661,14 @@
                     </div>
                 `;
             }).join('');
+
+            // PNG 가 static/ 에 없는 경우 SVG placeholder 로 자동 전환.
+            // 한 번만 발동되도록 once: true.
+            container.querySelectorAll('img[data-char]').forEach(img => {
+                img.addEventListener('error', () => {
+                    img.src = getCharacterSvgPlaceholder(img.dataset.char);
+                }, { once: true });
+            });
         }
 
         // 단어장 in-memory cache (UI 렌더링을 동기화하려고 보관)
