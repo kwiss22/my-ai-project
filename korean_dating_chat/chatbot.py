@@ -2000,6 +2000,65 @@ def text_to_speech():
         print(f"[TTS] ERROR: {str(e)[:300]}")
         return jsonify({'error': '음성 합성 중 오류가 발생했어요.'}), 500
 
+
+# === STT (Speech-to-Text) — Web Speech API 미지원 브라우저용 폴백 ===
+# 클라이언트가 16kHz mono PCM16 WAV 를 POST. Azure REST 엔드포인트로 단발 인식.
+# SDK + GStreamer 의존성을 피하기 위해 SDK 대신 직접 REST 호출.
+_STT_MAX_BYTES = 2 * 1024 * 1024  # ~30초 (16kHz PCM16 mono = ~960KB/30s, 여유분)
+
+@app.route('/transcribe', methods=['POST'])
+def transcribe():
+    """단발 음성 인식. multipart/form-data, field=audio (WAV PCM16 mono 16kHz)."""
+    import requests as _requests  # 지연 임포트 — 모듈 상단 import 추가 회피
+    if not AZURE_SPEECH_KEY:
+        return jsonify({'error': '백엔드 음성 인식이 비활성화돼 있어요.'}), 503
+    f = request.files.get('audio')
+    if not f:
+        return jsonify({'error': '오디오 파일이 없어요.'}), 400
+    data = f.read(_STT_MAX_BYTES + 1)
+    if not data:
+        return jsonify({'error': '오디오가 비어 있어요.'}), 400
+    if len(data) > _STT_MAX_BYTES:
+        return jsonify({'error': '오디오가 너무 길어요 (최대 ~30초).'}), 413
+    language = request.form.get('language', 'ko-KR')
+    if language not in ('ko-KR', 'en-US'):
+        language = 'ko-KR'
+    url = (
+        f"https://{AZURE_SPEECH_REGION}.stt.speech.microsoft.com"
+        "/speech/recognition/conversation/cognitiveservices/v1"
+    )
+    try:
+        resp = _requests.post(
+            url,
+            params={'language': language, 'format': 'simple', 'profanity': 'masked'},
+            headers={
+                'Ocp-Apim-Subscription-Key': AZURE_SPEECH_KEY,
+                'Content-Type': 'audio/wav; codecs=audio/pcm; samplerate=16000',
+                'Accept': 'application/json',
+            },
+            data=data,
+            timeout=12,
+        )
+    except _requests.RequestException as e:
+        print(f"[STT] network error: {str(e)[:200]}")
+        return jsonify({'error': '음성 인식 서비스에 연결할 수 없어요.'}), 502
+    if resp.status_code != 200:
+        # 401/403 = 키 문제, 429 = 쿼터, 5xx = Azure 측 — 모두 사용자에게는 일반 메시지.
+        print(f"[STT] Azure {resp.status_code}: {resp.text[:200]}")
+        return jsonify({'error': '음성 인식에 실패했어요.'}), 502
+    try:
+        body = resp.json()
+    except ValueError:
+        return jsonify({'error': '음성 인식 결과를 해석할 수 없어요.'}), 502
+    status = body.get('RecognitionStatus')
+    if status == 'Success':
+        return jsonify({'text': body.get('DisplayText', ''), 'language': language})
+    if status in ('NoMatch', 'InitialSilenceTimeout', 'BabbleTimeout'):
+        return jsonify({'text': '', 'language': language, 'no_match': True})
+    print(f"[STT] non-success status={status}")
+    return jsonify({'error': '음성이 인식되지 않았어요.'}), 422
+
+
 @app.route('/translate', methods=['POST'])
 def translate_text():
     """한국어 → 영어 번역.

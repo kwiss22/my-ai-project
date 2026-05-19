@@ -5184,7 +5184,8 @@
         function toggleVoiceInput() {
             const r = _ensureRecognition();
             if (!r) {
-                showToast('이 브라우저는 음성 입력을 지원하지 않아요. Chrome이나 Safari를 사용해주세요.');
+                // Web Speech API 미지원 (Firefox / 구형 Safari 등) → 백엔드 /transcribe 폴백
+                _toggleFallbackVoiceInput();
                 return;
             }
             if (_recognitionActive) {
@@ -5211,10 +5212,171 @@
             }
         }
 
+        // === 백엔드 STT 폴백 (Firefox / 구형 Safari) ===
+        // 마이크 캡처 → 16kHz mono PCM → WAV → POST /transcribe.
+        // MediaRecorder 의 webm/opus 컨테이너는 Azure 가 직접 받지 않아 클라이언트에서 WAV 로 변환.
+        let _fallbackActive = false;
+        let _fallbackStream = null;
+        let _fallbackAudioCtx = null;
+        let _fallbackNodes = null;
+        let _fallbackChunks = [];
+        let _fallbackInRate = 16000;
+        const _FALLBACK_MAX_SECONDS = 30;
+        let _fallbackAutoStopTimer = null;
+
+        async function _fallbackStart() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('이 브라우저는 마이크 접근을 지원하지 않아요.');
+                return false;
+            }
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: { channelCount: 1, sampleRate: 16000, echoCancellation: true, noiseSuppression: true }
+                });
+            } catch (e) {
+                const msg = e && e.name === 'NotAllowedError' ? '마이크 권한이 필요해요.'
+                          : e && e.name === 'NotFoundError'   ? '마이크를 찾을 수 없어요.'
+                          : '마이크를 시작할 수 없어요.';
+                showToast(msg);
+                return false;
+            }
+            const AC = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AC();
+            const source = ctx.createMediaStreamSource(stream);
+            // ScriptProcessorNode 는 deprecated 이지만 모든 표준 브라우저(Firefox 포함)에서 동작.
+            // AudioWorklet 은 별도 worklet 파일이 필요해 단일 HTML 템플릿 구조에서 복잡도 ↑.
+            const processor = ctx.createScriptProcessor(4096, 1, 1);
+            _fallbackChunks = [];
+            _fallbackInRate = ctx.sampleRate;
+            processor.onaudioprocess = (e) => {
+                const ch = e.inputBuffer.getChannelData(0);
+                _fallbackChunks.push(new Float32Array(ch));  // copy: inputBuffer 는 다음 콜백에 재사용됨
+            };
+            source.connect(processor);
+            processor.connect(ctx.destination);
+            _fallbackStream = stream;
+            _fallbackAudioCtx = ctx;
+            _fallbackNodes = { source, processor };
+            _fallbackActive = true;
+            // 30초 안전 컷오프 — ScriptProcessor 가 메인 스레드 부담을 늘리고 비용도 증가.
+            _fallbackAutoStopTimer = setTimeout(() => {
+                if (_fallbackActive) _fallbackFinish();
+            }, _FALLBACK_MAX_SECONDS * 1000);
+            return true;
+        }
+
+        async function _fallbackTeardown() {
+            if (_fallbackAutoStopTimer) { clearTimeout(_fallbackAutoStopTimer); _fallbackAutoStopTimer = null; }
+            try { _fallbackNodes && _fallbackNodes.processor.disconnect(); } catch (e) {}
+            try { _fallbackNodes && _fallbackNodes.source.disconnect(); } catch (e) {}
+            try { _fallbackStream && _fallbackStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+            try { _fallbackAudioCtx && await _fallbackAudioCtx.close(); } catch (e) {}
+            _fallbackNodes = null; _fallbackStream = null; _fallbackAudioCtx = null;
+        }
+
+        function _fallbackBuildWav() {
+            // Flatten
+            let total = 0;
+            for (const c of _fallbackChunks) total += c.length;
+            const flat = new Float32Array(total);
+            let off = 0;
+            for (const c of _fallbackChunks) { flat.set(c, off); off += c.length; }
+            _fallbackChunks = [];
+            // Resample (linear) to 16k
+            const target = 16000;
+            let samples;
+            if (_fallbackInRate === target) {
+                samples = flat;
+            } else {
+                const ratio = _fallbackInRate / target;
+                const outLen = Math.floor(flat.length / ratio);
+                samples = new Float32Array(outLen);
+                for (let i = 0; i < outLen; i++) {
+                    const idx = i * ratio;
+                    const i0 = Math.floor(idx);
+                    const i1 = Math.min(i0 + 1, flat.length - 1);
+                    const f = idx - i0;
+                    samples[i] = flat[i0] * (1 - f) + flat[i1] * f;
+                }
+            }
+            // PCM16 WAV
+            const buffer = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buffer);
+            const w = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+            w(0, 'RIFF');
+            view.setUint32(4, 36 + samples.length * 2, true);
+            w(8, 'WAVE'); w(12, 'fmt ');
+            view.setUint32(16, 16, true);    view.setUint16(20, 1, true);   view.setUint16(22, 1, true);
+            view.setUint32(24, target, true); view.setUint32(28, target * 2, true);
+            view.setUint16(32, 2, true);     view.setUint16(34, 16, true);
+            w(36, 'data');
+            view.setUint32(40, samples.length * 2, true);
+            let p = 44;
+            for (let i = 0; i < samples.length; i++, p += 2) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(p, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            }
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        async function _fallbackFinish() {
+            if (!_fallbackActive) return;
+            _fallbackActive = false;
+            _setVoiceBtnRecording(false);
+            const input = document.getElementById('user-input');
+            await _fallbackTeardown();
+            const wav = _fallbackBuildWav();
+            if (!wav || wav.size < 4400) {  // ~0.1s
+                showToast('음성이 너무 짧아요. 다시 시도해주세요.');
+                return;
+            }
+            if (input) input.placeholder = '인식 중...';
+            try {
+                const fd = new FormData();
+                fd.append('audio', wav, 'speech.wav');
+                fd.append('language', 'ko-KR');
+                const r = await fetch('/transcribe', { method: 'POST', body: fd });
+                let data = {};
+                try { data = await r.json(); } catch (e) {}
+                if (!r.ok) {
+                    showToast(data.error || '음성 인식에 실패했어요.');
+                    return;
+                }
+                if (data.no_match || !data.text) {
+                    showToast('음성이 인식되지 않았어요. 다시 시도해주세요.');
+                    return;
+                }
+                if (input) { input.value = data.text; updateInputButtonState(); }
+            } catch (e) {
+                showToast('서버에 연결할 수 없어요.');
+            } finally {
+                if (input) input.placeholder = '메시지를 입력하세요...';
+            }
+        }
+
+        function _toggleFallbackVoiceInput() {
+            if (_fallbackActive) { _fallbackFinish(); return; }
+            // 진행 중인 TTS 중단 — 자기 목소리 위에 모델 음성 겹치지 않도록.
+            try {
+                if (window._ttsCurrentAudio && !_ttsCurrentAudio.paused) _ttsCurrentAudio.pause();
+            } catch (e) {}
+            _fallbackStart().then((ok) => {
+                if (!ok) return;
+                _setVoiceBtnRecording(true);
+                const input = document.getElementById('user-input');
+                if (input && !input.value) input.placeholder = '듣고 있어요... (최대 30초)';
+            });
+        }
+
         // 페이지가 백그라운드로 가면 녹음 자동 중지 (마이크 LED 켜진 채 두지 않기)
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden && _recognitionActive && _recognition) {
+            if (!document.hidden) return;
+            if (_recognitionActive && _recognition) {
                 try { _recognition.stop(); } catch (e) {}
+            }
+            if (_fallbackActive) {
+                _fallbackFinish();
             }
         });
 
