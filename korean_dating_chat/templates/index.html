@@ -567,6 +567,44 @@
             border-color: var(--kakao-yellow);
         }
 
+        /* 인증/Quota chip (헤더 우상단) — 로그인/남은메시지/구독 배지 분기 */
+        .auth-header-slot {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 6px;
+        }
+        .auth-chip {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            line-height: 1;
+            white-space: nowrap;
+            display: inline-block;
+            border: none;
+            cursor: default;
+        }
+        .auth-chip--login {
+            background: rgba(255,255,255,0.92);
+            color: #3c1e1e;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        .auth-chip--login:hover { background: #fff; transform: translateY(-1px); }
+        .auth-chip--quota {
+            background: rgba(255,255,255,0.85);
+            color: #3c1e1e;
+        }
+        .auth-chip--quota.auth-chip--low {
+            background: #ffb3b3;
+            color: #5a0000;
+        }
+        .auth-chip--vip {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 2px 6px rgba(240,87,108,0.35);
+        }
+
         .send-btn {
             background: var(--kakao-yellow);
             border: none;
@@ -2125,6 +2163,8 @@
                 </div>
             </div>
             <div class="header-buttons">
+                <!-- 인증/Quota 칩 (renderAuthHeader 가 채움) -->
+                <div id="auth-header-slot" class="auth-header-slot"></div>
                 <!-- 호감도 카운터 (클릭 → 진행도 모달) -->
                 <div id="heart-counter" title="호감도" role="button" tabindex="0" aria-label="호감도 진행 상황 보기" onclick="openIntimacyModal()">
                     <span id="heart-level-badge">Lv1</span>
@@ -2250,6 +2290,73 @@
             </button>
             <!-- 입력창에 텍스트가 있을 때만 보이는 전송 버튼 -->
             <button class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="메시지 전송" style="display:none;">전송</button>
+        </div>
+    </div>
+
+    <!-- =====================
+         로그인 모달 (Google / Kakao)
+    ===================== -->
+    <div class="modal-overlay" id="login-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="login-modal-title" aria-hidden="true" onclick="closeLoginModal(event)">
+        <div class="modal-sheet" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3 id="login-modal-title">로그인</h3>
+                <button class="modal-close" aria-label="닫기" onclick="closeLoginModal()" id="login-modal-close-btn">&times;</button>
+            </div>
+            <div style="padding: 8px 24px 28px;">
+                <p style="color:#666; font-size:14px; line-height:1.6; margin: 0 0 20px;">
+                    K-Dating Chat 을 이용하려면 로그인이 필요해요.<br>
+                    무료로 일 <strong id="login-modal-quota">25</strong>개 메시지를 보낼 수 있습니다.
+                </p>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button id="login-btn-google" type="button" onclick="loginWithGoogle()" style="display:none; width:100%; padding:12px 16px; border:1px solid #dadce0; background:#fff; color:#3c4043; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;">
+                        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+                        Google로 계속
+                    </button>
+                    <button id="login-btn-kakao" type="button" onclick="loginWithKakao()" style="display:none; width:100%; padding:12px 16px; border:none; background:#FEE500; color:#191600; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; align-items:center; justify-content:center; gap:10px;">
+                        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="#191600"><path d="M9 1.5C4.858 1.5 1.5 4.193 1.5 7.5c0 2.124 1.391 3.992 3.487 5.054l-.881 3.224a.3.3 0 0 0 .462.325l3.871-2.561c.184.013.37.022.561.022 4.142 0 7.5-2.693 7.5-6.064C16.5 4.193 13.142 1.5 9 1.5z"/></svg>
+                        카카오로 계속
+                    </button>
+                    <button id="login-btn-dev" type="button" onclick="loginWithDev()" style="display:none; width:100%; padding:12px 16px; border:1px dashed #999; background:transparent; color:#666; border-radius:8px; font-size:13px; cursor:pointer;">
+                        Dev login (테스트용)
+                    </button>
+                </div>
+                <p id="login-modal-status" style="margin: 16px 0 0; font-size:12px; color:#888; min-height:18px;"></p>
+                <p style="margin-top:18px; font-size:11px; color:#aaa; line-height:1.6;">
+                    로그인하면 <a href="/terms" target="_blank" style="color:#888;">이용약관</a> 과
+                    <a href="/privacy" target="_blank" style="color:#888;">개인정보처리방침</a>에 동의하는 것으로 간주됩니다.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================
+         페이월 모달 (구독 결제)
+    ===================== -->
+    <div class="modal-overlay" id="paywall-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="paywall-modal-title" aria-hidden="true" onclick="closePaywallModal(event)">
+        <div class="modal-sheet" style="max-width: 440px;">
+            <div class="modal-header">
+                <h3 id="paywall-modal-title">✨ 무제한으로 더 대화하기</h3>
+                <button class="modal-close" aria-label="닫기" onclick="closePaywallModal()">&times;</button>
+            </div>
+            <div style="padding: 8px 24px 28px;">
+                <p style="color:#444; font-size:14px; line-height:1.7; margin: 0 0 18px;" id="paywall-modal-body">
+                    오늘 무료 메시지(<strong id="paywall-cap">25</strong>개)를 모두 사용했어요.<br>
+                    내일 자정(UTC)에 다시 리셋되고, 지금 바로 더 대화하고 싶다면 구독해주세요.
+                </p>
+                <div style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:white; border-radius:12px; padding:20px; margin-bottom:18px;">
+                    <div style="font-size:13px; opacity:0.9; margin-bottom:4px;">월 구독</div>
+                    <div style="font-size:28px; font-weight:700; line-height:1.1;">무제한 메시지</div>
+                    <ul style="font-size:13px; margin:14px 0 0; padding-left:18px; opacity:0.95; line-height:1.7;">
+                        <li>모든 캐릭터(11명) 무제한 대화</li>
+                        <li>시나리오·미션 무제한</li>
+                        <li>언제든 해지 가능</li>
+                    </ul>
+                </div>
+                <button id="paywall-subscribe-btn" type="button" onclick="startSubscription()" style="width:100%; padding:14px 16px; border:none; background:#3c1e1e; color:white; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer;">
+                    구독 시작
+                </button>
+                <p id="paywall-status" style="margin: 12px 0 0; font-size:12px; color:#888; min-height:18px; text-align:center;"></p>
+            </div>
         </div>
     </div>
 
@@ -4371,6 +4478,19 @@
 
                 if (!response.ok) {
                     const errData = await response.json().catch(() => ({}));
+                    // 401 = 로그인 필요, 402 = quota 초과 (둘 다 paywall 분기)
+                    if (response.status === 401 && errData.paywall === 'login') {
+                        typingIndicator.remove();
+                        document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                        openLoginModal();
+                        return;
+                    }
+                    if (response.status === 402 && errData.paywall === 'quota') {
+                        typingIndicator.remove();
+                        document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                        openPaywallModal(errData);
+                        return;
+                    }
                     throw new Error(errData.error || '서버 응답에 문제가 있어요.');
                 }
 
@@ -5141,6 +5261,189 @@
 
             return messageDiv;
         }
+
+        // ============================================================
+        // 인증 / Quota / 결제 상태 — /me 캐싱 + 모달 컨트롤
+        // ============================================================
+        // 서버에서 받은 최신 인증·구독·quota 스냅샷. /me 호출 시 갱신.
+        let authState = {
+            authenticated: false,
+            user: null,
+            subscription: { active: false, status: null, period_end: null },
+            quota: { used: 0, cap: 25, remaining: 0, reset_date: null, unlimited: false },
+            login_methods: { google: false, kakao: false, dev: false },
+            billing_enabled: false,
+        };
+
+        async function refreshAuthState() {
+            try {
+                const r = await fetch('/me', { credentials: 'same-origin' });
+                if (!r.ok) return authState;
+                const data = await r.json();
+                authState = data;
+                renderAuthHeader();
+                renderLoginMethodsUI();
+                return data;
+            } catch (e) {
+                console.warn('[auth] /me 실패:', e);
+                return authState;
+            }
+        }
+
+        // 헤더에 quota chip 또는 구독 배지 + 로그인 버튼 (또는 닉네임) 표시
+        function renderAuthHeader() {
+            const slot = document.getElementById('auth-header-slot');
+            if (!slot) return;
+            if (!authState.authenticated) {
+                slot.innerHTML = `<button class="auth-chip auth-chip--login" type="button" onclick="openLoginModal()" aria-label="로그인">로그인</button>`;
+                return;
+            }
+            const q = authState.quota || {};
+            const sub = authState.subscription || {};
+            const name = (authState.user && authState.user.display_name) || '나';
+            if (q.unlimited || sub.active) {
+                slot.innerHTML = `<span class="auth-chip auth-chip--vip" title="구독 활성">✨ 무제한</span>`;
+                return;
+            }
+            const remaining = (typeof q.remaining === 'number') ? q.remaining : q.cap;
+            const lowClass = remaining <= 3 ? ' auth-chip--low' : '';
+            slot.innerHTML =
+                `<span class="auth-chip auth-chip--quota${lowClass}" title="${name} · 오늘 남은 메시지">${remaining}/${q.cap}</span>`;
+        }
+
+        // 로그인 모달의 버튼들을 환경에 따라 보여주기/숨기기
+        function renderLoginMethodsUI() {
+            const m = authState.login_methods || {};
+            const showIf = (id, on, display='flex') => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = on ? display : 'none';
+            };
+            showIf('login-btn-google', !!m.google);
+            showIf('login-btn-kakao',  !!m.kakao);
+            showIf('login-btn-dev',    !!m.dev, 'block');
+            const quotaEl = document.getElementById('login-modal-quota');
+            if (quotaEl && authState.quota) quotaEl.textContent = authState.quota.cap || 25;
+            const capEl = document.getElementById('paywall-cap');
+            if (capEl && authState.quota) capEl.textContent = authState.quota.cap || 25;
+        }
+
+        // ---- 로그인 모달 ----
+        function openLoginModal() {
+            renderLoginMethodsUI();
+            const overlay = document.getElementById('login-modal-overlay');
+            if (!overlay) return;
+            overlay.classList.add('show');
+            overlay.setAttribute('aria-hidden', 'false');
+        }
+        function closeLoginModal(e) {
+            const overlay = document.getElementById('login-modal-overlay');
+            if (!overlay) return;
+            // 미인증 상태에선 닫기 막음 — 채팅을 쓸 수 없으니
+            if (!authState.authenticated && e && e.target !== overlay) return;
+            if (e && e.target && e.target !== overlay && !e.target.matches('.modal-close')) return;
+            overlay.classList.remove('show');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+        function loginWithGoogle() { window.location.href = '/auth/google/start'; }
+        function loginWithKakao()  { window.location.href = '/auth/kakao/start'; }
+        async function loginWithDev() {
+            const statusEl = document.getElementById('login-modal-status');
+            if (statusEl) statusEl.textContent = '로그인 중...';
+            try {
+                const r = await fetch('/auth/dev-login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'same-origin',
+                    body: JSON.stringify({}),
+                });
+                if (!r.ok) {
+                    if (statusEl) statusEl.textContent = '로그인 실패';
+                    return;
+                }
+                await refreshAuthState();
+                closeLoginModal({ target: document.getElementById('login-modal-overlay') });
+                if (typeof showToast === 'function') showToast('로그인 완료 ✅');
+            } catch (e) {
+                if (statusEl) statusEl.textContent = '네트워크 오류';
+            }
+        }
+        async function logoutCurrent() {
+            try {
+                await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });
+            } catch (e) {}
+            await refreshAuthState();
+            if (typeof showToast === 'function') showToast('로그아웃 완료');
+        }
+
+        // ---- 페이월 모달 (구독) ----
+        function openPaywallModal(serverErr) {
+            const overlay = document.getElementById('paywall-modal-overlay');
+            if (!overlay) return;
+            // 서버가 알려준 cap 으로 본문 동기화
+            if (serverErr && serverErr.free_quota) {
+                const capEl = document.getElementById('paywall-cap');
+                if (capEl) capEl.textContent = serverErr.free_quota;
+            }
+            const subBtn = document.getElementById('paywall-subscribe-btn');
+            if (subBtn) {
+                if (authState.billing_enabled) {
+                    subBtn.disabled = false;
+                    subBtn.textContent = '구독 시작';
+                } else {
+                    subBtn.disabled = true;
+                    subBtn.textContent = '결제 준비 중';
+                }
+            }
+            overlay.classList.add('show');
+            overlay.setAttribute('aria-hidden', 'false');
+        }
+        function closePaywallModal(e) {
+            const overlay = document.getElementById('paywall-modal-overlay');
+            if (!overlay) return;
+            if (e && e.target && e.target !== overlay && !e.target.matches('.modal-close')) return;
+            overlay.classList.remove('show');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+        async function startSubscription() {
+            const statusEl = document.getElementById('paywall-status');
+            const btn = document.getElementById('paywall-subscribe-btn');
+            if (btn) { btn.disabled = true; btn.textContent = '결제 페이지 여는 중...'; }
+            if (statusEl) statusEl.textContent = '';
+            try {
+                const r = await fetch('/billing/checkout', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                });
+                const data = await r.json().catch(() => ({}));
+                if (!r.ok || !data.url) {
+                    if (statusEl) statusEl.textContent = data.error || '결제 페이지를 열 수 없어요.';
+                    if (btn) { btn.disabled = false; btn.textContent = '구독 시작'; }
+                    return;
+                }
+                window.location.href = data.url;
+            } catch (e) {
+                if (statusEl) statusEl.textContent = '네트워크 오류';
+                if (btn) { btn.disabled = false; btn.textContent = '구독 시작'; }
+            }
+        }
+
+        // 페이지 로드 시: /me 호출 + ?billing=success URL 파라미터 처리
+        (async function bootAuth() {
+            await refreshAuthState();
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('billing') === 'success') {
+                // Stripe 성공 콜백 후 페이지 진입 — webhook 처리 지연 대비 1초 후 다시 fetch
+                if (typeof showToast === 'function') showToast('구독이 시작됐어요 ✨');
+                setTimeout(refreshAuthState, 1500);
+                // URL 정리
+                try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
+            } else if (params.get('billing') === 'canceled') {
+                if (typeof showToast === 'function') showToast('결제가 취소됐어요');
+                try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
+            }
+            // 미인증이면 로그인 모달 자동 표시 (단, 온보딩이 끝난 뒤 noop — 다음 채팅 시 자연스럽게)
+            // → 채팅 시도 시 401 받으면 openLoginModal 호출되므로 부팅 시점에는 표시 X
+        })();
 
         // Enter 키 처리 (한국어 IME 조합 중 Enter는 무시)
         function handleKeyPress(event) {

@@ -40,6 +40,12 @@ wheels/
 .DS_Store
 Thumbs.db
 
+# 사용자 DB (SQLite, 로컬 개발용)
+korean_dating_chat/kdate_users.db
+korean_dating_chat/kdate_users.db-journal
+korean_dating_chat/kdate_users.db-shm
+korean_dating_chat/kdate_users.db-wal
+
 # Uploads
 uploads/
 

@@ -1795,6 +1795,101 @@ SCENARIO_INTROS = {
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
+# 사용자/인증/결제 모듈. 분리된 파일에서 import.
+from users import (
+    init_db as init_users_db,
+    consume_quota,
+    peek_quota,
+    has_active_subscription,
+    DAILY_FREE_QUOTA,
+)
+from auth import (
+    current_user,
+    google_start, google_callback,
+    kakao_start, kakao_callback,
+    dev_login, logout as auth_logout,
+    DEV_LOGIN_ENABLED, GOOGLE_CLIENT_ID, KAKAO_CLIENT_ID,
+)
+from billing import (
+    create_checkout_session,
+    create_portal_session,
+    billing_success,
+    webhook as stripe_webhook,
+    stripe_enabled,
+)
+
+# 사용자 DB 초기화 (SQLite 파일 + 테이블).
+init_users_db()
+
+# 라우트 등록 — 모듈 분리 패턴.
+app.add_url_rule('/auth/google/start',    'auth_google_start',    google_start)
+app.add_url_rule('/auth/google/callback', 'auth_google_callback', google_callback)
+app.add_url_rule('/auth/kakao/start',     'auth_kakao_start',     kakao_start)
+app.add_url_rule('/auth/kakao/callback',  'auth_kakao_callback',  kakao_callback)
+app.add_url_rule('/auth/logout',          'auth_logout',          auth_logout,  methods=['POST'])
+app.add_url_rule('/auth/dev-login',       'auth_dev_login',       dev_login,    methods=['POST'])
+app.add_url_rule('/billing/checkout',     'billing_checkout',     create_checkout_session, methods=['POST'])
+app.add_url_rule('/billing/portal',       'billing_portal',       create_portal_session,   methods=['POST'])
+app.add_url_rule('/billing/webhook',      'billing_webhook',      stripe_webhook,           methods=['POST'])
+app.add_url_rule('/billing/success',      'billing_success',      billing_success)
+
+
+@app.route('/me')
+def me():
+    """클라이언트가 인증 상태 + quota + 구독 상태를 읽는다.
+
+    응답:
+      {
+        authenticated: bool,
+        user: { user_id, display_name, email, provider } | null,
+        subscription: { active: bool, status: str|null, period_end: int|null },
+        quota: { used, cap, remaining, reset_date }   # 미인증이면 모두 0
+        login_methods: { google: bool, kakao: bool, dev: bool }   # 환경에 따라 활성화된 채널
+        billing_enabled: bool
+      }
+    """
+    user = current_user()
+    methods = {
+        'google': bool(GOOGLE_CLIENT_ID),
+        'kakao':  bool(KAKAO_CLIENT_ID),
+        'dev':    DEV_LOGIN_ENABLED,
+    }
+    if not user:
+        return jsonify({
+            'authenticated': False,
+            'user': None,
+            'subscription': {'active': False, 'status': None, 'period_end': None},
+            'quota': {'used': 0, 'cap': DAILY_FREE_QUOTA, 'remaining': 0, 'reset_date': None},
+            'login_methods': methods,
+            'billing_enabled': stripe_enabled(),
+        })
+    active = has_active_subscription(user)
+    used, cap, remaining, reset_date = peek_quota(user['user_id'])
+    return jsonify({
+        'authenticated': True,
+        'user': {
+            'user_id': user['user_id'],
+            'display_name': user.get('display_name'),
+            'email': user.get('email'),
+            'provider': user.get('provider'),
+        },
+        'subscription': {
+            'active': active,
+            'status': user.get('subscription_status'),
+            'period_end': user.get('subscription_period_end'),
+        },
+        'quota': {
+            'used': used,
+            'cap': cap,
+            'remaining': cap if active else remaining,  # 구독자는 cap 만큼 항상 남은 것처럼 보이게
+            'reset_date': reset_date,
+            'unlimited': active,
+        },
+        'login_methods': methods,
+        'billing_enabled': stripe_enabled(),
+    })
+
+
 # Stateless 서버: 캐릭터/프로필/세션 상태는 모두 클라이언트(IndexedDB)가 관리한다.
 # 서버는 요청당 character/user_profile/history 를 인자로 받아 system_instruction을 조립하기만 한다.
 
@@ -2223,8 +2318,27 @@ def chat():
       - grammar_mode        'true'/'false'
       - extract_vocab       'true'/'false'
       - session_id          optional, 클라이언트가 전달/회수만 하는 패스스루 값
+
+    인증/Quota:
+      - 로그인 필수 (세션 cookie). 없으면 401 paywall='login'.
+      - 활성 구독자는 무제한. 그 외는 일일 무료 quota 차감.
+      - quota 초과 시 402 paywall='quota'.
     """
     from flask import Response, stream_with_context
+
+    # --- 인증 + quota 게이트 ----
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    if not has_active_subscription(user):
+        allowed, _remaining, reset_date = consume_quota(user['user_id'])
+        if not allowed:
+            return jsonify({
+                'error': '오늘 무료 메시지를 다 썼어요. 구독하시면 무제한으로 이용 가능합니다.',
+                'paywall': 'quota',
+                'reset_date': reset_date,  # 다음 UTC 자정에 리셋
+                'free_quota': DAILY_FREE_QUOTA,
+            }), 402
 
     user_message = request.form.get('message', '').strip()
     grammar_mode = request.form.get('grammar_mode', 'false') == 'true'
