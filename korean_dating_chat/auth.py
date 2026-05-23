@@ -1,11 +1,10 @@
-"""OAuth 로그인 (Google, Kakao) + 세션 cookie.
+"""OAuth 로그인 (Google) + 세션 cookie.
 
 세션은 itsdangerous 로 서명된 cookie (user_id 만 담음). DB session 테이블 없이 가볍게.
 CSRF 방지를 위해 OAuth state 도 cookie 로 왕복.
 
 ENV (production):
   GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET
-  KAKAO_OAUTH_CLIENT_ID,  KAKAO_OAUTH_CLIENT_SECRET   (Kakao 는 secret optional)
   SESSION_SECRET           (cookie 서명 키 — 절대 노출 X)
   APP_BASE_URL             (https://your-domain — redirect_uri 조립용)
 
@@ -30,8 +29,6 @@ SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60  # 30일
 
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', '')
-KAKAO_CLIENT_ID = os.getenv('KAKAO_OAUTH_CLIENT_ID', '')
-KAKAO_CLIENT_SECRET = os.getenv('KAKAO_OAUTH_CLIENT_SECRET', '')
 BASE_URL = os.getenv('APP_BASE_URL', 'http://localhost:8080')
 
 DEV_LOGIN_ENABLED = (
@@ -151,81 +148,6 @@ def google_callback():
         info['id'],
         email=info.get('email'),
         display_name=info.get('name'),
-    )
-    resp = make_response(redirect('/chat'))
-    return attach_session_cookie(resp, user['user_id'])
-
-
-# ---- Kakao OAuth -------------------------------------------------------------
-
-def kakao_start():
-    if not KAKAO_CLIENT_ID:
-        return jsonify({'error': 'Kakao 로그인이 설정되지 않았어요.'}), 503
-    state = secrets.token_urlsafe(24)
-    params = {
-        'client_id': KAKAO_CLIENT_ID,
-        'redirect_uri': f'{BASE_URL}/auth/kakao/callback',
-        'response_type': 'code',
-        'state': state,
-    }
-    resp = make_response(redirect(
-        f'https://kauth.kakao.com/oauth/authorize?{urlencode(params)}'
-    ))
-    resp.set_cookie(_STATE_COOKIE, state, max_age=600, httponly=True,
-                    samesite='Lax', path='/auth/kakao/')
-    return resp
-
-
-def kakao_callback():
-    if not KAKAO_CLIENT_ID:
-        return 'Kakao login disabled', 503
-    state = request.args.get('state', '')
-    expected = request.cookies.get(_STATE_COOKIE, '')
-    if not state or state != expected:
-        return 'state mismatch', 400
-    code = request.args.get('code')
-    if not code:
-        return 'no code', 400
-    payload = {
-        'grant_type': 'authorization_code',
-        'client_id': KAKAO_CLIENT_ID,
-        'redirect_uri': f'{BASE_URL}/auth/kakao/callback',
-        'code': code,
-    }
-    if KAKAO_CLIENT_SECRET:
-        payload['client_secret'] = KAKAO_CLIENT_SECRET
-    try:
-        tr = requests.post('https://kauth.kakao.com/oauth/token', data=payload, timeout=10)
-    except requests.RequestException as e:
-        print(f'[AUTH] kakao token network error: {str(e)[:120]}')
-        return 'token network error', 502
-    if tr.status_code != 200:
-        print(f'[AUTH] kakao token {tr.status_code}: {tr.text[:200]}')
-        return 'token exchange failed', 502
-    access_token = tr.json().get('access_token')
-    if not access_token:
-        return 'no access token', 502
-    try:
-        ur = requests.get(
-            'https://kapi.kakao.com/v2/user/me',
-            headers={'Authorization': f'Bearer {access_token}'},
-            timeout=10,
-        )
-    except requests.RequestException:
-        return 'userinfo network error', 502
-    if ur.status_code != 200:
-        return 'userinfo failed', 502
-    info = ur.json()
-    kakao_id = str(info.get('id') or '')
-    if not kakao_id:
-        return 'no kakao id', 502
-    account = info.get('kakao_account') or {}
-    profile = account.get('profile') or {}
-    user = get_or_create_oauth_user(
-        'kakao',
-        kakao_id,
-        email=account.get('email'),
-        display_name=profile.get('nickname'),
     )
     resp = make_response(redirect('/chat'))
     return attach_session_cookie(resp, user['user_id'])

@@ -1806,9 +1806,8 @@ from users import (
 from auth import (
     current_user,
     google_start, google_callback,
-    kakao_start, kakao_callback,
     dev_login, logout as auth_logout,
-    DEV_LOGIN_ENABLED, GOOGLE_CLIENT_ID, KAKAO_CLIENT_ID,
+    DEV_LOGIN_ENABLED, GOOGLE_CLIENT_ID,
 )
 from billing import (
     create_checkout_session,
@@ -1824,8 +1823,6 @@ init_users_db()
 # 라우트 등록 — 모듈 분리 패턴.
 app.add_url_rule('/auth/google/start',    'auth_google_start',    google_start)
 app.add_url_rule('/auth/google/callback', 'auth_google_callback', google_callback)
-app.add_url_rule('/auth/kakao/start',     'auth_kakao_start',     kakao_start)
-app.add_url_rule('/auth/kakao/callback',  'auth_kakao_callback',  kakao_callback)
 app.add_url_rule('/auth/logout',          'auth_logout',          auth_logout,  methods=['POST'])
 app.add_url_rule('/auth/dev-login',       'auth_dev_login',       dev_login,    methods=['POST'])
 app.add_url_rule('/billing/checkout',     'billing_checkout',     create_checkout_session, methods=['POST'])
@@ -1844,14 +1841,13 @@ def me():
         user: { user_id, display_name, email, provider } | null,
         subscription: { active: bool, status: str|null, period_end: int|null },
         quota: { used, cap, remaining, reset_date }   # 미인증이면 모두 0
-        login_methods: { google: bool, kakao: bool, dev: bool }   # 환경에 따라 활성화된 채널
+        login_methods: { google: bool, dev: bool }   # 환경에 따라 활성화된 채널
         billing_enabled: bool
       }
     """
     user = current_user()
     methods = {
         'google': bool(GOOGLE_CLIENT_ID),
-        'kakao':  bool(KAKAO_CLIENT_ID),
         'dev':    DEV_LOGIN_ENABLED,
     }
     if not user:

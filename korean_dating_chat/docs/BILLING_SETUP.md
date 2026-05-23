@@ -1,7 +1,7 @@
 # 결제·인증 셋업 가이드
 
-이 문서는 실제 Stripe / Google OAuth / Kakao OAuth 키를 발급받아 프로덕션에
-연결하는 단계별 절차입니다. 코드는 이미 다 들어가 있고, 키만 채우면 동작합니다.
+이 문서는 실제 Stripe / Google OAuth 키를 발급받아 프로덕션에 연결하는
+단계별 절차입니다. 코드는 이미 다 들어가 있고, 키만 채우면 동작합니다.
 
 ## 0. 사전 확인
 
@@ -95,33 +95,6 @@ stripe listen --forward-to localhost:8080/billing/webhook
 4. 발급된 **Client ID** → `GOOGLE_OAUTH_CLIENT_ID`
 5. 발급된 **Client secret** → `GOOGLE_OAUTH_CLIENT_SECRET`
 
-## 3. Kakao OAuth
-
-### 3.1 앱 등록
-
-1. https://developers.kakao.com → 내 애플리케이션 → 애플리케이션 추가
-2. 앱 이름·회사명 입력 → 저장
-3. 앱 키 페이지에서 **REST API 키** → `KAKAO_OAUTH_CLIENT_ID`
-
-### 3.2 카카오 로그인 활성
-
-1. 카카오 로그인 → 활성화 설정 → ON
-2. Redirect URI 등록:
-   - `http://localhost:8080/auth/kakao/callback`
-   - `https://your-domain.com/auth/kakao/callback`
-3. 동의 항목:
-   - `account_email` (이메일) — 선택 동의
-   - `profile_nickname` (닉네임) — 필수 동의 (기본 포함)
-
-### 3.3 (선택) 보안 모드
-
-운영 보안 강화하려면:
-1. 보안 → Client Secret 코드 발급
-2. 활성 상태 ON
-3. 발급된 키 → `KAKAO_OAUTH_CLIENT_SECRET`
-
-미설정이어도 동작함 (`code` 만으로 토큰 교환).
-
 ## 4. 최종 환경변수 모음
 
 운영 배포 전 모두 설정:
@@ -138,10 +111,6 @@ QUOTA_TIMEZONE=Asia/Seoul                       # (향후, 현재는 UTC)
 # Google
 GOOGLE_OAUTH_CLIENT_ID=xxx.apps.googleusercontent.com
 GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-xxx
-
-# Kakao
-KAKAO_OAUTH_CLIENT_ID=xxx
-KAKAO_OAUTH_CLIENT_SECRET=xxx                   # 선택
 
 # Stripe
 STRIPE_SECRET_KEY=sk_live_xxx                   # 또는 sk_test_xxx
@@ -169,9 +138,8 @@ DEV_LOGIN_ENABLED=0                             # 명시적으로도 OFF
 
 | 증상 | 원인 후보 |
 |---|---|
-| 로그인 모달의 Google/Kakao 버튼이 안 보임 | 환경변수 미설정. `/me` 응답의 `login_methods` 확인 |
+| 로그인 모달의 Google 버튼이 안 보임 | 환경변수 미설정. `/me` 응답의 `login_methods` 확인 |
 | Google 로그인 후 "state mismatch" | redirect URI 가 Google Console 등록과 다름. 정확한 경로 + 포트 확인 |
-| Kakao 로그인 후 "token exchange failed" | Kakao 보안 모드 ON 인데 `KAKAO_OAUTH_CLIENT_SECRET` 미설정 |
 | Checkout 페이지가 안 열림 (`/billing/checkout` → 503) | `STRIPE_SECRET_KEY` 또는 `STRIPE_PRICE_ID` 미설정 |
 | 결제 완료 후에도 quota 초과 메시지 | webhook 미도착. Stripe Dashboard → Events 확인. 서명 비밀키 일치 확인. |
 | 운영에서 Dev login 노출 | `FLASK_ENV=production` 누락. 즉시 설정 후 재배포. |
