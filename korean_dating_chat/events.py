@@ -75,6 +75,13 @@ def log_event(severity, kind, message='', **context):
                 _truncate_locked()
         except OSError:
             pass
+    # Best-effort 알림 발송 (severity threshold + dedup 은 alerts 측에서).
+    # 실패해도 이벤트 로그 자체는 이미 기록된 상태.
+    try:
+        from alerts import notify as _alert_notify
+        _alert_notify(severity, kind, message, **context)
+    except Exception as e:
+        print(f'[EVENTS] alert dispatch error: {str(e)[:120]}')
 
 
 def _truncate_locked():

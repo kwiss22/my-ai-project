@@ -16,6 +16,7 @@ from flask import jsonify, request
 from auth import current_user
 from users import _connect
 from events import read_recent as events_read_recent, summary_last_7d as events_summary_7d
+import alerts as _alerts
 
 ADMIN_EMAILS = set(
     e.strip().lower() for e in (os.getenv('ADMIN_EMAILS', '') or '').split(',') if e.strip()
@@ -185,3 +186,30 @@ def events():
     kind_prefix = request.args.get('kind_prefix') or None
     recs = events_read_recent(limit=limit, severity=severity, kind=kind, kind_prefix=kind_prefix)
     return jsonify({'events': recs, 'count': len(recs)})
+
+
+def alerts_health():
+    """알림 채널 설정 진단. 키 값은 노출 X — 활성/비활성 상태만."""
+    ok, err = _require_admin()
+    if not ok:
+        return err
+    return jsonify({
+        'min_severity': _alerts.MIN_SEVERITY,
+        'dedup_seconds': _alerts.DEDUP_SECONDS,
+        'channels': {
+            'slack': _alerts.slack_enabled(),
+            'smtp':  _alerts.smtp_enabled(),
+            'test_sink': _alerts.TEST_SINK,
+        },
+        'any_enabled': _alerts.any_enabled(),
+    })
+
+
+def alerts_test_sink():
+    """ALERT_TEST_SINK=1 일 때 메모리에 적재된 알림 조회. 통합 테스트용."""
+    ok, err = _require_admin()
+    if not ok:
+        return err
+    if not _alerts.TEST_SINK:
+        return jsonify({'error': 'test sink disabled', 'enable_with': 'ALERT_TEST_SINK=1'}), 503
+    return jsonify({'sink': _alerts.get_test_sink()})

@@ -1821,7 +1821,12 @@ from billing import (
     TRIAL_DAYS,
 )
 from rate_limit import limit as rate_limit
-from admin import stats as admin_stats, events as admin_events
+from admin import (
+    stats as admin_stats,
+    events as admin_events,
+    alerts_health as admin_alerts_health,
+    alerts_test_sink as admin_alerts_test_sink,
+)
 from events import log_event
 
 # 사용자 DB 초기화 (SQLite 파일 + 테이블).
@@ -1849,9 +1854,11 @@ app.add_url_rule('/billing/portal',       'billing_portal',       _rl_portal(cre
 app.add_url_rule('/billing/webhook',      'billing_webhook',      stripe_webhook,                         methods=['POST'])
 app.add_url_rule('/billing/success',      'billing_success',      billing_success)
 
-# 관리자 통계 + 이벤트 로그 조회
+# 관리자 통계 + 이벤트 로그 + 알림 채널 진단
 app.add_url_rule('/admin/stats',          'admin_stats',          admin_stats)
 app.add_url_rule('/admin/events',         'admin_events',         admin_events)
+app.add_url_rule('/admin/alerts-health',  'admin_alerts_health',  admin_alerts_health)
+app.add_url_rule('/admin/alerts-test',    'admin_alerts_test',    admin_alerts_test_sink)
 
 
 # 5xx 핸들러 — 모든 unhandled exception 을 events 에 critical 로 기록.
