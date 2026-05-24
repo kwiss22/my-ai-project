@@ -116,6 +116,7 @@ GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-xxx
 STRIPE_SECRET_KEY=sk_live_xxx                   # 또는 sk_test_xxx
 STRIPE_PRICE_ID=price_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_TRIAL_DAYS=7                             # 0 = trial 비활성. 7~14 권장.
 
 # Prod 잠금
 FLASK_ENV=production                            # DEV_LOGIN_ENABLED 자동 OFF

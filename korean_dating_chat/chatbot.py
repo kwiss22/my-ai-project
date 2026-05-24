@@ -1818,6 +1818,7 @@ from billing import (
     webhook as stripe_webhook,
     stripe_enabled,
     cancel_user_subscription,
+    TRIAL_DAYS,
 )
 from rate_limit import limit as rate_limit
 from admin import stats as admin_stats
@@ -1912,6 +1913,7 @@ def me():
                       'reset_date': None, 'timezone': QUOTA_TIMEZONE},
             'login_methods': methods,
             'billing_enabled': stripe_enabled(),
+            'trial_days': TRIAL_DAYS,
         })
     active = has_active_subscription(user)
     used, cap, remaining, reset_date = peek_quota(user['user_id'])
@@ -1939,6 +1941,7 @@ def me():
         },
         'login_methods': methods,
         'billing_enabled': stripe_enabled(),
+        'trial_days': TRIAL_DAYS,
     })
 
 

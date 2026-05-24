@@ -30,6 +30,10 @@ STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID', '')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 BASE_URL = os.getenv('APP_BASE_URL', 'http://localhost:8080')
 
+# Trial 일수. 0 = trial 비활성 (즉시 결제). 7~14가 일반적.
+# Stripe 가 동일 customer 의 중복 trial 을 막아주므로 abuse 방지는 자동.
+TRIAL_DAYS = int(os.getenv('STRIPE_TRIAL_DAYS', '7') or '0')
+
 if STRIPE_SECRET_KEY:
     stripe.api_key = STRIPE_SECRET_KEY
 
@@ -48,6 +52,11 @@ def create_checkout_session():
         # 결제가 아직 설정 안 됨 — 클라이언트는 '결제 준비 중' 안내
         return jsonify({'error': '결제가 준비 중이에요. 잠시 후 다시 시도해주세요.'}), 503
     try:
+        # subscription_data 에 trial_period_days 를 넣으면 첫 결제가 trial 종료 시점으로 미뤄짐.
+        # Stripe 가 같은 customer 의 중복 trial 을 자동 차단 — 첫 구독자만 trial 받음.
+        sub_data = {}
+        if TRIAL_DAYS > 0:
+            sub_data['trial_period_days'] = TRIAL_DAYS
         session = stripe.checkout.Session.create(
             mode='subscription',
             line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}],
@@ -57,6 +66,7 @@ def create_checkout_session():
             success_url=f'{BASE_URL}/billing/success?session_id={{CHECKOUT_SESSION_ID}}',
             cancel_url=f'{BASE_URL}/chat?billing=canceled',
             allow_promotion_codes=True,
+            subscription_data=sub_data or None,
         )
         return jsonify({'url': session.url})
     except stripe.error.StripeError as e:
@@ -191,6 +201,15 @@ def webhook():
             if user:
                 clear_subscription(user['user_id'])
                 print(f'[BILLING] canceled user={user["user_id"]}')
+
+        elif et == 'customer.subscription.trial_will_end':
+            # Stripe 가 trial 종료 ~3일 전에 보냄. 이메일 알림 hook 자리.
+            customer = obj.get('customer')
+            user = get_user_by_stripe_customer(customer) if customer else None
+            if user:
+                trial_end = obj.get('trial_end')
+                print(f'[BILLING] trial_will_end user={user["user_id"]} trial_end={trial_end}')
+                # TODO: 다음 작업에서 운영자 이메일/푸시 알림 연결
 
     except Exception as e:
         # 핸들러 에러는 로깅만 — Stripe 재시도 무한루프 방지 위해 200 반환

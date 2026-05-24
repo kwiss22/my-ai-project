@@ -2326,7 +2326,7 @@
     </div>
 
     <!-- =====================
-         페이월 모달 (구독 결제)
+         페이월 모달 (구독 결제) — trial 활성 시 trial 카피 자동 전환
     ===================== -->
     <div class="modal-overlay" id="paywall-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="paywall-modal-title" aria-hidden="true" onclick="closePaywallModal(event)">
         <div class="modal-sheet" style="max-width: 440px;">
@@ -2337,12 +2337,12 @@
             <div style="padding: 8px 24px 28px;">
                 <p style="color:#444; font-size:14px; line-height:1.7; margin: 0 0 18px;" id="paywall-modal-body">
                     오늘 무료 메시지(<strong id="paywall-cap">25</strong>개)를 모두 사용했어요.<br>
-                    내일 자정(UTC)에 다시 리셋되고, 지금 바로 더 대화하고 싶다면 구독해주세요.
+                    내일 자정에 다시 리셋되고, 지금 바로 더 대화하고 싶다면 구독해주세요.
                 </p>
                 <div style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:white; border-radius:12px; padding:20px; margin-bottom:18px;">
-                    <div style="font-size:13px; opacity:0.9; margin-bottom:4px;">월 구독</div>
-                    <div style="font-size:28px; font-weight:700; line-height:1.1;">무제한 메시지</div>
-                    <ul style="font-size:13px; margin:14px 0 0; padding-left:18px; opacity:0.95; line-height:1.7;">
+                    <div style="font-size:13px; opacity:0.9; margin-bottom:4px;" id="paywall-card-label">월 구독</div>
+                    <div style="font-size:28px; font-weight:700; line-height:1.1;" id="paywall-card-headline">무제한 메시지</div>
+                    <ul style="font-size:13px; margin:14px 0 0; padding-left:18px; opacity:0.95; line-height:1.7;" id="paywall-card-list">
                         <li>모든 캐릭터(11명) 무제한 대화</li>
                         <li>시나리오·미션 무제한</li>
                         <li>언제든 해지 가능</li>
@@ -2351,6 +2351,7 @@
                 <button id="paywall-subscribe-btn" type="button" onclick="startSubscription()" style="width:100%; padding:14px 16px; border:none; background:#3c1e1e; color:white; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer;">
                     구독 시작
                 </button>
+                <p id="paywall-trial-note" style="margin: 10px 0 0; font-size:11px; color:#888; line-height:1.5; text-align:center; display:none;"></p>
                 <p id="paywall-status" style="margin: 12px 0 0; font-size:12px; color:#888; min-height:18px; text-align:center;"></p>
             </div>
         </div>
@@ -5352,7 +5353,9 @@
             const sub = authState.subscription || {};
             const name = (authState.user && authState.user.display_name) || '나';
             if (q.unlimited || sub.active) {
-                const label = sub.cancel_at_period_end ? '✨ 해지 예정' : '✨ 무제한';
+                let label = '✨ 무제한';
+                if (sub.status === 'trialing') label = '✨ 체험 중';
+                else if (sub.cancel_at_period_end) label = '✨ 해지 예정';
                 slot.innerHTML = `<button class="auth-chip auth-chip--vip" type="button" onclick="openSettingsModal()" title="구독 설정">${label}</button>`;
                 return;
             }
@@ -5401,7 +5404,14 @@
             let det = periodLabel ? `다음 결제일: ${periodLabel}` : '';
             let acts = [];
 
-            if (sub.active && status === 'past_due') {
+            if (sub.active && status === 'trialing') {
+                bg = 'linear-gradient(135deg,#7e57c2 0%,#5e35b1 100%)';
+                const daysLeft = sub.period_end ? Math.max(0, Math.ceil((sub.period_end - Date.now()/1000) / 86400)) : 0;
+                head = `무료 체험 중 — ${daysLeft}일 남음`;
+                det = `${periodLabel}부터 자동 청구가 시작됩니다. 언제든 해지하면 청구되지 않아요.`;
+                acts.push({label: '구독 관리', primary: true, onclick: 'openBillingPortal()'});
+                acts.push({label: '체험 해지', primary: false, onclick: 'confirmCancelSubscription()'});
+            } else if (sub.active && status === 'past_due') {
                 bg = 'linear-gradient(135deg,#ffa502 0%,#ff6348 100%)';
                 head = '결제 재시도 중';
                 det = `결제 정보를 업데이트해주세요. 다음 결제일: ${periodLabel}`;
@@ -5600,11 +5610,29 @@
                 const capEl = document.getElementById('paywall-cap');
                 if (capEl) capEl.textContent = serverErr.free_quota;
             }
+            // Trial 활성 여부에 따라 카드·버튼 카피 분기
+            const trialDays = (authState && authState.trial_days) || 0;
+            const cardLabel = document.getElementById('paywall-card-label');
+            const cardHead = document.getElementById('paywall-card-headline');
+            const trialNote = document.getElementById('paywall-trial-note');
             const subBtn = document.getElementById('paywall-subscribe-btn');
+            if (trialDays > 0) {
+                if (cardLabel) cardLabel.textContent = `${trialDays}일 무료 체험`;
+                if (cardHead) cardHead.textContent = '오늘부터 무제한 메시지';
+                if (trialNote) {
+                    trialNote.style.display = 'block';
+                    trialNote.textContent = `카드 등록 후 ${trialDays}일간 무료. 체험 기간 안에 해지하면 청구되지 않아요.`;
+                }
+                if (subBtn && authState.billing_enabled) subBtn.textContent = `${trialDays}일 무료 체험 시작`;
+            } else {
+                if (cardLabel) cardLabel.textContent = '월 구독';
+                if (cardHead) cardHead.textContent = '무제한 메시지';
+                if (trialNote) trialNote.style.display = 'none';
+                if (subBtn && authState.billing_enabled) subBtn.textContent = '구독 시작';
+            }
             if (subBtn) {
                 if (authState.billing_enabled) {
                     subBtn.disabled = false;
-                    subBtn.textContent = '구독 시작';
                 } else {
                     subBtn.disabled = true;
                     subBtn.textContent = '결제 준비 중';
