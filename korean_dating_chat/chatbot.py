@@ -1819,22 +1819,40 @@ from billing import (
     stripe_enabled,
     cancel_user_subscription,
 )
+from rate_limit import limit as rate_limit
+from admin import stats as admin_stats
 
 # 사용자 DB 초기화 (SQLite 파일 + 테이블).
 init_users_db()
 
 # 라우트 등록 — 모듈 분리 패턴.
+# Rate-limited handler wrapper. 한 곳에 다 모아두면 운영 중 한도 조정 쉬움.
+# scope='user_or_ip' = 로그인 시 user_id, 미로그인 시 IP. dev-login 은 미인증 호출이라 IP only.
+_rl_chat       = rate_limit('chat',     per_minute=30, scope='user_or_ip')
+_rl_checkout   = rate_limit('checkout', per_minute=5,  scope='user_or_ip')
+_rl_portal     = rate_limit('portal',   per_minute=5,  scope='user_or_ip')
+_rl_cancel     = rate_limit('cancel',   per_minute=5,  scope='user_or_ip')
+_rl_delete     = rate_limit('delete',   per_hour=3,    scope='user_or_ip')
+_rl_dev_login  = rate_limit('devlogin', per_minute=10, scope='ip')
+_rl_oauth_cb   = rate_limit('oauth_cb', per_minute=20, scope='ip')
+_rl_transcribe = rate_limit('stt',      per_minute=20, scope='user_or_ip')
+_rl_tts        = rate_limit('tts',      per_minute=30, scope='user_or_ip')
+
 app.add_url_rule('/auth/google/start',    'auth_google_start',    google_start)
-app.add_url_rule('/auth/google/callback', 'auth_google_callback', google_callback)
+app.add_url_rule('/auth/google/callback', 'auth_google_callback', _rl_oauth_cb(google_callback))
 app.add_url_rule('/auth/logout',          'auth_logout',          auth_logout,  methods=['POST'])
-app.add_url_rule('/auth/dev-login',       'auth_dev_login',       dev_login,    methods=['POST'])
-app.add_url_rule('/billing/checkout',     'billing_checkout',     create_checkout_session, methods=['POST'])
-app.add_url_rule('/billing/portal',       'billing_portal',       create_portal_session,   methods=['POST'])
-app.add_url_rule('/billing/webhook',      'billing_webhook',      stripe_webhook,           methods=['POST'])
+app.add_url_rule('/auth/dev-login',       'auth_dev_login',       _rl_dev_login(dev_login),    methods=['POST'])
+app.add_url_rule('/billing/checkout',     'billing_checkout',     _rl_checkout(create_checkout_session), methods=['POST'])
+app.add_url_rule('/billing/portal',       'billing_portal',       _rl_portal(create_portal_session),     methods=['POST'])
+app.add_url_rule('/billing/webhook',      'billing_webhook',      stripe_webhook,                         methods=['POST'])
 app.add_url_rule('/billing/success',      'billing_success',      billing_success)
+
+# 관리자 통계
+app.add_url_rule('/admin/stats',          'admin_stats',          admin_stats)
 
 
 @app.route('/billing/cancel-subscription', methods=['POST'])
+@_rl_cancel
 def cancel_subscription_route():
     """현재 사용자의 Stripe 구독을 cancel_at_period_end=True 로 표시.
     period_end 까지 무제한 유지, 그 후 자동 만료."""
@@ -1848,6 +1866,7 @@ def cancel_subscription_route():
 
 
 @app.route('/auth/delete-account', methods=['POST'])
+@_rl_delete
 def delete_account():
     """계정 완전 삭제. Stripe 구독이 있으면 먼저 해지 후 DB 행 삭제 + 세션 cookie 무효화.
     개인정보보호법·GDPR·Apple/Google 정책상 유료 서비스는 사용자가 셀프-삭제 가능해야 함."""
@@ -2339,6 +2358,7 @@ def extract_vocab_from_response(ai_response, user_level='intermediate'):
 
 
 @app.route('/chat', methods=['POST'])
+@_rl_chat
 def chat():
     """채팅 엔드포인트 - SSE 스트리밍 (stateless).
 
@@ -2576,6 +2596,7 @@ def scenario_start():
     })
 
 @app.route('/tts', methods=['POST'])
+@_rl_tts
 def text_to_speech():
     """한국어 TTS (Azure Speech Service with Whisper support)"""
     if not azure_speech_config:
@@ -2703,6 +2724,7 @@ def text_to_speech():
 _STT_MAX_BYTES = 2 * 1024 * 1024  # ~30초 (16kHz PCM16 mono = ~960KB/30s, 여유분)
 
 @app.route('/transcribe', methods=['POST'])
+@_rl_transcribe
 def transcribe():
     """단발 음성 인식. multipart/form-data, field=audio (WAV PCM16 mono 16kHz)."""
     import requests as _requests  # 지연 임포트 — 모듈 상단 import 추가 회피
