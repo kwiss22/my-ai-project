@@ -87,6 +87,39 @@ def billing_success():
     return redirect('/chat?billing=success')
 
 
+def cancel_user_subscription(user):
+    """사용자 행에 연결된 Stripe 구독을 cancel_at_period_end=True 로 표시한다.
+
+    즉시 해지가 아니라 결제 주기 끝에 해지 — 사용자가 이미 낸 돈만큼은 쓸 수 있게.
+    Stripe webhook(customer.subscription.updated)이 곧 도착해 우리 DB 도 동기화.
+
+    반환: (ok: bool, error_message: str|None)
+    """
+    if not user or not user.get('stripe_subscription_id'):
+        return (True, None)  # 구독 없음 = no-op
+    if not stripe_enabled():
+        # 로컬·테스트 환경: API 호출 불가. DB 만 표시.
+        from users import set_subscription
+        set_subscription(
+            user['user_id'],
+            stripe_customer_id=user.get('stripe_customer_id'),
+            stripe_subscription_id=user.get('stripe_subscription_id'),
+            status=user.get('subscription_status') or 'canceled',
+            period_end=user.get('subscription_period_end') or 0,
+            cancel_at_period_end=True,
+        )
+        return (True, None)
+    try:
+        stripe.Subscription.modify(
+            user['stripe_subscription_id'],
+            cancel_at_period_end=True,
+        )
+        return (True, None)
+    except stripe.error.StripeError as e:
+        print(f'[BILLING] cancel failed user={user["user_id"]}: {str(e)[:200]}')
+        return (False, '구독 해지에 실패했어요. 잠시 후 다시 시도해주세요.')
+
+
 # ---- Webhook -----------------------------------------------------------------
 
 def webhook():
@@ -147,8 +180,10 @@ def webhook():
                     stripe_subscription_id=obj.get('id'),
                     status=obj.get('status'),
                     period_end=int(obj.get('current_period_end') or 0),
+                    cancel_at_period_end=bool(obj.get('cancel_at_period_end')),
                 )
-                print(f'[BILLING] subscription {et.split(".")[-1]} user={user["user_id"]} status={obj.get("status")}')
+                ce = 'cap_end=true' if obj.get('cancel_at_period_end') else 'cap_end=false'
+                print(f'[BILLING] subscription {et.split(".")[-1]} user={user["user_id"]} status={obj.get("status")} {ce}')
 
         elif et == 'customer.subscription.deleted':
             customer = obj.get('customer')

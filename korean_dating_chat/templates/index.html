@@ -2359,6 +2359,55 @@
     <!-- =====================
          단어장 모달
     ===================== -->
+    <!-- =====================
+         설정 모달 (계정 + 구독 + 로그아웃 + 계정 삭제)
+         quota chip 클릭 또는 ⋮ 메뉴에서 진입.
+    ===================== -->
+    <div class="modal-overlay" id="settings-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" aria-hidden="true" onclick="closeSettingsModal(event)">
+        <div class="modal-sheet" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3 id="settings-modal-title">⚙️ 설정</h3>
+                <button class="modal-close" aria-label="닫기" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div style="padding: 0 24px 28px;">
+                <!-- 프로필 카드 -->
+                <div style="background:#f8f8fa; border-radius:10px; padding:14px 16px; margin-bottom:16px;">
+                    <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">계정</div>
+                    <div id="settings-display-name" style="font-size:15px; font-weight:600; color:#222;">—</div>
+                    <div id="settings-email" style="font-size:12px; color:#666; margin-top:2px;">—</div>
+                    <div id="settings-provider" style="font-size:11px; color:#999; margin-top:6px;">—</div>
+                </div>
+
+                <!-- 구독 카드 — 상태에 따라 본문 자동 변경 -->
+                <div id="settings-sub-card" style="border-radius:12px; padding:16px 18px; margin-bottom:16px; background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:white;">
+                    <div style="font-size:11px; opacity:0.9; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;" id="settings-sub-label">구독 상태</div>
+                    <div id="settings-sub-headline" style="font-size:17px; font-weight:700; line-height:1.3;">로딩 중...</div>
+                    <div id="settings-sub-detail" style="font-size:12px; opacity:0.92; margin-top:6px; line-height:1.5;"></div>
+                    <div id="settings-sub-actions" style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+                </div>
+
+                <!-- Quota 표시 (비구독자에게만) -->
+                <div id="settings-quota-card" style="display:none; background:#f8f8fa; border-radius:10px; padding:12px 16px; margin-bottom:16px;">
+                    <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">오늘 사용량</div>
+                    <div id="settings-quota-text" style="font-size:14px; color:#222;">—</div>
+                </div>
+
+                <!-- 위험 영역 -->
+                <div style="border-top:1px solid #eee; padding-top:16px; display:flex; flex-direction:column; gap:8px;">
+                    <button type="button" onclick="logoutCurrent()" style="width:100%; padding:11px; border:1px solid #ccc; background:white; color:#444; border-radius:8px; font-size:14px; cursor:pointer;">
+                        로그아웃
+                    </button>
+                    <button type="button" onclick="confirmDeleteAccount()" style="width:100%; padding:11px; border:1px solid #ffaaaa; background:white; color:#cc3030; border-radius:8px; font-size:14px; cursor:pointer;">
+                        계정 삭제
+                    </button>
+                    <p style="font-size:11px; color:#999; margin:8px 2px 0; line-height:1.5;">
+                        계정 삭제 시 모든 정보가 영구 삭제되며, 활성 구독이 있으면 다음 결제일 전에 자동 해지됩니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="vocab-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="vocab-modal-title" aria-hidden="true" onclick="closeVocabModal(event)">
         <div class="modal-sheet">
             <div class="modal-header">
@@ -4592,6 +4641,9 @@
                 requestController = null;
                 const sendBtn = document.getElementById('send-btn');
                 if (sendBtn) sendBtn.disabled = false;
+                // 메시지 보낸 직후 quota chip 갱신 + 거의 다 썼으면 경고 toast
+                // (실패해도 다음 /me 호출에서 자연 동기화)
+                refreshAuthState({ warnLowQuota: true });
             }
         }
 
@@ -5271,7 +5323,7 @@
             billing_enabled: false,
         };
 
-        async function refreshAuthState() {
+        async function refreshAuthState(opts = {}) {
             try {
                 const r = await fetch('/me', { credentials: 'same-origin' });
                 if (!r.ok) return authState;
@@ -5279,6 +5331,7 @@
                 authState = data;
                 renderAuthHeader();
                 renderLoginMethodsUI();
+                if (opts.warnLowQuota) maybeWarnLowQuota();
                 return data;
             } catch (e) {
                 console.warn('[auth] /me 실패:', e);
@@ -5286,7 +5339,8 @@
             }
         }
 
-        // 헤더에 quota chip 또는 구독 배지 + 로그인 버튼 (또는 닉네임) 표시
+        // 헤더에 quota chip 또는 구독 배지 + 로그인 버튼 표시.
+        // 인증된 사용자의 chip 은 클릭 시 설정 모달 진입.
         function renderAuthHeader() {
             const slot = document.getElementById('auth-header-slot');
             if (!slot) return;
@@ -5298,13 +5352,181 @@
             const sub = authState.subscription || {};
             const name = (authState.user && authState.user.display_name) || '나';
             if (q.unlimited || sub.active) {
-                slot.innerHTML = `<span class="auth-chip auth-chip--vip" title="구독 활성">✨ 무제한</span>`;
+                const label = sub.cancel_at_period_end ? '✨ 해지 예정' : '✨ 무제한';
+                slot.innerHTML = `<button class="auth-chip auth-chip--vip" type="button" onclick="openSettingsModal()" title="구독 설정">${label}</button>`;
                 return;
             }
             const remaining = (typeof q.remaining === 'number') ? q.remaining : q.cap;
             const lowClass = remaining <= 3 ? ' auth-chip--low' : '';
             slot.innerHTML =
-                `<span class="auth-chip auth-chip--quota${lowClass}" title="${name} · 오늘 남은 메시지">${remaining}/${q.cap}</span>`;
+                `<button class="auth-chip auth-chip--quota${lowClass}" type="button" onclick="openSettingsModal()" title="${name} · 오늘 남은 메시지">${remaining}/${q.cap}</button>`;
+        }
+
+        // ============================================================
+        // 설정 모달 — 프로필 + 구독 카드 + 로그아웃/계정 삭제
+        // ============================================================
+        function _fmtDate(unixSec) {
+            if (!unixSec) return '';
+            const d = new Date(unixSec * 1000);
+            return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+        }
+
+        function renderSettingsModal() {
+            if (!authState.authenticated) return;
+            const u = authState.user || {};
+            const sub = authState.subscription || {};
+            const q = authState.quota || {};
+
+            const dn = document.getElementById('settings-display-name');
+            const em = document.getElementById('settings-email');
+            const pr = document.getElementById('settings-provider');
+            if (dn) dn.textContent = u.display_name || '(이름 없음)';
+            if (em) em.textContent = u.email || '(이메일 없음)';
+            if (pr) pr.textContent = (u.provider || 'dev').toUpperCase() + ' 로그인';
+
+            const card = document.getElementById('settings-sub-card');
+            const headline = document.getElementById('settings-sub-headline');
+            const detail = document.getElementById('settings-sub-detail');
+            const actions = document.getElementById('settings-sub-actions');
+            const quotaCard = document.getElementById('settings-quota-card');
+            const quotaText = document.getElementById('settings-quota-text');
+
+            const status = sub.status;
+            const cap_end = !!sub.cancel_at_period_end;
+            const periodLabel = sub.period_end ? _fmtDate(sub.period_end) : '';
+
+            // 상태별 카드 본문 + 액션 분기
+            let bg = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';   // 기본 (active)
+            let head = '월 구독 활성';
+            let det = periodLabel ? `다음 결제일: ${periodLabel}` : '';
+            let acts = [];
+
+            if (sub.active && status === 'past_due') {
+                bg = 'linear-gradient(135deg,#ffa502 0%,#ff6348 100%)';
+                head = '결제 재시도 중';
+                det = `결제 정보를 업데이트해주세요. 다음 결제일: ${periodLabel}`;
+                acts.push({label: '결제 정보 관리', primary: true, onclick: 'openBillingPortal()'});
+            } else if (sub.active && cap_end) {
+                bg = 'linear-gradient(135deg,#888 0%,#444 100%)';
+                head = '해지 예정';
+                det = `${periodLabel}까지 무제한으로 이용 가능합니다. 그 후 자동 만료.`;
+                acts.push({label: '구독 관리', primary: true, onclick: 'openBillingPortal()'});
+            } else if (sub.active) {
+                head = '월 구독 무제한';
+                det = periodLabel ? `다음 결제일: ${periodLabel}` : '구독 활성';
+                acts.push({label: '구독 관리', primary: true, onclick: 'openBillingPortal()'});
+                acts.push({label: '해지 예약', primary: false, onclick: 'confirmCancelSubscription()'});
+            } else {
+                bg = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+                head = '무료 사용 중';
+                det = `오늘 무료 메시지: ${q.used || 0}/${q.cap || 0} 사용. 무제한 이용하려면 구독해주세요.`;
+                acts.push({label: '구독 시작', primary: true, onclick: 'startSubscription()'});
+                if (quotaCard) quotaCard.style.display = 'block';
+                if (quotaText) {
+                    const tz = q.timezone === 'Asia/Seoul' ? 'KST' : 'UTC';
+                    quotaText.textContent = `${q.used || 0} / ${q.cap || 0} 메시지 (${tz} 자정에 리셋)`;
+                }
+            }
+            if (card) card.style.background = bg;
+            if (headline) headline.textContent = head;
+            if (detail) detail.textContent = det;
+            if (sub.active && quotaCard) quotaCard.style.display = 'none';
+            if (actions) {
+                actions.innerHTML = acts.map(a => {
+                    const style = a.primary
+                        ? 'background:white; color:#3c1e1e; font-weight:700;'
+                        : 'background:transparent; color:white; border:1px solid rgba(255,255,255,0.6);';
+                    return `<button type="button" onclick="${a.onclick}" style="flex:1; min-width:100px; padding:10px 12px; ${style} border-radius:8px; font-size:13px; cursor:pointer;">${a.label}</button>`;
+                }).join('');
+            }
+        }
+
+        function openSettingsModal() {
+            if (!authState.authenticated) { openLoginModal(); return; }
+            renderSettingsModal();
+            const overlay = document.getElementById('settings-modal-overlay');
+            if (!overlay) return;
+            overlay.classList.add('show');
+            overlay.setAttribute('aria-hidden', 'false');
+        }
+        function closeSettingsModal(e) {
+            const overlay = document.getElementById('settings-modal-overlay');
+            if (!overlay) return;
+            if (e && e.target && e.target !== overlay && !e.target.matches('.modal-close')) return;
+            overlay.classList.remove('show');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+
+        async function openBillingPortal() {
+            try {
+                const r = await fetch('/billing/portal', { method: 'POST', credentials: 'same-origin' });
+                const data = await r.json().catch(() => ({}));
+                if (r.ok && data.url) {
+                    window.location.href = data.url;
+                    return;
+                }
+                if (typeof showToast === 'function') showToast(data.error || '관리 페이지를 열 수 없어요.');
+            } catch (e) {
+                if (typeof showToast === 'function') showToast('네트워크 오류');
+            }
+        }
+
+        async function confirmCancelSubscription() {
+            if (!confirm('정말 해지하시겠어요?\n\n현재 결제 주기 종료일까지는 계속 이용 가능하고, 그 이후 자동 만료됩니다.')) return;
+            try {
+                const r = await fetch('/billing/cancel-subscription', { method: 'POST', credentials: 'same-origin' });
+                const data = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    if (typeof showToast === 'function') showToast(data.error || '해지 실패');
+                    return;
+                }
+                if (typeof showToast === 'function') showToast('해지 예약 완료 ✅');
+                await refreshAuthState();
+                renderSettingsModal();
+            } catch (e) {
+                if (typeof showToast === 'function') showToast('네트워크 오류');
+            }
+        }
+
+        async function confirmDeleteAccount() {
+            const msg = '⚠️ 계정을 영구 삭제할까요?\n\n' +
+                '• 모든 대화 기록·캐릭터 진행도가 사라집니다.\n' +
+                '• 활성 구독이 있으면 즉시 해지됩니다 (다음 결제 없음).\n' +
+                '• 같은 이메일로 다시 가입은 가능합니다.\n\n' +
+                '이 작업은 되돌릴 수 없습니다.';
+            if (!confirm(msg)) return;
+            try {
+                const r = await fetch('/auth/delete-account', { method: 'POST', credentials: 'same-origin' });
+                if (!r.ok) {
+                    if (typeof showToast === 'function') showToast('삭제 실패');
+                    return;
+                }
+                if (typeof showToast === 'function') showToast('계정이 삭제됐어요.');
+                closeSettingsModal({ target: document.getElementById('settings-modal-overlay') });
+                await refreshAuthState();
+            } catch (e) {
+                if (typeof showToast === 'function') showToast('네트워크 오류');
+            }
+        }
+
+        // ============================================================
+        // "거의 다 씀" 경고 — 남은 ≤ 3 일 때 세션당 1회 toast
+        // ============================================================
+        let _lowQuotaWarnedAt = 0;
+        function maybeWarnLowQuota() {
+            if (!authState.authenticated) return;
+            const q = authState.quota || {};
+            const sub = authState.subscription || {};
+            if (sub.active || q.unlimited) return;
+            const remaining = (typeof q.remaining === 'number') ? q.remaining : q.cap;
+            if (remaining > 3 || remaining <= 0) return;
+            // 1시간에 한 번만 (사용자가 계속 보내며 알림 폭주 방지)
+            const now = Date.now();
+            if (now - _lowQuotaWarnedAt < 60 * 60 * 1000) return;
+            _lowQuotaWarnedAt = now;
+            if (typeof showToast === 'function') {
+                showToast(`오늘 메시지 ${remaining}개 남았어요. 무제한 구독을 고려해보세요 ✨`);
+            }
         }
 
         // 로그인 모달의 버튼들을 환경에 따라 보여주기/숨기기

@@ -1801,7 +1801,9 @@ from users import (
     consume_quota,
     peek_quota,
     has_active_subscription,
+    delete_user as users_delete,
     DAILY_FREE_QUOTA,
+    QUOTA_TIMEZONE,
 )
 from auth import (
     current_user,
@@ -1815,6 +1817,7 @@ from billing import (
     billing_success,
     webhook as stripe_webhook,
     stripe_enabled,
+    cancel_user_subscription,
 )
 
 # 사용자 DB 초기화 (SQLite 파일 + 테이블).
@@ -1829,6 +1832,36 @@ app.add_url_rule('/billing/checkout',     'billing_checkout',     create_checkou
 app.add_url_rule('/billing/portal',       'billing_portal',       create_portal_session,   methods=['POST'])
 app.add_url_rule('/billing/webhook',      'billing_webhook',      stripe_webhook,           methods=['POST'])
 app.add_url_rule('/billing/success',      'billing_success',      billing_success)
+
+
+@app.route('/billing/cancel-subscription', methods=['POST'])
+def cancel_subscription_route():
+    """현재 사용자의 Stripe 구독을 cancel_at_period_end=True 로 표시.
+    period_end 까지 무제한 유지, 그 후 자동 만료."""
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.'}), 401
+    ok, err = cancel_user_subscription(user)
+    if not ok:
+        return jsonify({'error': err or '해지 처리 중 오류가 발생했어요.'}), 502
+    return jsonify({'ok': True})
+
+
+@app.route('/auth/delete-account', methods=['POST'])
+def delete_account():
+    """계정 완전 삭제. Stripe 구독이 있으면 먼저 해지 후 DB 행 삭제 + 세션 cookie 무효화.
+    개인정보보호법·GDPR·Apple/Google 정책상 유료 서비스는 사용자가 셀프-삭제 가능해야 함."""
+    from auth import clear_session_cookie
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.'}), 401
+    # Stripe 구독이 있으면 즉시 해지 시도 (실패해도 계정 삭제는 진행 — 사용자가 다시 가입 못 해도 그만)
+    if user.get('stripe_subscription_id'):
+        cancel_user_subscription(user)
+    users_delete(user['user_id'])
+    print(f'[ACCOUNT] deleted user={user["user_id"]} provider={user.get("provider")}')
+    resp = jsonify({'ok': True})
+    return clear_session_cookie(resp)
 
 
 @app.route('/me')
@@ -1854,8 +1887,10 @@ def me():
         return jsonify({
             'authenticated': False,
             'user': None,
-            'subscription': {'active': False, 'status': None, 'period_end': None},
-            'quota': {'used': 0, 'cap': DAILY_FREE_QUOTA, 'remaining': 0, 'reset_date': None},
+            'subscription': {'active': False, 'status': None, 'period_end': None,
+                             'cancel_at_period_end': False},
+            'quota': {'used': 0, 'cap': DAILY_FREE_QUOTA, 'remaining': 0,
+                      'reset_date': None, 'timezone': QUOTA_TIMEZONE},
             'login_methods': methods,
             'billing_enabled': stripe_enabled(),
         })
@@ -1873,12 +1908,14 @@ def me():
             'active': active,
             'status': user.get('subscription_status'),
             'period_end': user.get('subscription_period_end'),
+            'cancel_at_period_end': bool(user.get('subscription_cancel_at_period_end')),
         },
         'quota': {
             'used': used,
             'cap': cap,
             'remaining': cap if active else remaining,  # 구독자는 cap 만큼 항상 남은 것처럼 보이게
             'reset_date': reset_date,
+            'timezone': QUOTA_TIMEZONE,
             'unlimited': active,
         },
         'login_methods': methods,
