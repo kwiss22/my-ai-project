@@ -1821,7 +1821,8 @@ from billing import (
     TRIAL_DAYS,
 )
 from rate_limit import limit as rate_limit
-from admin import stats as admin_stats
+from admin import stats as admin_stats, events as admin_events
+from events import log_event
 
 # 사용자 DB 초기화 (SQLite 파일 + 테이블).
 init_users_db()
@@ -1848,8 +1849,43 @@ app.add_url_rule('/billing/portal',       'billing_portal',       _rl_portal(cre
 app.add_url_rule('/billing/webhook',      'billing_webhook',      stripe_webhook,                         methods=['POST'])
 app.add_url_rule('/billing/success',      'billing_success',      billing_success)
 
-# 관리자 통계
+# 관리자 통계 + 이벤트 로그 조회
 app.add_url_rule('/admin/stats',          'admin_stats',          admin_stats)
+app.add_url_rule('/admin/events',         'admin_events',         admin_events)
+
+
+# 5xx 핸들러 — 모든 unhandled exception 을 events 에 critical 로 기록.
+# Flask 의 errorhandler 는 우리 라우트 함수가 raise 한 예외를 잡음.
+@app.errorhandler(500)
+def _handle_500(e):
+    try:
+        log_event('error', 'http.500',
+                  message=str(e)[:200],
+                  path=request.path, method=request.method,
+                  remote_addr=request.remote_addr)
+    except Exception:
+        pass
+    return jsonify({'error': '서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.'}), 500
+
+
+@app.errorhandler(Exception)
+def _handle_uncaught(e):
+    # 라이브러리가 던지는 예외 중 일부는 5xx 가 아닐 수도. 그래도 unhandled 면 기록.
+    try:
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            # 4xx 는 정상 흐름 — 로그하지 않음
+            return e
+    except Exception:
+        pass
+    try:
+        log_event('error', 'http.500',
+                  message=f'{type(e).__name__}: {str(e)[:200]}',
+                  path=request.path, method=request.method,
+                  remote_addr=request.remote_addr)
+    except Exception:
+        pass
+    return jsonify({'error': '서버 오류가 발생했어요.'}), 500
 
 
 @app.route('/billing/cancel-subscription', methods=['POST'])
@@ -1879,7 +1915,9 @@ def delete_account():
     if user.get('stripe_subscription_id'):
         cancel_user_subscription(user)
     users_delete(user['user_id'])
-    print(f'[ACCOUNT] deleted user={user["user_id"]} provider={user.get("provider")}')
+    log_event('warn', 'account.deleted',
+              message=f'user={user["user_id"]} provider={user.get("provider")}',
+              user_id=user['user_id'], had_subscription=bool(user.get('stripe_subscription_id')))
     resp = jsonify({'ok': True})
     return clear_session_cookie(resp)
 

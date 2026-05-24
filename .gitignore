@@ -46,6 +46,9 @@ korean_dating_chat/kdate_users.db-journal
 korean_dating_chat/kdate_users.db-shm
 korean_dating_chat/kdate_users.db-wal
 
+# 운영 이벤트 로그 (JSONL append-only, 자동 회전)
+korean_dating_chat/events.jsonl
+
 # Uploads
 uploads/
 

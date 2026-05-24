@@ -15,6 +15,7 @@ from flask import jsonify, request
 
 from auth import current_user
 from users import _connect
+from events import read_recent as events_read_recent, summary_last_7d as events_summary_7d
 
 ADMIN_EMAILS = set(
     e.strip().lower() for e in (os.getenv('ADMIN_EMAILS', '') or '').split(',') if e.strip()
@@ -165,5 +166,22 @@ def stats():
         'quota': {
             'today_capped': today_capped,
         },
+        'events_7d': events_summary_7d(),
         'as_of': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
     })
+
+
+def events():
+    """최근 이벤트 로그 조회. ?limit=N&severity=critical&kind=payment.failed&kind_prefix=subscription."""
+    ok, err = _require_admin()
+    if not ok:
+        return err
+    try:
+        limit = min(500, max(1, int(request.args.get('limit', '100'))))
+    except ValueError:
+        limit = 100
+    severity = request.args.get('severity') or None
+    kind = request.args.get('kind') or None
+    kind_prefix = request.args.get('kind_prefix') or None
+    recs = events_read_recent(limit=limit, severity=severity, kind=kind, kind_prefix=kind_prefix)
+    return jsonify({'events': recs, 'count': len(recs)})
