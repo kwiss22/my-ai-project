@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이용약관 | K-Dating Chat</title>
-    <!-- Google Analytics -->
+    <title>Terms of Service | K-Dating Chat</title>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHL89SXPSY"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-EHL89SXPSY');</script>
     <style>
@@ -13,96 +12,313 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
             background: #f5f5f5;
             color: #333;
-            line-height: 1.8;
+            line-height: 1.75;
         }
         .container {
-            max-width: 720px;
+            max-width: 760px;
             margin: 0 auto;
             background: white;
             min-height: 100vh;
-            padding: 40px 24px 80px;
+            padding: 40px 28px 80px;
         }
         .header {
             border-bottom: 2px solid #FEE500;
             padding-bottom: 20px;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
-        .header h1 { font-size: 22px; color: #222; margin-bottom: 6px; }
-        .header p { font-size: 13px; color: #888; }
+        .header h1 { font-size: 24px; color: #222; margin-bottom: 6px; }
+        .header .sub { font-size: 13px; color: #888; }
+        .lang-toggle {
+            display: inline-flex;
+            gap: 4px;
+            background: #eee;
+            border-radius: 6px;
+            padding: 2px;
+            margin: 8px 0;
+        }
+        .lang-toggle button {
+            background: transparent;
+            border: none;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .lang-toggle button.active { background: white; color: #222; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
         h2 {
             font-size: 16px;
             color: #222;
-            margin: 28px 0 10px;
+            margin: 26px 0 10px;
             padding-left: 10px;
             border-left: 3px solid #FEE500;
         }
+        h3 { font-size: 14px; color: #444; margin: 14px 0 6px; }
         p, li { font-size: 14px; color: #555; margin-bottom: 6px; }
-        ul { padding-left: 20px; margin-bottom: 10px; }
+        ul { padding-left: 22px; margin-bottom: 10px; }
         a { color: #667eea; text-decoration: none; }
+        a:hover { text-decoration: underline; }
         .back-btn {
-            display: inline-block;
-            margin-bottom: 24px;
-            font-size: 14px;
-            color: #667eea;
+            display: inline-block; margin-bottom: 16px;
+            font-size: 14px; color: #667eea; cursor: pointer; text-decoration: none;
+        }
+        .disclaimer-box {
+            background: #fffbea; border: 1px solid #f5d36b; border-radius: 8px;
+            padding: 12px 16px; margin: 16px 0 24px; font-size: 13px; color: #6b5500;
+        }
+        .highlight-box {
+            background: #f0f4ff; border: 1px solid #b6c8ff; border-radius: 8px;
+            padding: 12px 16px; margin: 12px 0; font-size: 13px; color: #2a3760;
         }
         .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #aaa; }
+
+        body[data-lang="en"] .ko { display: none; }
+        body[data-lang="ko"] .en { display: none; }
+        body[data-lang="ko"] { font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif; }
     </style>
 </head>
-<body>
+<body data-lang="en">
 <div class="container">
-    <a class="back-btn" href="/chat">← K-Dating Chat으로 돌아가기</a>
+    <a class="back-btn" href="/chat">← K-Dating Chat</a>
 
     <div class="header">
-        <h1>이용약관</h1>
-        <p>Terms of Service · 최종 업데이트: 2026년 4월 1일</p>
+        <h1 class="en">Terms of Service</h1>
+        <h1 class="ko">이용약관</h1>
+        <p class="sub">
+            <span class="en">Last updated: May 24, 2026</span>
+            <span class="ko">최종 업데이트: 2026년 5월 24일</span>
+        </p>
+        <div class="lang-toggle" role="group" aria-label="Language">
+            <button type="button" data-set-lang="en" class="active">EN</button>
+            <button type="button" data-set-lang="ko">한국어</button>
+        </div>
     </div>
 
-    <p>K-Dating Chat 서비스를 이용하시기 전에 본 약관을 주의 깊게 읽어주세요. 서비스를 이용하면 본 약관에 동의한 것으로 간주됩니다.</p>
+    <div class="disclaimer-box">
+        <strong class="en">Operator notice (replace before launch):</strong>
+        <strong class="ko">운영자 안내 (출시 전 반드시 수정):</strong>
+        <span class="en">This service is operated by <strong>[OPERATOR_NAME]</strong>, located at <strong>[OPERATOR_ADDRESS]</strong>. Business contact: <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a>.</span>
+        <span class="ko">본 서비스는 <strong>[운영자명]</strong> (주소: <strong>[운영자 주소]</strong>)가 운영합니다. 사업자 연락처: <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a>.</span>
+    </div>
 
-    <h2>1. 서비스 소개</h2>
-    <p>K-Dating Chat은 AI 캐릭터(지우, 현우)와 한국어로 채팅하며 한국어를 자연스럽게 학습할 수 있는 교육·오락 서비스입니다.</p>
+    <p class="en">Please read these Terms of Service ("Terms") carefully before using K-Dating Chat ("the Service"). By accessing or using the Service you agree to be bound by these Terms. If you do not agree, do not use the Service.</p>
+    <p class="ko">K-Dating Chat (이하 "서비스") 이용 전 본 약관을 주의 깊게 읽어주세요. 서비스 접속·이용 시 본 약관에 동의하신 것으로 간주됩니다. 동의하지 않으시면 서비스를 이용하지 마세요.</p>
 
-    <h2>2. 이용 자격</h2>
-    <ul>
-        <li>만 13세 이상 누구나 이용 가능합니다.</li>
-        <li>만 13세 미만은 보호자의 동의 없이 이용할 수 없습니다.</li>
+    <h2>1. <span class="en">The Service</span><span class="ko">서비스 소개</span></h2>
+    <p class="en">K-Dating Chat is a Korean-language learning application. Users practice Korean conversation with fictional AI characters whose friendly, affectionate role-play is designed to motivate daily practice. The Service is provided for education and entertainment; it is not a dating, matchmaking, or social-networking service.</p>
+    <p class="ko">K-Dating Chat 은 한국어 학습 애플리케이션입니다. 매일 한국어 연습 동기를 부여하기 위해 친근하고 다정한 톤의 롤플레이를 하는 가상의 AI 캐릭터와 대화하며 한국어를 익히는 서비스입니다. 교육·오락 목적으로 제공되며, 데이팅·소개팅·소셜 네트워킹 서비스가 아닙니다.</p>
+
+    <h2>2. <span class="en">Eligibility</span><span class="ko">이용 자격</span></h2>
+    <ul class="en">
+        <li>The Service is available to users <strong>13 years of age or older</strong>.</li>
+        <li>If you are under the legal age of digital consent in your country (<strong>16 in much of the EU/EEA, 14 in Korea, 13 in most other places</strong>), you must have permission from a parent or legal guardian to use the Service and to provide personal data.</li>
+        <li>If you are a minor anywhere, you may only purchase a subscription with the consent and supervision of a parent or legal guardian, and they must own or control the payment method used.</li>
+        <li>You must have legal capacity (or appropriate guardian consent) to enter into a binding contract in your jurisdiction.</li>
+    </ul>
+    <ul class="ko">
+        <li>본 서비스는 만 <strong>13세 이상</strong>이 이용할 수 있습니다.</li>
+        <li>거주국 디지털 동의 가능 연령(<strong>EU/EEA 다수 16세, 한국 14세, 그 외 대부분 13세</strong>) 미만이면 서비스 이용 및 개인정보 제공에 부모·법정대리인의 동의가 필요합니다.</li>
+        <li>미성년자는 부모·법정대리인의 동의·감독 하에서만 구독을 결제할 수 있으며, 결제 수단은 부모·법정대리인이 소유·관리하는 것이어야 합니다.</li>
+        <li>거주국 법률상 계약 체결 능력(또는 적법한 보호자 동의)이 있어야 합니다.</li>
     </ul>
 
-    <h2>3. AI 캐릭터 면책</h2>
-    <ul>
-        <li>지우(Jiwoo)와 현우(Hyunwoo)는 AI 기술로 구현된 가상의 캐릭터입니다.</li>
-        <li>모든 대화 내용은 교육·오락 목적의 허구(롤플레이)이며, 실제 인물과 관련이 없습니다.</li>
-        <li>AI와의 대화가 실제 연애 관계나 만남으로 이어지지 않습니다.</li>
-        <li>AI 응답의 정확성·완전성을 보장하지 않습니다.</li>
+    <h2>3. <span class="en">Account</span><span class="ko">계정</span></h2>
+    <ul class="en">
+        <li>You sign in via Google OAuth. You are responsible for the security of your Google account.</li>
+        <li>One account per natural person. Sharing accounts is not permitted.</li>
+        <li>You may delete your account at any time via Settings → Delete account. Account deletion cancels any active subscription as of the next billing cycle (no further charges) and erases your personal data within 30 days.</li>
+    </ul>
+    <ul class="ko">
+        <li>Google OAuth 로 로그인합니다. Google 계정 보안은 본인 책임입니다.</li>
+        <li>자연인 1명당 계정 1개. 공유 금지.</li>
+        <li>설정 → 계정 삭제로 언제든 탈퇴할 수 있습니다. 탈퇴 시 활성 구독은 다음 결제일부터 자동 해지되며(추가 결제 없음), 개인정보는 30일 이내 파기됩니다.</li>
     </ul>
 
-    <h2>4. 금지 행위</h2>
-    <ul>
-        <li>불법적이거나 타인에게 해가 되는 내용의 대화</li>
-        <li>서비스 시스템을 악용·해킹·크롤링하는 행위</li>
-        <li>AI 캐릭터를 실제 인물로 오인하게 하는 콘텐츠 배포</li>
-        <li>상업적 목적으로 대화 내용을 무단 사용하는 행위</li>
+    <h2>4. <span class="en">AI Character Disclaimer</span><span class="ko">AI 캐릭터 면책</span></h2>
+    <ul class="en">
+        <li>All characters — 지우, the HWARANG group (태오, 레오, 지훈, 주노, 현우), and the WONHWA group (수아, 민서, 세린, 하린, 유나) — are <strong>fictional AI language-learning companions</strong>. They are not real people, do not represent any real person living or dead, and have no real-world counterparts.</li>
+        <li>The friendly, affectionate, sometimes flirtatious tone used by some characters is a pedagogical device to motivate daily Korean practice. <strong>The Service is not a dating, matchmaking, romance, or companionship product</strong>, does not facilitate real-world relationships or meetings, and should not be used as a substitute for human connection.</li>
+        <li>AI-generated outputs may be inaccurate, incomplete, or inappropriate. Do not rely on them for medical, legal, financial, safety, or emergency advice. We do not guarantee accuracy.</li>
+    </ul>
+    <ul class="ko">
+        <li>모든 캐릭터 — 지우, 화랑 멤버(태오·레오·지훈·주노·현우), 원화 멤버(수아·민서·세린·하린·유나) — 는 <strong>가상의 AI 한국어 학습 동반자</strong>입니다. 실존 인물이 아니며, 어떤 실존 인물도 묘사하지 않고, 실제로 대응되는 인물이 존재하지 않습니다.</li>
+        <li>일부 캐릭터의 친근하고 다정하며 때로 설레는 톤은 매일 한국어 연습을 유도하기 위한 교수법적 장치입니다. <strong>본 서비스는 데이팅·소개팅·로맨스·반려 서비스가 아니며</strong>, 실제 만남으로 이어지지 않고, 사람 사이의 교류를 대체할 수 없습니다.</li>
+        <li>AI 생성 콘텐츠는 부정확·불완전·부적절할 수 있습니다. 의료·법률·금융·안전·응급 자문에 사용하지 마세요. 정확성을 보장하지 않습니다.</li>
     </ul>
 
-    <h2>5. 광고</h2>
-    <p>본 서비스는 Google AdSense를 통해 광고를 게재합니다. 광고는 서비스 운영 비용을 충당하기 위한 것이며, 광고 클릭 여부는 이용자의 자유입니다.</p>
+    <h2>5. <span class="en">Subscriptions, Billing, &amp; Renewals</span><span class="ko">구독·결제·갱신</span></h2>
+    <div class="highlight-box">
+        <strong class="en">Auto-renewal notice:</strong>
+        <strong class="ko">자동 갱신 안내:</strong>
+        <span class="en">Subscriptions automatically renew each billing cycle until canceled. You can cancel at any time and retain access through the end of the current paid period.</span>
+        <span class="ko">구독은 해지하기 전까지 매 결제 주기마다 자동 갱신됩니다. 언제든 해지 가능하며, 해지 후에도 현재 결제 주기 종료일까지는 계속 이용할 수 있습니다.</span>
+    </div>
 
-    <h2>6. 서비스 변경 및 중단</h2>
-    <p>운영 상의 이유로 사전 공지 없이 서비스 내용을 변경하거나 중단할 수 있습니다.</p>
+    <h3 class="en">a. Plans &amp; pricing</h3>
+    <h3 class="ko">가. 요금제 및 가격</h3>
+    <ul class="en">
+        <li><strong>Free tier:</strong> a daily allotment of free chat messages (currently shown in Settings; subject to change).</li>
+        <li><strong>Monthly subscription:</strong> unlimited chat messages with all characters. The current price is shown on the checkout page before payment.</li>
+        <li>Prices are charged in the currency shown at checkout and may include applicable taxes (VAT/GST/sales tax) depending on your location.</li>
+    </ul>
+    <ul class="ko">
+        <li><strong>무료 플랜:</strong> 매일 무료 메시지 일정량 제공 (현재 한도는 설정 화면에서 확인, 변경 가능).</li>
+        <li><strong>월 구독:</strong> 모든 캐릭터와 메시지 무제한. 현재 가격은 결제 페이지에 표시됩니다.</li>
+        <li>표시 통화로 결제되며 거주 지역에 따라 부가가치세(VAT/GST/소비세)가 포함될 수 있습니다.</li>
+    </ul>
 
-    <h2>7. 책임 제한</h2>
-    <p>서비스는 "있는 그대로(as-is)" 제공됩니다. AI 응답으로 인한 직·간접적 손해에 대해 서비스 운영자는 책임지지 않습니다.</p>
+    <h3 class="en">b. Payment processor</h3>
+    <h3 class="ko">나. 결제 처리자</h3>
+    <p class="en">All payments are processed by Stripe, Inc. (USA). We do not store or see your card number. Your payment method is charged automatically at the start of each billing cycle.</p>
+    <p class="ko">모든 결제는 Stripe, Inc. (미국)이 처리합니다. 카드 번호는 저희가 저장·열람하지 않습니다. 결제 수단은 각 결제 주기 시작 시 자동 청구됩니다.</p>
 
-    <h2>8. 준거법</h2>
-    <p>본 약관은 대한민국 법률을 준거법으로 합니다.</p>
+    <h3 class="en">c. Failed payments</h3>
+    <h3 class="ko">다. 결제 실패</h3>
+    <p class="en">If a renewal payment fails, Stripe will retry several times over approximately one week ("past_due" period). During this period your subscriber access continues. If all retries fail, the subscription is canceled and the free tier applies on the next day.</p>
+    <p class="ko">갱신 결제가 실패하면 Stripe 가 약 1주일 동안 여러 차례 재시도합니다(past_due 상태). 이 기간 동안 구독자 권한은 유지됩니다. 모든 재시도가 실패하면 구독이 해지되고 다음 날부터 무료 플랜이 적용됩니다.</p>
 
-    <h2>9. 문의</h2>
-    <p>📧 <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a></p>
+    <h3 class="en">d. Cancellation</h3>
+    <h3 class="ko">라. 해지</h3>
+    <p class="en">Cancel any time via Settings → Cancel subscription. Cancellation is scheduled for the end of the current paid period; you keep subscriber access until that date and are not charged again. You can resubscribe at any time.</p>
+    <p class="ko">설정 → 해지 예약으로 언제든 해지할 수 있습니다. 해지는 현재 결제 주기 종료일에 효력이 발생하며, 그 날까지 구독자 권한이 유지되고 추가 청구는 없습니다. 이후 언제든 재구독 가능합니다.</p>
+
+    <h2>6. <span class="en">Refund Policy</span><span class="ko">환불 정책</span></h2>
+    <p class="en">Subscription fees for the current billing period are <strong>generally non-refundable</strong> once charged, because the digital service is delivered immediately. <strong>However:</strong></p>
+    <p class="ko">결제 완료된 현재 결제 주기 요금은 디지털 서비스가 즉시 제공되므로 <strong>원칙적으로 환불 불가</strong>합니다. <strong>다만:</strong></p>
+
+    <h3 class="en">a. EU / EEA / UK consumers — 14-day right of withdrawal</h3>
+    <h3 class="ko">가. EU / EEA / 영국 소비자 — 14일 청약철회권</h3>
+    <p class="en">Under Directive 2011/83/EU and equivalent UK law, consumers in the EU/EEA/UK have a 14-day right to withdraw from a distance contract. By purchasing a subscription you expressly request that service begin immediately and acknowledge that, by Article 16(m) of the Directive, you lose the right of withdrawal once digital content has been supplied with your prior consent. If you have not yet used the Service after subscribing, contact us within 14 days for a full refund.</p>
+    <p class="ko">EU 지침 2011/83/EU 및 영국 동등 법률에 따라 EU/EEA/영국 소비자는 원격 계약 체결 후 14일 내 철회권을 가집니다. 단, 구독 결제 시 즉시 이용 개시를 명시 동의하고 동 지침 제16(m)조에 따라 디지털 콘텐츠 제공이 시작된 시점에 철회권이 소멸함을 확인합니다. 구독 후 서비스를 전혀 이용하지 않은 상태라면 14일 이내 연락 시 전액 환불해 드립니다.</p>
+
+    <h3 class="en">b. Korea consumers — 7-day cooling-off period</h3>
+    <h3 class="ko">나. 한국 소비자 — 7일 청약철회권</h3>
+    <p class="en">Under the Korean Act on the Consumer Protection in Electronic Commerce (전자상거래 등에서의 소비자보호에 관한 법률 제17조), consumers in Korea may withdraw from a digital-content purchase within 7 days. By purchasing a subscription you expressly consent to immediate provision of the digital service; under Article 17(2)5, the right of withdrawal does not apply once the service has been provided. If you have not used the Service after subscribing, contact us within 7 days for a full refund.</p>
+    <p class="ko">전자상거래 등에서의 소비자보호에 관한 법률 제17조에 따라 한국 소비자는 디지털 콘텐츠 구매 후 7일 이내 청약을 철회할 수 있습니다. 단, 구독 결제 시 즉시 제공에 명시 동의하시며, 동법 제17조 제2항 제5호에 따라 서비스 제공이 시작된 시점에 청약철회권이 적용되지 않습니다. 구독 후 서비스를 전혀 이용하지 않으셨다면 7일 이내 연락 시 전액 환불해 드립니다.</p>
+
+    <h3 class="en">c. Other jurisdictions</h3>
+    <h3 class="ko">다. 그 외 지역</h3>
+    <p class="en">If applicable mandatory consumer law in your country grants additional refund rights, those rights apply. Outside of legally mandated cases, we may offer goodwill refunds at our discretion if you contact us within 7 days of purchase and have made minimal use of the subscription.</p>
+    <p class="ko">거주 국가의 강행 소비자 보호 법령이 추가 환불 권리를 부여하는 경우 해당 권리가 우선 적용됩니다. 법령상 의무가 없는 경우에도, 결제 후 7일 이내 연락하시고 사용량이 미미하다면 자율적으로 환불을 진행할 수 있습니다.</p>
+
+    <h3 class="en">d. How to request a refund</h3>
+    <h3 class="ko">라. 환불 요청 방법</h3>
+    <p class="en">Email <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a> from the email address on your account with the subject "Refund request" and your Stripe receipt number. Refunds are issued to the original payment method within 7 business days of approval.</p>
+    <p class="ko">계정에 등록된 이메일로 <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a> 에 제목 "환불 요청" + Stripe 영수증 번호를 보내주세요. 승인 후 7영업일 이내 원결제 수단으로 환불됩니다.</p>
+
+    <h2>7. <span class="en">Acceptable Use</span><span class="ko">금지 행위</span></h2>
+    <p class="en">You agree not to:</p>
+    <p class="ko">이용자는 다음 행위를 하지 않기로 동의합니다:</p>
+    <ul class="en">
+        <li>Use the Service for any illegal purpose, or to send or solicit content depicting minors in a sexual manner, threats, harassment, hate speech, or fraud.</li>
+        <li>Attempt to extract real personal information from AI characters, or treat AI responses as advice from a licensed professional.</li>
+        <li>Scrape, mirror, reverse-engineer, or build a competing service from our outputs.</li>
+        <li>Attempt to disable, circumvent, or overload our rate limits, quota, authentication, or payment systems.</li>
+        <li>Impersonate another person, share account access, or transfer your account.</li>
+        <li>Distribute Service content in a way that suggests AI characters are real people, or that makes us appear to endorse a real person, brand, or product.</li>
+        <li>Use the Service to develop, train, or evaluate a competing AI model.</li>
+    </ul>
+    <ul class="ko">
+        <li>불법적 목적 이용, 미성년자 성적 묘사, 협박·괴롭힘·증오 표현·사기 콘텐츠 송수신.</li>
+        <li>AI 캐릭터로부터 실제 개인 정보 추출 시도, AI 응답을 자격 있는 전문가의 조언처럼 취급.</li>
+        <li>크롤링·미러링·리버스 엔지니어링, 출력물을 이용한 경쟁 서비스 구축.</li>
+        <li>rate limit·quota·인증·결제 시스템 비활성화·우회·과부하 시도.</li>
+        <li>타인 사칭, 계정 공유, 계정 양도.</li>
+        <li>AI 캐릭터를 실존 인물처럼 보이게 하거나, 실존 인물·브랜드·제품을 저희가 보증하는 것처럼 보이는 방식으로 콘텐츠 배포.</li>
+        <li>경쟁 AI 모델의 학습·평가 목적 이용.</li>
+    </ul>
+    <p class="en">Violation may result in suspension or termination of your account, and forfeiture of unused subscription time at our reasonable discretion.</p>
+    <p class="ko">위반 시 계정 정지·해지 및 미사용 구독 기간 권리 상실로 이어질 수 있습니다.</p>
+
+    <h2>8. <span class="en">Intellectual Property</span><span class="ko">지적재산권</span></h2>
+    <ul class="en">
+        <li>We retain all rights, title, and interest in the Service, characters, names, artwork, branding, and underlying technology.</li>
+        <li>You retain ownership of the messages you write. By using the Service you grant us a worldwide, royalty-free license to process those messages solely to provide and improve the Service.</li>
+        <li>AI-generated outputs are provided to you for your personal, non-commercial use within the Service. We do not claim copyright over individual outputs but make no representations regarding their originality, accuracy, or rights to third-party content.</li>
+    </ul>
+    <ul class="ko">
+        <li>서비스·캐릭터·이름·아트워크·브랜딩·기반 기술의 모든 권리는 저희에게 있습니다.</li>
+        <li>이용자가 작성한 메시지의 소유권은 이용자에게 있습니다. 서비스 이용 시 저희가 서비스 제공·개선 목적으로 메시지를 처리할 수 있도록 글로벌·무상 라이선스를 부여합니다.</li>
+        <li>AI 생성 출력물은 서비스 내 개인적·비상업적 이용을 위해 제공됩니다. 개별 출력물의 저작권을 주장하지 않으나, 독창성·정확성·제3자 콘텐츠 권리에 대해 보장하지 않습니다.</li>
+    </ul>
+
+    <h2>9. <span class="en">Disclaimers</span><span class="ko">보증 면책</span></h2>
+    <p class="en">THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR THAT THE SERVICE WILL BE UNINTERRUPTED OR ERROR-FREE. AI OUTPUTS MAY BE INACCURATE OR INAPPROPRIATE. SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF CERTAIN WARRANTIES; IN THAT CASE THE EXCLUSIONS ABOVE MAY NOT APPLY TO YOU.</p>
+    <p class="ko">서비스는 "있는 그대로(AS-IS)" 및 "이용 가능한 상태(AS-AVAILABLE)" 로 제공되며 상품성·특정 목적 적합성·비침해·중단 없음·오류 없음을 포함한 어떠한 명시적·묵시적 보증도 하지 않습니다. AI 출력은 부정확·부적절할 수 있습니다. 일부 지역은 특정 보증의 배제를 허용하지 않으며, 그 경우 위 배제 조항이 적용되지 않을 수 있습니다.</p>
+
+    <h2>10. <span class="en">Limitation of Liability</span><span class="ko">책임의 제한</span></h2>
+    <p class="en">TO THE MAXIMUM EXTENT PERMITTED BY LAW, OUR TOTAL AGGREGATE LIABILITY FOR ANY CLAIM ARISING OUT OF OR RELATING TO THE SERVICE IS LIMITED TO THE GREATER OF (A) THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM, OR (B) USD 50. WE ARE NOT LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR LOSS OF PROFITS, DATA, OR GOODWILL. NOTHING IN THESE TERMS LIMITS LIABILITY THAT CANNOT BE LIMITED BY LAW (E.G., GROSS NEGLIGENCE, INTENT, CONSUMER STATUTORY RIGHTS, OR DEATH/PERSONAL INJURY CAUSED BY OUR NEGLIGENCE).</p>
+    <p class="ko">적용 법률이 허용하는 최대 범위에서 본 서비스와 관련된 모든 청구에 대한 저희의 총 책임은 (가) 청구 발생 직전 12개월간 이용자가 저희에게 지급한 금액과 (나) 미화 50달러 중 큰 금액으로 제한됩니다. 간접·부수적·특별·결과적·징벌적 손해, 이익·데이터·영업권 손실에 대해 책임지지 않습니다. 단, 법률상 제한할 수 없는 책임(중과실·고의·소비자의 강행 권리·과실로 인한 사망·신체 상해 등)에는 본 조항이 적용되지 않습니다.</p>
+
+    <h2>11. <span class="en">Indemnification</span><span class="ko">손해 배상</span></h2>
+    <p class="en">You agree to indemnify and hold harmless K-Dating Chat and its operators from any third-party claim arising from your breach of these Terms, your misuse of the Service, or your violation of any law or third-party right.</p>
+    <p class="ko">이용자의 본 약관 위반, 서비스 오용, 법률·제3자 권리 침해로 인한 제3자 청구에 대해 K-Dating Chat 및 운영자를 면책하고 보전합니다.</p>
+
+    <h2>12. <span class="en">Termination</span><span class="ko">계약 해지</span></h2>
+    <ul class="en">
+        <li>You may stop using the Service or delete your account at any time.</li>
+        <li>We may suspend or terminate your account for breach of these Terms, suspected fraud, abuse, or risk to the Service or other users, with notice where reasonably feasible.</li>
+        <li>Sections that by their nature should survive (Refunds for amounts owed, IP, Disclaimers, Limitation of Liability, Indemnification, Governing Law) survive termination.</li>
+    </ul>
+    <ul class="ko">
+        <li>이용자는 언제든 서비스 이용을 중단하거나 계정을 삭제할 수 있습니다.</li>
+        <li>약관 위반·사기 의심·악용·서비스나 타 이용자에 대한 위협 시 합리적인 범위에서 사전 통지 후 계정을 정지·해지할 수 있습니다.</li>
+        <li>그 성격상 효력이 유지되어야 하는 조항(미지급 금액 환불, 지재권, 면책, 책임 제한, 손해 배상, 준거법)은 해지 후에도 유효합니다.</li>
+    </ul>
+
+    <h2>13. <span class="en">Changes to the Service or Terms</span><span class="ko">서비스 및 약관 변경</span></h2>
+    <p class="en">We may modify the Service (features, characters, pricing, quotas) and these Terms at any time. Material changes will be notified in-app or by email at least 30 days before they take effect; price increases will not apply to a currently active billing period. Continued use after the effective date constitutes acceptance.</p>
+    <p class="ko">서비스(기능·캐릭터·가격·quota) 와 약관은 변경될 수 있습니다. 중요한 변경은 시행 30일 전 앱 내 공지 또는 이메일로 안내합니다. 가격 인상은 진행 중인 결제 주기에는 적용되지 않습니다. 시행일 이후 계속 이용 시 변경에 동의하신 것으로 간주됩니다.</p>
+
+    <h2>14. <span class="en">Governing Law &amp; Disputes</span><span class="ko">준거법 및 분쟁 해결</span></h2>
+    <p class="en">These Terms are governed by the laws of the State of Delaware, USA, without regard to its conflict of law principles. Disputes will be resolved in the state or federal courts located in Delaware. <strong>Nothing in this section overrides your non-waivable consumer rights under the mandatory laws of your country of residence (including the right to bring proceedings in your local courts where guaranteed by EU, UK, Korean, or other consumer-protection law).</strong></p>
+    <p class="ko">본 약관은 미국 델라웨어주 법률을 준거법으로 하며 저촉법 원칙은 적용되지 않습니다. 분쟁은 델라웨어주 법원의 관할에 따릅니다. <strong>단, 거주국의 강행 소비자 보호 법령에 따른 비포기 권리(EU·영국·한국 등에서 보장하는 본국 법원 제소권 등) 는 본 조항으로 침해되지 않습니다.</strong></p>
+
+    <h2>15. <span class="en">Miscellaneous</span><span class="ko">기타</span></h2>
+    <ul class="en">
+        <li><strong>Entire agreement:</strong> these Terms and the Privacy Policy are the entire agreement between you and us regarding the Service.</li>
+        <li><strong>Severability:</strong> if any provision is held unenforceable, the rest remains in effect.</li>
+        <li><strong>No waiver:</strong> our failure to enforce a right is not a waiver of that right.</li>
+        <li><strong>Assignment:</strong> you may not assign these Terms; we may assign to a successor of our business.</li>
+        <li><strong>Notices:</strong> we may notify you via in-app messages or the email address associated with your account.</li>
+    </ul>
+    <ul class="ko">
+        <li><strong>완전 합의:</strong> 본 약관 및 개인정보처리방침이 서비스에 관한 이용자와 저희 간의 완전한 합의입니다.</li>
+        <li><strong>분리 가능성:</strong> 일부 조항이 무효라도 나머지는 유효합니다.</li>
+        <li><strong>권리 포기 아님:</strong> 권리 행사 지연·미행사는 포기로 간주되지 않습니다.</li>
+        <li><strong>양도:</strong> 이용자는 본 약관상 권리·의무를 양도할 수 없습니다. 저희는 사업 승계인에게 양도할 수 있습니다.</li>
+        <li><strong>통지:</strong> 앱 내 메시지 또는 계정 이메일로 통지합니다.</li>
+    </ul>
+
+    <h2>16. <span class="en">Contact</span><span class="ko">문의</span></h2>
+    <p class="en">Questions about these Terms? Email <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a>.</p>
+    <p class="ko">약관 관련 문의: <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a>.</p>
 
     <div class="footer">
         <p>© 2026 K-Dating Chat. All rights reserved.</p>
-        <p><a href="/terms">이용약관</a> · <a href="/privacy">개인정보처리방침</a></p>
+        <p><a href="/terms">Terms of Service · 이용약관</a> · <a href="/privacy">Privacy Policy · 개인정보처리방침</a></p>
     </div>
 </div>
+
+<script>
+    (function () {
+        const body = document.body;
+        const saved = localStorage.getItem('kdate-legal-lang');
+        if (saved === 'ko' || saved === 'en') body.dataset.lang = saved;
+        document.querySelectorAll('[data-set-lang]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.dataset.setLang;
+                body.dataset.lang = lang;
+                localStorage.setItem('kdate-legal-lang', lang);
+                document.querySelectorAll('[data-set-lang]').forEach(b => {
+                    b.classList.toggle('active', b.dataset.setLang === lang);
+                });
+            });
+            if (btn.dataset.setLang === body.dataset.lang) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+    })();
+</script>
 </body>
 </html>

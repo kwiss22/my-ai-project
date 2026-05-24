@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>개인정보처리방침 | K-Dating Chat</title>
-    <!-- Google Analytics -->
+    <title>Privacy Policy | K-Dating Chat</title>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHL89SXPSY"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-EHL89SXPSY');</script>
     <style>
@@ -13,109 +12,295 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
             background: #f5f5f5;
             color: #333;
-            line-height: 1.8;
+            line-height: 1.75;
         }
         .container {
-            max-width: 720px;
+            max-width: 760px;
             margin: 0 auto;
             background: white;
             min-height: 100vh;
-            padding: 40px 24px 80px;
+            padding: 40px 28px 80px;
         }
         .header {
             border-bottom: 2px solid #FEE500;
             padding-bottom: 20px;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
-        .header h1 { font-size: 22px; color: #222; margin-bottom: 6px; }
-        .header p { font-size: 13px; color: #888; }
+        .header h1 { font-size: 24px; color: #222; margin-bottom: 6px; }
+        .header .sub { font-size: 13px; color: #888; }
+        .lang-toggle {
+            display: inline-flex;
+            gap: 4px;
+            background: #eee;
+            border-radius: 6px;
+            padding: 2px;
+            margin: 8px 0;
+        }
+        .lang-toggle button {
+            background: transparent;
+            border: none;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .lang-toggle button.active { background: white; color: #222; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
         h2 {
             font-size: 16px;
             color: #222;
-            margin: 28px 0 10px;
+            margin: 26px 0 10px;
             padding-left: 10px;
             border-left: 3px solid #FEE500;
         }
+        h3 { font-size: 14px; color: #444; margin: 14px 0 6px; }
         p, li { font-size: 14px; color: #555; margin-bottom: 6px; }
-        ul { padding-left: 20px; margin-bottom: 10px; }
+        ul { padding-left: 22px; margin-bottom: 10px; }
         a { color: #667eea; text-decoration: none; }
+        a:hover { text-decoration: underline; }
         .back-btn {
-            display: inline-block;
-            margin-bottom: 24px;
-            font-size: 14px;
-            color: #667eea;
-            cursor: pointer;
-            text-decoration: none;
+            display: inline-block; margin-bottom: 16px;
+            font-size: 14px; color: #667eea; cursor: pointer; text-decoration: none;
+        }
+        .disclaimer-box {
+            background: #fffbea; border: 1px solid #f5d36b; border-radius: 8px;
+            padding: 12px 16px; margin: 16px 0 24px; font-size: 13px; color: #6b5500;
         }
         .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #aaa; }
+
+        /* Language visibility */
+        body[data-lang="en"] .ko { display: none; }
+        body[data-lang="ko"] .en { display: none; }
+        body[data-lang="ko"] { font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif; }
     </style>
 </head>
-<body>
+<body data-lang="en">
 <div class="container">
-    <a class="back-btn" href="/chat">← K-Dating Chat으로 돌아가기</a>
+    <a class="back-btn" href="/chat">← K-Dating Chat</a>
 
     <div class="header">
-        <h1>개인정보처리방침</h1>
-        <p>Privacy Policy · 최종 업데이트: 2026년 4월 1일</p>
+        <h1 class="en">Privacy Policy</h1>
+        <h1 class="ko">개인정보처리방침</h1>
+        <p class="sub">
+            <span class="en">Last updated: May 24, 2026</span>
+            <span class="ko">최종 업데이트: 2026년 5월 24일</span>
+        </p>
+        <div class="lang-toggle" role="group" aria-label="Language">
+            <button type="button" data-set-lang="en" class="active">EN</button>
+            <button type="button" data-set-lang="ko">한국어</button>
+        </div>
     </div>
 
-    <p>K-Dating Chat(이하 "서비스")은 이용자의 개인정보를 소중히 여기며, 관련 법령을 준수합니다. 본 방침은 서비스 이용 시 수집·이용·보관되는 정보에 대해 안내합니다.</p>
+    <div class="disclaimer-box">
+        <strong class="en">Operator notice (replace before launch):</strong>
+        <strong class="ko">운영자 안내 (출시 전 반드시 수정):</strong>
+        <span class="en">This policy is operated by <strong>[OPERATOR_NAME]</strong>, located at <strong>[OPERATOR_ADDRESS]</strong>. Contact: <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a>.</span>
+        <span class="ko">본 정책은 <strong>[운영자명]</strong> (주소: <strong>[운영자 주소]</strong>)가 운영하며, 문의처는 <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a> 입니다.</span>
+    </div>
 
-    <h2>1. 수집하는 정보</h2>
-    <ul>
-        <li><strong>직접 입력 정보:</strong> 닉네임(선택), 한국어 수준, 관심사</li>
-        <li><strong>대화 내용:</strong> AI와 주고받은 채팅 메시지 (AI 응답 생성 및 대화 기록 저장 목적)</li>
-        <li><strong>기술 정보:</strong> 세션 ID, 브라우저 종류, 접속 시간</li>
-        <li><strong>푸시 알림:</strong> FCM 토큰 (알림 수신 동의 시)</li>
+    <p class="en">K-Dating Chat ("the Service", "we") is a Korean-language learning application in which users practice Korean conversation with fictional AI characters. It is an education product, not a dating, matchmaking, or social-networking service. This Privacy Policy explains what information we collect, how we use it, with whom we share it, and the rights you have over your data. By using the Service you agree to the practices described here.</p>
+    <p class="ko">K-Dating Chat (이하 "서비스")은 가상의 AI 캐릭터와 한국어 대화를 연습하는 한국어 학습 애플리케이션입니다. 교육 서비스이며, 데이팅·소개팅·소셜 네트워킹 서비스가 아닙니다. 본 방침은 서비스 이용 시 수집·이용·공유되는 정보와 이용자에게 부여되는 권리를 안내합니다. 서비스를 이용하시면 본 방침에 동의하신 것으로 간주됩니다.</p>
+
+    <h2>1. <span class="en">Information We Collect</span><span class="ko">수집하는 정보</span></h2>
+    <h3 class="en">a. Account information (when you sign in)</h3>
+    <h3 class="ko">가. 계정 정보 (로그인 시)</h3>
+    <ul class="en">
+        <li>Your Google account ID, email address, and display name (via Google OAuth).</li>
+        <li>A randomly generated internal user ID used to identify you within our database.</li>
+    </ul>
+    <ul class="ko">
+        <li>Google 계정 ID, 이메일, 표시 이름 (Google OAuth 경유).</li>
+        <li>내부 식별용 무작위 사용자 ID.</li>
     </ul>
 
-    <h2>2. 정보의 이용 목적</h2>
-    <ul>
-        <li>AI 캐릭터와의 한국어 학습 대화 서비스 제공</li>
-        <li>대화 기록 저장 및 복원</li>
-        <li>오늘의 운세, 단어장, 데일리 미션 등 부가 기능 제공</li>
-        <li>서비스 품질 개선 및 오류 분석</li>
-        <li>푸시 알림 발송 (동의한 경우)</li>
+    <h3 class="en">b. Subscription &amp; payment information</h3>
+    <h3 class="ko">나. 구독 및 결제 정보</h3>
+    <ul class="en">
+        <li>Stripe customer ID, subscription ID, status (active / past_due / canceled), and current billing period end date.</li>
+        <li><strong>We do not store, see, or process your card number.</strong> All payment data is handled directly by Stripe, Inc., a PCI-DSS Level 1 certified processor. See <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe's Privacy Policy</a>.</li>
+    </ul>
+    <ul class="ko">
+        <li>Stripe 고객 ID, 구독 ID, 상태(active / past_due / canceled), 현재 결제 주기 종료일.</li>
+        <li><strong>카드 번호는 저희가 저장·열람·처리하지 않습니다.</strong> 결제 정보는 PCI-DSS Level 1 인증을 받은 Stripe, Inc. 가 직접 처리합니다. <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe 개인정보처리방침</a> 참조.</li>
     </ul>
 
-    <h2>3. 제3자 서비스 및 쿠키</h2>
-    <p>본 서비스는 다음 제3자 서비스를 사용합니다:</p>
-    <ul>
-        <li><strong>Google AdSense:</strong> 광고 게재 목적으로 쿠키를 사용합니다. Google의 광고 쿠키 사용에 대한 자세한 내용은 <a href="https://policies.google.com/technologies/ads" target="_blank">Google 광고 정책</a>을 참조하세요.</li>
-        <li><strong>Google Gemini AI:</strong> AI 대화 응답 생성에 사용됩니다.</li>
-        <li><strong>Google Cloud Datastore:</strong> 대화 기록 저장에 사용됩니다.</li>
-        <li><strong>Microsoft Azure Speech:</strong> 한국어 음성(TTS) 생성에 사용됩니다.</li>
-        <li><strong>Firebase Cloud Messaging:</strong> 푸시 알림 발송에 사용됩니다.</li>
+    <h3 class="en">c. Service usage data</h3>
+    <h3 class="ko">다. 서비스 이용 정보</h3>
+    <ul class="en">
+        <li>Chat messages you exchange with AI characters (used to generate responses; stored locally in your browser's IndexedDB, and sent to AI providers for processing).</li>
+        <li>Your selected character, optional nickname, Korean proficiency level, and interests.</li>
+        <li>Daily message count and quota reset date.</li>
+        <li>FCM token (only if you opt in to push notifications).</li>
+    </ul>
+    <ul class="ko">
+        <li>AI 캐릭터와 주고받은 대화 메시지 (응답 생성 목적; 브라우저 IndexedDB 에 로컬 저장 + AI 제공자에 전송하여 처리).</li>
+        <li>선택한 캐릭터, 닉네임(선택), 한국어 수준, 관심사.</li>
+        <li>일일 메시지 카운트 및 quota 리셋 날짜.</li>
+        <li>FCM 토큰 (푸시 알림 동의 시에만).</li>
     </ul>
 
-    <h2>4. 정보의 보관 및 파기</h2>
-    <ul>
-        <li>대화 기록은 서비스 운영 기간 동안 보관됩니다.</li>
-        <li>이용자가 요청 시 보관된 대화 기록을 삭제해 드립니다.</li>
-        <li>서비스 종료 시 모든 개인정보는 파기됩니다.</li>
+    <h3 class="en">d. Technical information (logs)</h3>
+    <h3 class="ko">라. 기술 정보 (로그)</h3>
+    <ul class="en">
+        <li>IP address, browser type and version, operating system, referrer URL, and access timestamps.</li>
+        <li>Session cookie value (signed user ID), OAuth state cookie (CSRF protection, short-lived).</li>
+    </ul>
+    <ul class="ko">
+        <li>IP 주소, 브라우저 종류·버전, OS, 리퍼러 URL, 접속 시간.</li>
+        <li>세션 cookie 값(서명된 사용자 ID), OAuth state cookie(CSRF 방지, 단기).</li>
     </ul>
 
-    <h2>5. 이용자의 권리</h2>
-    <ul>
-        <li>개인정보 열람, 수정, 삭제를 요청할 수 있습니다.</li>
-        <li>푸시 알림은 브라우저 설정에서 언제든지 거부할 수 있습니다.</li>
-        <li>쿠키는 브라우저 설정에서 비활성화할 수 있습니다.</li>
+    <h2>2. <span class="en">How We Use Your Information</span><span class="ko">정보의 이용 목적</span></h2>
+    <ul class="en">
+        <li>Provide the AI character chat service and store conversation history.</li>
+        <li>Authenticate you across sessions (signed session cookie).</li>
+        <li>Process subscription payments and grant unlimited access to active subscribers.</li>
+        <li>Enforce the daily free-message quota for non-subscribers.</li>
+        <li>Send push notifications you have opted into.</li>
+        <li>Detect and prevent abuse, fraud, automated scraping, and security incidents.</li>
+        <li>Improve service quality through aggregated, non-identifying analytics.</li>
+    </ul>
+    <ul class="ko">
+        <li>AI 캐릭터 채팅 서비스 제공 및 대화 기록 저장.</li>
+        <li>세션 cookie 를 통한 인증 유지.</li>
+        <li>구독 결제 처리 및 활성 구독자 무제한 이용 권한 부여.</li>
+        <li>비구독자 일일 무료 메시지 quota 적용.</li>
+        <li>동의하신 푸시 알림 발송.</li>
+        <li>악용·사기·자동 스크래핑·보안 사고 탐지 및 방지.</li>
+        <li>익명·집계 분석을 통한 서비스 품질 개선.</li>
     </ul>
 
-    <h2>6. 아동 보호</h2>
-    <p>본 서비스는 13세 미만 아동을 대상으로 하지 않습니다. 13세 미만 아동의 개인정보를 수집하지 않으며, 해당 사실이 확인될 경우 즉시 삭제합니다.</p>
+    <h2>3. <span class="en">Third-Party Service Providers</span><span class="ko">제3자 서비스 제공자</span></h2>
+    <p class="en">We share specific data with the following processors only as needed to operate the Service:</p>
+    <p class="ko">서비스 운영에 필요한 범위에서만 다음 처리자와 데이터를 공유합니다:</p>
+    <ul class="en">
+        <li><strong>Google LLC</strong> (USA) — OAuth login, Gemini API for AI responses, Cloud Translate, Cloud Datastore (server-side persistence), Firebase Cloud Messaging (push), AdSense (advertising), Analytics. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.</li>
+        <li><strong>Stripe, Inc.</strong> (USA) — Subscription processing, billing, customer portal, webhook events. <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe Privacy Policy</a>.</li>
+        <li><strong>Microsoft Corporation</strong> (USA) — Azure Speech for Korean text-to-speech and speech-to-text. <a href="https://privacy.microsoft.com" target="_blank" rel="noopener">Microsoft Privacy</a>.</li>
+    </ul>
+    <ul class="ko">
+        <li><strong>Google LLC</strong> (미국) — OAuth 로그인, Gemini API (AI 응답), Cloud Translate, Cloud Datastore (서버 저장), Firebase Cloud Messaging (푸시), AdSense (광고), Analytics. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google 개인정보처리방침</a>.</li>
+        <li><strong>Stripe, Inc.</strong> (미국) — 구독 결제, 청구, 고객 포털, webhook 이벤트. <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe 개인정보처리방침</a>.</li>
+        <li><strong>Microsoft Corporation</strong> (미국) — Azure Speech (한국어 TTS / STT). <a href="https://privacy.microsoft.com" target="_blank" rel="noopener">Microsoft 개인정보보호 정책</a>.</li>
+    </ul>
+    <p class="en"><strong>Chat content disclosure to AI providers.</strong> When you send a message, the message text, your selected character, your stated proficiency level, and recent conversation context are transmitted to Google Gemini to generate the response. Google may retain this content per its API terms. Do not send personally identifying information, financial details, or sensitive content you do not want shared.</p>
+    <p class="ko"><strong>AI 제공자에게 대화 내용이 전송됩니다.</strong> 메시지 전송 시 메시지 텍스트·선택 캐릭터·한국어 수준·최근 대화 맥락이 Google Gemini 에 전송되어 응답을 생성합니다. Google 은 API 약관에 따라 이를 보관할 수 있습니다. 식별 정보·금융 정보·민감한 내용은 입력하지 마세요.</p>
 
-    <h2>7. 면책 사항</h2>
-    <p>지우(Jiwoo)와 현우(Hyunwoo)는 AI 캐릭터입니다. 모든 대화 내용은 허구이며 교육·오락 목적의 롤플레이입니다. 실제 만남이나 연애 관계를 형성하지 않습니다.</p>
+    <h2>4. <span class="en">International Data Transfers</span><span class="ko">국외 이전</span></h2>
+    <p class="en">Our processors (Google, Stripe, Microsoft) operate globally and your data is processed primarily in the United States. By using the Service you consent to your data being transferred and processed there. We rely on Standard Contractual Clauses, the EU-US Data Privacy Framework, and equivalent mechanisms where applicable.</p>
+    <p class="ko">처리자(Google, Stripe, Microsoft) 는 글로벌로 운영되며 데이터는 주로 미국에서 처리됩니다. 서비스 이용 시 이에 동의하신 것으로 간주됩니다. EU 표준계약조항(SCC), EU-US Data Privacy Framework 등 적합한 보호 장치를 활용합니다.</p>
 
-    <h2>8. 문의</h2>
-    <p>개인정보 관련 문의 사항은 아래로 연락해 주세요:</p>
-    <p>📧 <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a></p>
+    <h2>5. <span class="en">Data Retention</span><span class="ko">보관 기간</span></h2>
+    <ul class="en">
+        <li><strong>Account &amp; subscription data:</strong> kept while your account is active. Deleted within 30 days after account deletion, except where retention is legally required (e.g., tax records related to payments).</li>
+        <li><strong>Chat history (browser-side, IndexedDB):</strong> stored locally in your browser until you clear browser data or delete your account.</li>
+        <li><strong>Chat content sent to AI providers:</strong> retention governed by the provider's terms (Google Gemini's default at the time of writing).</li>
+        <li><strong>Server logs:</strong> typically 30–90 days.</li>
+        <li><strong>Payment records:</strong> retained for the period required by applicable tax law (typically 5–7 years).</li>
+    </ul>
+    <ul class="ko">
+        <li><strong>계정 및 구독 정보:</strong> 계정이 활성인 동안 보관. 계정 삭제 후 30일 이내 파기 (단, 결제 관련 세무 기록 등 법령상 보관 의무가 있는 정보 제외).</li>
+        <li><strong>대화 기록(브라우저 IndexedDB):</strong> 브라우저 데이터를 지우거나 계정을 삭제할 때까지 로컬 보관.</li>
+        <li><strong>AI 제공자 전송 내용:</strong> 해당 제공자 약관 (작성일 기준 Google Gemini 기본 정책)에 따름.</li>
+        <li><strong>서버 로그:</strong> 통상 30–90일.</li>
+        <li><strong>결제 기록:</strong> 적용되는 세법상 보관 기간 (통상 5–7년).</li>
+    </ul>
+
+    <h2>6. <span class="en">Your Rights</span><span class="ko">이용자 권리</span></h2>
+    <p class="en">Depending on your jurisdiction (GDPR for EU/EEA/UK, CCPA/CPRA for California, PIPA for Korea, similar laws elsewhere) you have some or all of the following rights:</p>
+    <p class="ko">거주 지역(EU/EEA/UK 의 GDPR, 캘리포니아 CCPA/CPRA, 한국 개인정보보호법 등)에 따라 다음 권리가 있습니다:</p>
+    <ul class="en">
+        <li><strong>Access</strong> — request a copy of the personal data we hold about you.</li>
+        <li><strong>Correction</strong> — ask us to fix inaccurate or incomplete data.</li>
+        <li><strong>Deletion ("right to be forgotten")</strong> — delete your account at any time via Settings → Delete account, or by emailing us.</li>
+        <li><strong>Portability</strong> — receive your data in a machine-readable format.</li>
+        <li><strong>Withdraw consent</strong> — disable push notifications, revoke OAuth access in your Google account, or cancel your subscription at any time.</li>
+        <li><strong>Object / restrict processing</strong> — limit how we use your data.</li>
+        <li><strong>Complain to a supervisory authority</strong> — your local data-protection regulator (e.g., your EU DPA, the Korean PIPC, the California AG).</li>
+    </ul>
+    <ul class="ko">
+        <li><strong>열람</strong> — 보유 중인 본인 정보의 사본 요청.</li>
+        <li><strong>정정</strong> — 부정확·불완전 정보의 수정 요청.</li>
+        <li><strong>삭제 (잊혀질 권리)</strong> — 설정 → 계정 삭제 또는 이메일 요청으로 언제든 삭제.</li>
+        <li><strong>이동</strong> — 기계 판독 가능 형식으로 본인 데이터 수령.</li>
+        <li><strong>동의 철회</strong> — 푸시 알림 끄기, Google 계정에서 OAuth 권한 회수, 구독 해지 모두 언제든 가능.</li>
+        <li><strong>처리 제한·이의 제기</strong> — 데이터 이용 방식 제한 요청.</li>
+        <li><strong>감독 기관 신고</strong> — 거주 지역의 개인정보 감독 기관 (예: EU DPA, 한국 개인정보보호위원회).</li>
+    </ul>
+    <p class="en">To exercise any right, email <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a>. We respond within 30 days.</p>
+    <p class="ko">권리 행사는 <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a> 으로 요청해 주세요. 30일 이내 답변드립니다.</p>
+
+    <h2>7. <span class="en">Cookies</span><span class="ko">쿠키</span></h2>
+    <ul class="en">
+        <li><code>kdate_session</code> — signed session cookie holding only your internal user ID (httpOnly, SameSite=Lax, 30-day expiry).</li>
+        <li><code>kdate_oauth_state</code> — short-lived OAuth state cookie for CSRF protection (deleted after login).</li>
+        <li>Google Analytics, AdSense cookies — set by Google for measurement and advertising. You can opt out via <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics Opt-out</a>.</li>
+    </ul>
+    <ul class="ko">
+        <li><code>kdate_session</code> — 사용자 내부 ID 만 담은 서명된 세션 cookie (httpOnly, SameSite=Lax, 30일 만료).</li>
+        <li><code>kdate_oauth_state</code> — CSRF 방지용 단기 OAuth state cookie (로그인 후 삭제).</li>
+        <li>Google Analytics, AdSense cookies — Google 이 분석·광고용으로 설정. <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics Opt-out</a> 으로 거부 가능.</li>
+    </ul>
+
+    <h2>8. <span class="en">Children's Privacy</span><span class="ko">아동 보호 / 미성년자 동의</span></h2>
+    <p class="en">The Service is available to users <strong>13 years of age or older</strong> as an education product. We do not knowingly collect personal data from anyone under 13. Where local law sets the digital-consent age higher than 13 — for example <strong>16 in many EU/EEA member states</strong> or <strong>14 in Korea</strong> under the Personal Information Protection Act — users under that local age must have verifiable consent from a parent or legal guardian before using the Service or providing personal data. Parents/guardians may contact us to review, correct, or delete a minor's data at any time.</p>
+    <p class="ko">본 서비스는 교육 목적으로 <strong>만 13세 이상</strong>이 이용할 수 있습니다. 만 13세 미만의 정보는 의도적으로 수집하지 않습니다. 거주국 법령상 디지털 동의 연령이 13세보다 높은 경우 — 예를 들어 <strong>EU/EEA 다수 회원국 16세</strong>, <strong>한국 개인정보보호법상 14세</strong> — 해당 연령 미만 이용자는 서비스 이용 및 정보 제공 전 부모·법정대리인의 검증 가능한 동의를 받아야 합니다. 부모·법정대리인은 언제든 미성년자 정보의 열람·정정·삭제를 요청할 수 있습니다.</p>
+
+    <h2>9. <span class="en">Security</span><span class="ko">보안</span></h2>
+    <ul class="en">
+        <li>HTTPS / TLS for all traffic in production.</li>
+        <li>Session cookies are signed (HMAC-SHA256) and httpOnly.</li>
+        <li>OAuth flows use state-cookie CSRF protection.</li>
+        <li>Stripe webhook signatures are verified before any state change.</li>
+        <li>Payment card data never touches our servers.</li>
+    </ul>
+    <ul class="ko">
+        <li>운영 환경 전체 트래픽 HTTPS / TLS.</li>
+        <li>세션 cookie 는 서명(HMAC-SHA256) + httpOnly.</li>
+        <li>OAuth 흐름에 state cookie CSRF 방지 적용.</li>
+        <li>Stripe webhook 서명 검증 후 상태 변경.</li>
+        <li>카드 정보는 저희 서버를 거치지 않습니다.</li>
+    </ul>
+    <p class="en">No system is perfectly secure. We encourage you to use a unique, strong password on your Google account and enable 2-factor authentication.</p>
+    <p class="ko">완벽히 안전한 시스템은 없습니다. Google 계정에 강력한 비밀번호와 2단계 인증을 사용해주세요.</p>
+
+    <h2>10. <span class="en">AI Character Notice</span><span class="ko">AI 캐릭터 안내</span></h2>
+    <p class="en">All characters in K-Dating Chat (지우, the HWARANG group, the WONHWA group) are <strong>fictional AI language-learning companions</strong>. The friendly and affectionate tone used by some characters is a pedagogical device intended to motivate daily Korean practice. The Service is not a dating, matchmaking, or romance product. No real person is represented. AI outputs may be inaccurate, incomplete, or inappropriate; do not rely on them for medical, legal, financial, or safety advice.</p>
+    <p class="ko">K-Dating Chat 의 모든 캐릭터(지우, 화랑 멤버, 원화 멤버)는 <strong>가상의 AI 한국어 학습 동반자</strong>입니다. 일부 캐릭터의 친근하고 다정한 톤은 매일 한국어 연습을 유도하기 위한 교수법적 장치입니다. 본 서비스는 데이팅·소개팅·로맨스 서비스가 아닙니다. 어떤 실존 인물도 묘사하지 않습니다. AI 응답은 부정확·불완전·부적절할 수 있으니 의료·법률·금융·안전 자문 용도로 사용하지 마세요.</p>
+
+    <h2>11. <span class="en">Changes to This Policy</span><span class="ko">방침 변경</span></h2>
+    <p class="en">We may update this Privacy Policy. The "Last updated" date at the top will change, and material changes will be notified in-app or via email at least 30 days in advance. Continued use of the Service after the effective date constitutes acceptance.</p>
+    <p class="ko">본 방침은 변경될 수 있습니다. 상단의 "최종 업데이트" 일자가 갱신되며, 중요한 변경은 시행 30일 전 앱 내 공지 또는 이메일로 안내합니다. 시행일 이후 서비스 이용 시 변경에 동의하신 것으로 간주됩니다.</p>
+
+    <h2>12. <span class="en">Contact</span><span class="ko">문의</span></h2>
+    <p class="en">Questions, requests, or complaints? Email us at <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a>.</p>
+    <p class="ko">문의·요청·항의 사항은 <a href="mailto:fassionmap@gmail.com">fassionmap@gmail.com</a> 으로 보내주세요.</p>
 
     <div class="footer">
         <p>© 2026 K-Dating Chat. All rights reserved.</p>
-        <p><a href="/terms">이용약관</a> · <a href="/privacy">개인정보처리방침</a></p>
+        <p><a href="/terms">Terms of Service · 이용약관</a> · <a href="/privacy">Privacy Policy · 개인정보처리방침</a></p>
     </div>
 </div>
+
+<script>
+    (function () {
+        const body = document.body;
+        const saved = localStorage.getItem('kdate-legal-lang');
+        if (saved === 'ko' || saved === 'en') body.dataset.lang = saved;
+        document.querySelectorAll('[data-set-lang]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.dataset.setLang;
+                body.dataset.lang = lang;
+                localStorage.setItem('kdate-legal-lang', lang);
+                document.querySelectorAll('[data-set-lang]').forEach(b => {
+                    b.classList.toggle('active', b.dataset.setLang === lang);
+                });
+            });
+            if (btn.dataset.setLang === body.dataset.lang) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+    })();
+</script>
 </body>
 </html>
