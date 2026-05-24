@@ -213,3 +213,48 @@ def alerts_test_sink():
     if not _alerts.TEST_SINK:
         return jsonify({'error': 'test sink disabled', 'enable_with': 'ALERT_TEST_SINK=1'}), 503
     return jsonify({'sink': _alerts.get_test_sink()})
+
+
+def test_reset():
+    """통합 테스트용 상태 초기화 — DB users 비우기, events.jsonl 삭제,
+    rate-limit 버킷 / alert dedup / test sink 초기화.
+
+    안전 게이트: ENV_ALLOW_TEST_RESET=1 이고 FLASK_ENV != 'production' 일 때만 동작.
+    프로덕션에서는 명시적으로 503 반환.
+    """
+    if os.getenv('FLASK_ENV') == 'production':
+        return jsonify({'error': 'disabled in production'}), 503
+    if os.getenv('ENV_ALLOW_TEST_RESET') != '1':
+        return jsonify({'error': 'set ENV_ALLOW_TEST_RESET=1 to enable'}), 503
+
+    # 인증·관리자 화이트리스트 거치지 않음 — 테스트 도구. 다만 위 두 가드로 운영 차단.
+    # users 테이블 비우기 (스키마 유지)
+    from users import _connect
+    conn = _connect()
+    try:
+        conn.execute('DELETE FROM users')
+        conn.commit()
+    finally:
+        conn.close()
+
+    # events.jsonl 삭제
+    from events import EVENTS_LOG_PATH
+    try:
+        if os.path.exists(EVENTS_LOG_PATH):
+            os.remove(EVENTS_LOG_PATH)
+    except OSError:
+        pass
+
+    # rate-limit + alert dedup + test sink 초기화
+    try:
+        from rate_limit import reset_all as _rl_reset
+        _rl_reset()
+    except Exception:
+        pass
+    try:
+        _alerts.reset_dedup()
+        _alerts.clear_test_sink()
+    except Exception:
+        pass
+
+    return jsonify({'ok': True, 'reset': ['users', 'events', 'rate_limit', 'alert_dedup', 'test_sink']})

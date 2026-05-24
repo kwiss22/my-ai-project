@@ -1826,6 +1826,7 @@ from admin import (
     events as admin_events,
     alerts_health as admin_alerts_health,
     alerts_test_sink as admin_alerts_test_sink,
+    test_reset as admin_test_reset,
 )
 from events import log_event
 
@@ -1859,6 +1860,7 @@ app.add_url_rule('/admin/stats',          'admin_stats',          admin_stats)
 app.add_url_rule('/admin/events',         'admin_events',         admin_events)
 app.add_url_rule('/admin/alerts-health',  'admin_alerts_health',  admin_alerts_health)
 app.add_url_rule('/admin/alerts-test',    'admin_alerts_test',    admin_alerts_test_sink)
+app.add_url_rule('/admin/test-reset',     'admin_test_reset',     admin_test_reset, methods=['POST'])
 
 
 # 5xx 핸들러 — 모든 unhandled exception 을 events 에 critical 로 기록.
