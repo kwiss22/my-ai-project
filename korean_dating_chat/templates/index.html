@@ -567,6 +567,57 @@
             border-color: var(--kakao-yellow);
         }
 
+        /* 미인증 사용자 안내 배너 — 채팅 진입 시 dismissible, ambush 방지 */
+        .auth-prompt-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #fff8e1 0%, #ffe9a8 100%);
+            border-bottom: 1px solid #f0d472;
+            font-size: 13px;
+            color: #4a3500;
+            line-height: 1.5;
+        }
+        .auth-prompt-banner__content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+        .auth-prompt-banner__emoji { font-size: 18px; flex-shrink: 0; }
+        .auth-prompt-banner__text { min-width: 0; }
+        .auth-prompt-banner__actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .auth-prompt-banner__btn {
+            background: #3c1e1e;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .auth-prompt-banner__btn:hover { transform: translateY(-1px); }
+        .auth-prompt-banner__close {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            line-height: 1;
+            color: #6b5500;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .auth-prompt-banner__close:hover { background: rgba(0,0,0,0.08); }
+
         /* 인증/Quota chip (헤더 우상단) — 로그인/남은메시지/구독 배지 분기 */
         .auth-header-slot {
             display: inline-flex;
@@ -2258,6 +2309,20 @@
             </button>
         </div>
 
+        <!-- 미인증 사용자용 안내 배너 — 첫 메시지에서 모달 ambush 방지. dismissible. -->
+        <div class="auth-prompt-banner" id="auth-prompt-banner" style="display:none;" role="region" aria-label="로그인 안내">
+            <div class="auth-prompt-banner__content">
+                <span class="auth-prompt-banner__emoji" aria-hidden="true">💾</span>
+                <span class="auth-prompt-banner__text">
+                    <strong>Google로 1초 가입 →</strong> 진행도와 캐릭터 호감도가 저장돼요. 일 <strong id="auth-prompt-quota">25</strong>개 메시지 무료.
+                </span>
+            </div>
+            <div class="auth-prompt-banner__actions">
+                <button type="button" class="auth-prompt-banner__btn" onclick="openLoginModal()">로그인</button>
+                <button type="button" class="auth-prompt-banner__close" aria-label="배너 닫기" onclick="dismissAuthBanner()">&times;</button>
+            </div>
+        </div>
+
         <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions" aria-label="대화 기록"></div>
 
         <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -2304,8 +2369,8 @@
             </div>
             <div style="padding: 8px 24px 28px;">
                 <p style="color:#666; font-size:14px; line-height:1.6; margin: 0 0 20px;">
-                    K-Dating Chat 을 이용하려면 로그인이 필요해요.<br>
-                    무료로 일 <strong id="login-modal-quota">25</strong>개 메시지를 보낼 수 있습니다.
+                    💾 <strong>Google로 1초 가입</strong> — 진행도와 캐릭터 호감도가 저장돼요.<br>
+                    무료로 일 <strong id="login-modal-quota">25</strong>개 메시지, 무제한 월 구독 옵션도 있어요.
                 </p>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <button id="login-btn-google" type="button" onclick="loginWithGoogle()" style="display:none; width:100%; padding:12px 16px; border:1px solid #dadce0; background:#fff; color:#3c4043; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;">
@@ -3517,6 +3582,9 @@
                     document.getElementById('lang-toggle').style.display = 'none';
                     document.getElementById('chat-container').classList.add('active');
                     document.getElementById('messages').innerHTML = '';
+
+                    // 채팅 진입 — 미인증이면 안내 배너 표시
+                    try { renderAuthBanner(); } catch (e) {}
 
                     // 하트/친밀도 표시 업데이트 (선택한 캐릭터 기준)
                     initHeartDisplay();
@@ -5336,12 +5404,33 @@
                 authState = data;
                 renderAuthHeader();
                 renderLoginMethodsUI();
+                renderAuthBanner();
                 if (opts.warnLowQuota) maybeWarnLowQuota();
                 return data;
             } catch (e) {
                 console.warn('[auth] /me 실패:', e);
                 return authState;
             }
+        }
+
+        // 미인증 + 채팅 화면 진입 + 사용자가 명시적으로 dismiss 안 했을 때만 배너 표시.
+        // dismiss 는 sessionStorage 단위 — 새 탭에서 다시 보임 (잊지 말라는 의도).
+        const AUTH_BANNER_DISMISS_KEY = 'kdate-auth-banner-dismissed';
+        function renderAuthBanner() {
+            const banner = document.getElementById('auth-prompt-banner');
+            if (!banner) return;
+            const chatActive = document.getElementById('chat-container')?.classList.contains('active');
+            const dismissed = sessionStorage.getItem(AUTH_BANNER_DISMISS_KEY) === '1';
+            const show = !authState.authenticated && chatActive && !dismissed;
+            banner.style.display = show ? 'flex' : 'none';
+            if (show) {
+                const q = document.getElementById('auth-prompt-quota');
+                if (q && authState.quota) q.textContent = authState.quota.cap || 25;
+            }
+        }
+        function dismissAuthBanner() {
+            sessionStorage.setItem(AUTH_BANNER_DISMISS_KEY, '1');
+            renderAuthBanner();
         }
 
         // 헤더에 quota chip 또는 구독 배지 + 로그인 버튼 표시.
