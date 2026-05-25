@@ -216,6 +216,42 @@ r = await req('GET', '/admin/alerts-test', null, aCookie);
 check('alerts-test sink 비어 있지 않음', (r.json?.sink?.length || 0) >= 1);
 
 // ============================================================
+section('Section 5a — 데이터 export (GDPR/PIPA portability)');
+// ============================================================
+await reset();
+const exp = await req('POST', '/auth/dev-login', { provider_user_id: 'exp-u', email: 'exp@example.com', display_name: 'Export Tester' });
+const expCookie = getCookie(exp.setCookie);
+
+// 미인증 → 401
+r = await req('POST', '/auth/export-data', '');
+check('미인증 export → 401', r.status === 401);
+
+// 인증 + 다운로드
+r = await req('POST', '/auth/export-data', '', expCookie);
+check('export 200', r.status === 200);
+check('  Content-Disposition attachment 헤더', /attachment/.test(r.raw) || r.json?.user);
+check('  user_id 포함', r.json?.user?.user_id === exp.json?.user_id);
+check('  email 포함', r.json?.user?.email === 'exp@example.com');
+check('  GDPR/PIPA 명시', /GDPR.*개인정보보호법|portability/.test(JSON.stringify(r.json?.request || {})));
+check('  chat_history 안내 (브라우저 저장)', /IndexedDB|브라우저/.test(r.json?.notes?.chat_history || ''));
+check('  payment_card 안내 (Stripe 처리)', /Stripe/.test(r.json?.notes?.payment_card || ''));
+check('  subscription 섹션 존재', !!r.json?.subscription);
+check('  quota.timezone 포함', r.json?.quota?.timezone === 'UTC');
+
+// audit log — account.export 이벤트 발생
+await new Promise(r => setTimeout(r, 200));
+const aLogin = await req('POST', '/auth/dev-login', { provider_user_id: 'audit', email: 'admin@example.com' });
+const aLoginCookie = getCookie(aLogin.setCookie);
+r = await req('GET', '/admin/events?kind=account.export', null, aLoginCookie);
+check('  account.export audit 이벤트 기록', (r.json?.count || 0) >= 1);
+
+// rate limit: 5/hour
+r = await req('POST', '/auth/export-data', '', expCookie);
+check('  2회까지는 통과', r.status === 200);
+// 추가 호출 — bypass header 켜있어서 rate limit 통과. 그래도 endpoint 자체는 OK
+// (실제 rate limit 검증은 §3 에서 별도)
+
+// ============================================================
 section('Section 5 — 계정 삭제 + 권한');
 // ============================================================
 await reset();

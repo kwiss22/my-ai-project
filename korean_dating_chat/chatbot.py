@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
 from google import genai
 from google.genai import types
 import os
@@ -1841,6 +1841,7 @@ _rl_checkout   = rate_limit('checkout', per_minute=5,  scope='user_or_ip')
 _rl_portal     = rate_limit('portal',   per_minute=5,  scope='user_or_ip')
 _rl_cancel     = rate_limit('cancel',   per_minute=5,  scope='user_or_ip')
 _rl_delete     = rate_limit('delete',   per_hour=3,    scope='user_or_ip')
+_rl_export     = rate_limit('export',   per_hour=5,    scope='user_or_ip')
 _rl_dev_login  = rate_limit('devlogin', per_minute=10, scope='ip')
 _rl_oauth_cb   = rate_limit('oauth_cb', per_minute=20, scope='ip')
 _rl_transcribe = rate_limit('stt',      per_minute=20, scope='user_or_ip')
@@ -1929,6 +1930,82 @@ def delete_account():
               user_id=user['user_id'], had_subscription=bool(user.get('stripe_subscription_id')))
     resp = jsonify({'ok': True})
     return clear_session_cookie(resp)
+
+
+@app.route('/auth/export-data', methods=['POST'])
+@_rl_export
+def export_data():
+    """본인이 보유한 모든 개인정보 JSON 으로 다운로드.
+
+    GDPR Art. 20 (portability) + 개인정보보호법 §35 (자기정보결정권) 권리 행사용.
+    Stripe 카드번호는 우리가 안 갖고 있으니 ID·상태만 포함.
+    채팅 기록은 클라이언트 IndexedDB 에 있으므로 별도 안내.
+    """
+    from datetime import datetime as _dt, timezone as _tz
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.'}), 401
+
+    created_iso = None
+    try:
+        created_iso = _dt.fromtimestamp(user['created_at'], _tz.utc).isoformat()
+    except (TypeError, ValueError, OSError):
+        pass
+
+    period_end_iso = None
+    if user.get('subscription_period_end'):
+        try:
+            period_end_iso = _dt.fromtimestamp(user['subscription_period_end'], _tz.utc).isoformat()
+        except (TypeError, ValueError, OSError):
+            pass
+
+    payload = {
+        'service': 'K-Dating Chat',
+        'exported_at': _dt.now(_tz.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'request': {
+            'right_invoked': 'data portability (GDPR Art. 20 / 개인정보보호법 §35)',
+        },
+        'user': {
+            'user_id': user['user_id'],
+            'provider': user['provider'],
+            'provider_user_id': user.get('provider_user_id'),
+            'email': user.get('email'),
+            'display_name': user.get('display_name'),
+            'created_at_unix': user.get('created_at'),
+            'created_at_iso': created_iso,
+        },
+        'subscription': {
+            'stripe_customer_id': user.get('stripe_customer_id'),
+            'stripe_subscription_id': user.get('stripe_subscription_id'),
+            'status': user.get('subscription_status'),
+            'period_end_unix': user.get('subscription_period_end'),
+            'period_end_iso': period_end_iso,
+            'cancel_at_period_end': bool(user.get('subscription_cancel_at_period_end')),
+        },
+        'quota': {
+            'daily_chat_count': user.get('daily_chat_count', 0),
+            'daily_reset_date': user.get('daily_reset_date'),
+            'timezone': QUOTA_TIMEZONE,
+        },
+        'notes': {
+            'chat_history': '대화 기록은 본인 브라우저(IndexedDB)에 저장돼 있어요. '
+                            '설정 → 대화 기록에서 직접 백업 가능합니다. '
+                            'Chat history is stored locally in your browser (IndexedDB); '
+                            'export it from Settings → History.',
+            'payment_card': '카드 번호는 저희 서버에 저장되지 않고 Stripe 가 직접 처리합니다. '
+                            'We never store your card number; Stripe handles payment data directly. '
+                            '결제 영수증은 Stripe 고객 포털(설정 → 구독 관리)에서 다운로드 가능.',
+        },
+    }
+    log_event('info', 'account.export',
+              message=f'user={user["user_id"]} requested data export',
+              user_id=user['user_id'])
+    response = make_response(jsonify(payload))
+    today_iso = _dt.now(_tz.utc).strftime('%Y-%m-%d')
+    filename = f'kdate-export-{user["user_id"][:8]}-{today_iso}.json'
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @app.route('/me')

@@ -2395,6 +2395,9 @@
 
                 <!-- 위험 영역 -->
                 <div style="border-top:1px solid #eee; padding-top:16px; display:flex; flex-direction:column; gap:8px;">
+                    <button type="button" onclick="downloadMyData()" style="width:100%; padding:11px; border:1px solid #ccc; background:white; color:#444; border-radius:8px; font-size:14px; cursor:pointer;">
+                        📥 내 데이터 다운로드 (JSON)
+                    </button>
                     <button type="button" onclick="logoutCurrent()" style="width:100%; padding:11px; border:1px solid #ccc; background:white; color:#444; border-radius:8px; font-size:14px; cursor:pointer;">
                         로그아웃
                     </button>
@@ -2402,6 +2405,7 @@
                         계정 삭제
                     </button>
                     <p style="font-size:11px; color:#999; margin:8px 2px 0; line-height:1.5;">
+                        데이터 다운로드는 GDPR · 개인정보보호법상 본인이 가진 권리입니다.
                         계정 삭제 시 모든 정보가 영구 삭제되며, 활성 구독이 있으면 다음 결제일 전에 자동 해지됩니다.
                     </p>
                 </div>
@@ -5493,6 +5497,36 @@
                 if (typeof showToast === 'function') showToast('해지 예약 완료 ✅');
                 await refreshAuthState();
                 renderSettingsModal();
+            } catch (e) {
+                if (typeof showToast === 'function') showToast('네트워크 오류');
+            }
+        }
+
+        async function downloadMyData() {
+            try {
+                const r = await fetch('/auth/export-data', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                });
+                if (r.status === 429) {
+                    if (typeof showToast === 'function') showToast('요청이 너무 잦아요. 잠시 후 다시 시도해주세요.');
+                    return;
+                }
+                if (!r.ok) {
+                    if (typeof showToast === 'function') showToast('다운로드에 실패했어요.');
+                    return;
+                }
+                const blob = await r.blob();
+                // 서버가 Content-Disposition 으로 filename 지정. 우리는 한 번 더 안전 파싱.
+                const cd = r.headers.get('Content-Disposition') || '';
+                const m = cd.match(/filename="([^"]+)"/);
+                const filename = m ? m[1] : `kdate-export-${Date.now()}.json`;
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = filename;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                if (typeof showToast === 'function') showToast('데이터를 다운로드했어요 ✅');
             } catch (e) {
                 if (typeof showToast === 'function') showToast('네트워크 오류');
             }
