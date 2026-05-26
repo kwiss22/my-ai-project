@@ -14,7 +14,11 @@ from datetime import datetime, timezone, timedelta
 from flask import jsonify, request
 
 from auth import current_user
-from users import _connect
+from users import (
+    DAILY_FREE_QUOTA, _today,
+    stats_snapshot as _users_stats_snapshot,
+    reset_all as _users_reset_all,
+)
 from events import read_recent as events_read_recent, summary_last_7d as events_summary_7d
 import alerts as _alerts
 
@@ -76,96 +80,29 @@ def stats():
         return err
 
     now_ts = int(time.time())
-    today_utc = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    seven_days_ago = now_ts - 7 * 86400
-    thirty_days_ago = now_ts - 30 * 86400
+    today = _today()
 
-    conn = _connect()
-    try:
-        # 가입자 집계
-        total_users = conn.execute('SELECT COUNT(*) AS n FROM users').fetchone()['n']
-        by_provider = {
-            row['provider']: row['n']
-            for row in conn.execute(
-                'SELECT provider, COUNT(*) AS n FROM users GROUP BY provider'
-            ).fetchall()
-        }
-        new_today = conn.execute(
-            'SELECT COUNT(*) AS n FROM users WHERE created_at >= ?',
-            (now_ts - 86400,),
-        ).fetchone()['n']
-        new_7 = conn.execute(
-            'SELECT COUNT(*) AS n FROM users WHERE created_at >= ?',
-            (seven_days_ago,),
-        ).fetchone()['n']
-        new_30 = conn.execute(
-            'SELECT COUNT(*) AS n FROM users WHERE created_at >= ?',
-            (thirty_days_ago,),
-        ).fetchone()['n']
+    # 백엔드 무관 — UserStore 가 집계해서 dict 로 반환
+    snap = _users_stats_snapshot(today, now_ts, DAILY_FREE_QUOTA)
 
-        # 구독자 상태 집계 (has_active_subscription 정의와 일치)
-        active = conn.execute(
-            "SELECT COUNT(*) AS n FROM users "
-            "WHERE subscription_status IN ('active','trialing','past_due','canceled') "
-            "AND subscription_period_end > ?",
-            (now_ts,),
-        ).fetchone()['n']
-        trialing = conn.execute(
-            "SELECT COUNT(*) AS n FROM users "
-            "WHERE subscription_status='trialing' AND subscription_period_end > ?",
-            (now_ts,),
-        ).fetchone()['n']
-        past_due = conn.execute(
-            "SELECT COUNT(*) AS n FROM users "
-            "WHERE subscription_status='past_due' AND subscription_period_end > ?",
-            (now_ts,),
-        ).fetchone()['n']
-        scheduled_cancel = conn.execute(
-            "SELECT COUNT(*) AS n FROM users "
-            "WHERE subscription_cancel_at_period_end=1 AND subscription_period_end > ?",
-            (now_ts,),
-        ).fetchone()['n']
-        canceled = conn.execute(
-            "SELECT COUNT(*) AS n FROM users "
-            "WHERE subscription_status='canceled' "
-            "AND (subscription_period_end IS NULL OR subscription_period_end <= ?)",
-            (now_ts,),
-        ).fetchone()['n']
-
-        # 오늘 cap 도달자 (페이월 전환 funnel)
-        from users import DAILY_FREE_QUOTA
-        today_capped = conn.execute(
-            "SELECT COUNT(*) AS n FROM users "
-            "WHERE daily_reset_date=? AND daily_chat_count >= ? "
-            "AND (subscription_status IS NULL "
-            "     OR subscription_period_end IS NULL "
-            "     OR subscription_period_end <= ?)",
-            (today_utc, DAILY_FREE_QUOTA, now_ts),
-        ).fetchone()['n']
-    finally:
-        conn.close()
+    new_since = snap['new_since']
+    active = snap['subscribers']['active']
 
     return jsonify({
         'users': {
-            'total': total_users,
-            'by_provider': by_provider,
-            'new_today': new_today,
-            'new_7days': new_7,
-            'new_30days': new_30,
+            'total': snap['total'],
+            'by_provider': snap['by_provider'],
+            'new_today':  new_since[now_ts - 86400],
+            'new_7days':  new_since[now_ts - 7 * 86400],
+            'new_30days': new_since[now_ts - 30 * 86400],
         },
-        'subscribers': {
-            'active': active,
-            'trialing': trialing,
-            'past_due': past_due,
-            'cancel_at_period_end': scheduled_cancel,
-            'canceled': canceled,
-        },
+        'subscribers': snap['subscribers'],
         'revenue': {
             'estimated_mrr_usd': round(active * PRICE_USD_MONTHLY, 2),
             'price_assumed_usd': PRICE_USD_MONTHLY,
         },
         'quota': {
-            'today_capped': today_capped,
+            'today_capped': snap['today_capped'],
         },
         'events_7d': events_summary_7d(),
         'as_of': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -228,14 +165,8 @@ def test_reset():
         return jsonify({'error': 'set ENV_ALLOW_TEST_RESET=1 to enable'}), 503
 
     # 인증·관리자 화이트리스트 거치지 않음 — 테스트 도구. 다만 위 두 가드로 운영 차단.
-    # users 테이블 비우기 (스키마 유지)
-    from users import _connect
-    conn = _connect()
-    try:
-        conn.execute('DELETE FROM users')
-        conn.commit()
-    finally:
-        conn.close()
+    # 사용자 저장소 비우기 (백엔드 무관)
+    _users_reset_all()
 
     # events.jsonl 삭제
     from events import EVENTS_LOG_PATH
