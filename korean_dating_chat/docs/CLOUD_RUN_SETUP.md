@@ -197,6 +197,29 @@ curl -s $URL/privacy | head     # 약관 페이지 라이브
 curl -s $URL/terms   | head
 ```
 
+## 일일 모니터링 cron (선택)
+
+매일 자정 stats 스냅샷을 `snapshots.jsonl` 에 기록 → 시간 추세 추적.
+
+```bash
+# 1. Cron 토큰 발급 + Secret Manager 등록
+echo -n "$(openssl rand -hex 24)" | gcloud secrets create CRON_SECRET --data-file=-
+
+# 2. deploy.yml 의 SECRETS 에 CRON_SECRET=CRON_SECRET:latest 추가 + 재배포
+
+# 3. Cloud Scheduler 작업 등록 (KST 자정)
+CRON_SECRET=$(gcloud secrets versions access latest --secret=CRON_SECRET)
+RUN_URL=$(gcloud run services describe kdating-chat --region=asia-northeast3 --format='value(status.url)')
+gcloud scheduler jobs create http kdate-daily-snapshot \
+    --location=asia-northeast3 \
+    --schedule="0 0 * * *" \
+    --time-zone="Asia/Seoul" \
+    --uri="$RUN_URL/cron/daily-snapshot?key=$CRON_SECRET" \
+    --http-method=POST
+```
+
+운영자 대시보드의 `/admin/snapshots?days=30` 에서 history 조회.
+
 ## 운영 — 자주 쓸 명령
 
 ```bash

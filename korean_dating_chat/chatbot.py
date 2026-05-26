@@ -1826,6 +1826,8 @@ from admin import (
     stats as admin_stats,
     events as admin_events,
     analytics as admin_analytics,
+    snapshots as admin_snapshots,
+    cron_daily_snapshot as admin_cron_snapshot,
     alerts_health as admin_alerts_health,
     alerts_test_sink as admin_alerts_test_sink,
     test_reset as admin_test_reset,
@@ -1864,6 +1866,8 @@ app.add_url_rule('/billing/success',      'billing_success',      billing_succes
 app.add_url_rule('/admin/stats',          'admin_stats',          admin_stats)
 app.add_url_rule('/admin/events',         'admin_events',         admin_events)
 app.add_url_rule('/admin/analytics',      'admin_analytics',      admin_analytics)
+app.add_url_rule('/admin/snapshots',      'admin_snapshots',      admin_snapshots)
+app.add_url_rule('/cron/daily-snapshot',  'cron_daily_snapshot',  admin_cron_snapshot, methods=['POST'])
 app.add_url_rule('/admin/alerts-health',  'admin_alerts_health',  admin_alerts_health)
 app.add_url_rule('/admin/alerts-test',    'admin_alerts_test',    admin_alerts_test_sink)
 app.add_url_rule('/admin/test-reset',     'admin_test_reset',     admin_test_reset, methods=['POST'])

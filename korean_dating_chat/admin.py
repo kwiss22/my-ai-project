@@ -28,6 +28,14 @@ from events import (
 import alerts as _alerts
 import json as _json
 
+# 일일 스냅샷 저장 경로 — events.jsonl 옆에 둠 (같은 GCS Fuse 마운트로 영구화)
+SNAPSHOTS_PATH = os.getenv(
+    'SNAPSHOTS_LOG_PATH',
+    os.path.join(os.path.dirname(__file__), 'snapshots.jsonl'),
+)
+# Cloud Scheduler / 외부 cron 이 호출할 때 사용할 인증 토큰. 미설정 시 cron 비활성.
+CRON_SECRET = os.getenv('CRON_SECRET', '')
+
 ADMIN_EMAILS = set(
     e.strip().lower() for e in (os.getenv('ADMIN_EMAILS', '') or '').split(',') if e.strip()
 )
@@ -268,6 +276,78 @@ def alerts_test_sink():
     return jsonify({'sink': _alerts.get_test_sink()})
 
 
+def cron_daily_snapshot():
+    """POST /cron/daily-snapshot — 일일 stats 스냅샷을 snapshots.jsonl 에 append.
+
+    인증: admin 세션 cookie 또는 ?key=$CRON_SECRET URL 파라미터 또는
+    X-Cron-Secret 헤더. Cloud Scheduler 가 호출.
+    """
+    # 인증 분기
+    key = request.args.get('key', '') or request.headers.get('X-Cron-Secret', '')
+    via_secret = bool(CRON_SECRET) and key == CRON_SECRET
+    via_admin = False
+    if not via_secret:
+        user = current_user()
+        via_admin = bool(user) and _is_admin(user)
+    if not (via_secret or via_admin):
+        return jsonify({'error': 'unauthorized'}), 401
+
+    now_ts = int(time.time())
+    today = _today()
+    snap = _users_stats_snapshot(today, now_ts, DAILY_FREE_QUOTA)
+    retention = _users_retention(now_ts)
+
+    record = {
+        'date': today,
+        'ts': now_ts,
+        'users': {
+            'total': snap['total'],
+            'by_provider': snap['by_provider'],
+            'new_today': snap['new_since'][now_ts - 86400],
+            'new_7days': snap['new_since'][now_ts - 7 * 86400],
+            'new_30days': snap['new_since'][now_ts - 30 * 86400],
+        },
+        'subscribers': snap['subscribers'],
+        'estimated_mrr_usd': round(snap['subscribers']['active'] * PRICE_USD_MONTHLY, 2),
+        'today_capped': snap['today_capped'],
+        'retention': retention,
+    }
+
+    try:
+        with open(SNAPSHOTS_PATH, 'a', encoding='utf-8') as f:
+            f.write(_json.dumps(record, ensure_ascii=False) + '\n')
+    except (IOError, OSError) as e:
+        return jsonify({'error': f'snapshot write failed: {e}'}), 500
+
+    return jsonify({'ok': True, 'snapshot': record, 'via': 'secret' if via_secret else 'admin'})
+
+
+def snapshots():
+    """GET /admin/snapshots?days=30 — 최근 N일 스냅샷 (오래된 → 최신 순).
+    차트·트렌드 표시용."""
+    ok, err = _require_admin()
+    if not ok:
+        return err
+    try:
+        days = max(1, min(365, int(request.args.get('days', '30'))))
+    except ValueError:
+        days = 30
+    cutoff = int(time.time()) - days * 86400
+    out = []
+    try:
+        with open(SNAPSHOTS_PATH, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    rec = _json.loads(line)
+                except ValueError:
+                    continue
+                if (rec.get('ts') or 0) >= cutoff:
+                    out.append(rec)
+    except FileNotFoundError:
+        pass
+    return jsonify({'snapshots': out, 'count': len(out)})
+
+
 def test_reset():
     """통합 테스트용 상태 초기화 — DB users 비우기, events.jsonl 삭제,
     rate-limit 버킷 / alert dedup / test sink 초기화.
@@ -289,6 +369,13 @@ def test_reset():
     try:
         if os.path.exists(EVENTS_LOG_PATH):
             os.remove(EVENTS_LOG_PATH)
+    except OSError:
+        pass
+
+    # snapshots.jsonl 삭제
+    try:
+        if os.path.exists(SNAPSHOTS_PATH):
+            os.remove(SNAPSHOTS_PATH)
     except OSError:
         pass
 
