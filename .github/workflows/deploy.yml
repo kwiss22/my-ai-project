@@ -14,6 +14,11 @@ on:
 env:
   SERVICE: kdating-chat
   REGION: asia-northeast3
+  BUCKET: kdate-data           # GCS bucket mounted for SQLite + events.jsonl persistence
+
+# 모든 비밀값은 Secret Manager 에 등록돼 있어야 함. docs/CLOUD_RUN_SETUP.md 참조.
+# 출시 전 빈 placeholder 로라도 모두 생성 — 그 secret 이 없으면 deploy 실패.
+# 빈 값이면 우리 코드는 기능별 503/no-op 로 자동 대응 (Stripe 미설정 등).
 
 jobs:
   deploy:
@@ -31,15 +36,68 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy to Cloud Run
+        env:
+          # 비밀값 아닌 운영 환경변수. ${{ vars.* }} 는 GitHub repo variable.
+          ENV_VARS: >-
+            USERS_DB_PATH=/app/data/kdate_users.db,
+            EVENTS_LOG_PATH=/app/data/events.jsonl,
+            FLASK_ENV=production,
+            DEV_LOGIN_ENABLED=0,
+            DAILY_FREE_QUOTA=25,
+            STRIPE_TRIAL_DAYS=7,
+            QUOTA_TIMEZONE=Asia/Seoul,
+            PRICE_USD_MONTHLY=4.99,
+            ALERT_MIN_SEVERITY=critical,
+            ALERT_DEDUP_SECONDS=300,
+            AZURE_SPEECH_REGION=koreacentral,
+            ADMIN_EMAILS=${{ vars.ADMIN_EMAILS }},
+            APP_BASE_URL=${{ vars.APP_BASE_URL }}
+          # Secret Manager 의 비밀값 참조 — 빈 placeholder 라도 secret 자체는 존재해야 함.
+          SECRETS: >-
+            GEMINI_API_KEY=GEMINI_API_KEY:latest,
+            SESSION_SECRET=SESSION_SECRET:latest,
+            GOOGLE_OAUTH_CLIENT_ID=GOOGLE_OAUTH_CLIENT_ID:latest,
+            GOOGLE_OAUTH_CLIENT_SECRET=GOOGLE_OAUTH_CLIENT_SECRET:latest,
+            STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest,
+            STRIPE_PRICE_ID=STRIPE_PRICE_ID:latest,
+            STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest,
+            AZURE_SPEECH_KEY=AZURE_SPEECH_KEY:latest,
+            ALERT_SLACK_WEBHOOK_URL=ALERT_SLACK_WEBHOOK_URL:latest,
+            ALERT_SMTP_PASSWORD=ALERT_SMTP_PASSWORD:latest
         run: |
+          # gcloud 는 쉼표 + 공백 모두 허용 — folded scalar 의 공백 안전.
+          # SQLite 단일 작성자 제약 때문에 max-instances=1 강제.
+          # gen2 execution environment 는 GCS Fuse 마운트에 필수.
           gcloud run deploy "$SERVICE" \
             --source ./korean_dating_chat \
             --region "$REGION" \
             --allow-unauthenticated \
+            --execution-environment=gen2 \
+            --min-instances=1 \
+            --max-instances=1 \
+            --memory=1Gi \
+            --cpu=1 \
+            --timeout=300 \
+            --add-volume="name=data,type=cloud-storage,bucket=$BUCKET" \
+            --add-volume-mount="volume=data,mount-path=/app/data" \
+            --set-env-vars="$(echo "$ENV_VARS" | tr -d ' ')" \
+            --set-secrets="$(echo "$SECRETS" | tr -d ' ')" \
             --quiet
 
-      - name: Show service URL
+      - name: Show service URL + OAuth checklist
         run: |
-          gcloud run services describe "$SERVICE" \
-            --region "$REGION" \
-            --format='value(status.url)'
+          URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
+          echo "Service URL: $URL"
+          {
+            echo "## ✅ 배포 완료"
+            echo ""
+            echo "- **Service URL**: \`$URL\`"
+            echo "- **OAuth callback** 등록: \`$URL/auth/google/callback\`"
+            echo "- **Stripe webhook** 등록: \`$URL/billing/webhook\`"
+            echo ""
+            echo "### 첫 배포 후 한 번만"
+            echo "1. \`APP_BASE_URL\` 을 위 URL 로 GitHub repository variable 에 등록"
+            echo "2. main 에 다시 푸시(또는 workflow_dispatch) → 환경변수 적용"
+            echo "3. Google OAuth Console 에 callback URL 등록"
+            echo "4. Stripe Dashboard 에 webhook URL 등록"
+          } >> $GITHUB_STEP_SUMMARY
