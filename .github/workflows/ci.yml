@@ -12,7 +12,7 @@ on:
 
 jobs:
   regression:
-    name: Regression suite
+    name: HTTP regression
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -53,5 +53,52 @@ jobs:
         with:
           name: regression-server-log
           path: /tmp/regression-server.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ui-regression:
+    # Playwright 기반 UI 회귀. regression job 과 다른 PORT 라 병렬 실행 가능.
+    name: UI regression (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: korean_dating_chat/requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: korean_dating_chat/tests/package.json
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r korean_dating_chat/requirements.txt
+
+      - name: Install Playwright + chromium
+        working-directory: korean_dating_chat/tests
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Run UI regression
+        working-directory: korean_dating_chat
+        run: bash tests/ui_runner.sh
+
+      - name: Upload server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-server-log
+          path: /tmp/ui-server.log
           if-no-files-found: ignore
           retention-days: 7

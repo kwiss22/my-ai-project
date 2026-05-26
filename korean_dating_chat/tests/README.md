@@ -58,16 +58,33 @@ ENV_ALLOW_TEST_RESET=1
 | 6 | Azure 미설정 시 /transcribe 503 그레이스풀 |
 | 7 | 알림 환경 진단 (min_severity / dedup) |
 
-## UI 회귀 (별도)
+## UI 회귀
 
-`/tmp/stt-check.mjs`, `/tmp/stt-fallback-check.mjs`, `/tmp/wonhwa-check.mjs`,
-`/tmp/a11y-check.mjs` 는 Playwright 기반 UI 회귀. 환경 의존 없어서
-독립 실행. `tests/run.sh` 서버가 떠 있는 동안 별도 셸에서 그대로 동작.
+```bash
+# 최초 한 번
+cd tests && npm install && cd ..
 
-## CI 통합 (향후)
-
-GitHub Actions 예시:
-```yaml
-- run: ./tests/run.sh
+# 실행 (자체 서버 시작, PORT 9090)
+./tests/ui_runner.sh
 ```
-exit code 0 이면 모두 통과, 1 이면 실패 목록 stderr 로 출력.
+
+Playwright 기반 6개 테스트, ~170+ 체크:
+
+| 파일 | 검증 영역 |
+|---|---|
+| `seo-check.mjs` | 404/500 HTML/JSON 분기, robots.txt, sitemap.xml 동적 호스트 |
+| `onboarding-check.mjs` | 미인증 사용자 안내 배너 |
+| `admin-ui-check.mjs` | /admin 대시보드 KPI/필터 |
+| `wonhwa-check.mjs` | 11 캐릭터 카드, 그룹 배지, tagline |
+| `stt-check.mjs` | Web Speech API 음성 입력 |
+| `a11y-check.mjs` | 50+ 접근성 항목 |
+
+서버는 PORT 9090 으로 시작 — `tests/run.sh` (8080) 와 병렬 실행 가능.
+
+## CI 통합
+
+`.github/workflows/ci.yml` 에 두 job 병렬:
+- **HTTP regression** — `tests/run.sh` (45 체크, ~3분)
+- **UI regression (Playwright)** — `tests/ui_runner.sh` (170+ 체크, ~5분)
+
+두 job 다 exit code 0 일 때 PR/main merge 통과.

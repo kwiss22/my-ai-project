@@ -28,6 +28,10 @@ wheels/
 
 # Google Cloud credentials
 *.json
+# 단, 테스트 의존성 manifest 는 커밋 (재현 가능한 빌드)
+!korean_dating_chat/tests/package.json
+!korean_dating_chat/tests/package-lock.json
+!korean_dating_chat/static/manifest.json
 
 # IDEs
 .vscode/
@@ -51,6 +55,9 @@ korean_dating_chat/events.jsonl
 
 # 일일 스냅샷 (모니터링 cron)
 korean_dating_chat/snapshots.jsonl
+
+# 테스트 의존성
+korean_dating_chat/tests/node_modules/
 
 # Uploads
 uploads/
