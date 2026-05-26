@@ -1802,6 +1802,7 @@ from users import (
     peek_quota,
     has_active_subscription,
     delete_user as users_delete,
+    touch_user as users_touch,
     DAILY_FREE_QUOTA,
     QUOTA_TIMEZONE,
 )
@@ -1824,6 +1825,7 @@ from rate_limit import limit as rate_limit
 from admin import (
     stats as admin_stats,
     events as admin_events,
+    analytics as admin_analytics,
     alerts_health as admin_alerts_health,
     alerts_test_sink as admin_alerts_test_sink,
     test_reset as admin_test_reset,
@@ -1861,6 +1863,7 @@ app.add_url_rule('/billing/success',      'billing_success',      billing_succes
 # 관리자 통계 + 이벤트 로그 + 알림 채널 진단
 app.add_url_rule('/admin/stats',          'admin_stats',          admin_stats)
 app.add_url_rule('/admin/events',         'admin_events',         admin_events)
+app.add_url_rule('/admin/analytics',      'admin_analytics',      admin_analytics)
 app.add_url_rule('/admin/alerts-health',  'admin_alerts_health',  admin_alerts_health)
 app.add_url_rule('/admin/alerts-test',    'admin_alerts_test',    admin_alerts_test_sink)
 app.add_url_rule('/admin/test-reset',     'admin_test_reset',     admin_test_reset, methods=['POST'])
@@ -2540,6 +2543,13 @@ def chat():
                 'free_quota': DAILY_FREE_QUOTA,
             }), 402
 
+    # 활동 기록 (retention 입력) + 분석용 이벤트.
+    # 구독자도 동일하게 touch — 이용 분석은 결제 무관.
+    try:
+        users_touch(user['user_id'])
+    except Exception:
+        pass
+
     user_message = request.form.get('message', '').strip()
     grammar_mode = request.form.get('grammar_mode', 'false') == 'true'
     extract_vocab_flag = request.form.get('extract_vocab', 'false') == 'true'
@@ -2553,6 +2563,15 @@ def chat():
     except ValueError:
         intimacy_level = 1
     intimacy_level = max(1, min(5, intimacy_level))
+
+    # 분석용 이벤트 (severity=info — 알림 안 가게)
+    try:
+        log_event('info', 'chat.message',
+                  message=f'character={character}',
+                  user_id=user['user_id'], character=character,
+                  scenario_id=scenario_id)
+    except Exception:
+        pass
 
     try:
         user_profile = json.loads(request.form.get('user_profile', '{}') or '{}')
@@ -2735,6 +2754,16 @@ def scenario_start():
         return jsonify({'success': False, 'error': 'Invalid scenario'}), 400
 
     intro = SCENARIO_INTROS.get(scenario_id, {}).get(character, '안녕하세요!')
+
+    # 분석용 이벤트
+    try:
+        u = current_user()
+        log_event('info', 'scenario.started',
+                  message=f'scenario={scenario_id} character={character}',
+                  user_id=(u or {}).get('user_id'),
+                  scenario_id=scenario_id, character=character)
+    except Exception:
+        pass
 
     return jsonify({
         'success': True,
@@ -3610,6 +3639,14 @@ def start_mission():
     day_index = date.today().timetuple().tm_yday % len(DAILY_MISSIONS)
     mission = DAILY_MISSIONS[day_index]
     opener = mission.get(_mission_key_for(character)) or mission.get(_mission_fallback_key(character), '')
+    try:
+        u = current_user()
+        log_event('info', 'mission.started',
+                  message=f'mission={mission["id"]} character={character}',
+                  user_id=(u or {}).get('user_id'),
+                  mission_id=mission['id'], character=character)
+    except Exception:
+        pass
     return jsonify({'success': True, 'opener': opener, 'mission_id': mission['id']})
 
 @app.route('/check-mission', methods=['POST'])
@@ -3653,6 +3690,16 @@ def check_mission():
             mission.get(_mission_key_for(character, 'success_'))
             or mission.get(_mission_fallback_key(character, 'success_'), '')
         ) if completed else ''
+        if completed:
+            try:
+                u = current_user()
+                log_event('info', 'mission.completed',
+                          message=f'mission={mission["id"]} character={character}',
+                          user_id=(u or {}).get('user_id'),
+                          mission_id=mission['id'], character=character,
+                          reward=mission['reward_points'])
+            except Exception:
+                pass
         return jsonify({
             'success': True,
             'completed': completed,

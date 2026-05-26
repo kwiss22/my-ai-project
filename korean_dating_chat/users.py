@@ -112,6 +112,24 @@ class UserStore(abc.ABC):
         """사용자 행 완전 삭제. 호출 전에 Stripe 구독은 별도 취소돼야 함. 성공 시 True."""
 
     @abc.abstractmethod
+    def touch_user(self, user_id):
+        """사용자의 last_seen_at = 현재 시각. 매 /chat 호출 시점에 한 번.
+        retention 계산의 입력."""
+
+    @abc.abstractmethod
+    def retention_snapshot(self, now_ts):
+        """현재 시점 retention 지표.
+
+        반환:
+          {'active_today_count': N,
+           'active_7d_count': N,
+           'cohorts': [
+             {'name': 'd1', 'cohort_size': N, 'returned': N, 'returning_pct': 0.X},
+             {'name': 'd7', 'cohort_size': N, 'returned': N, 'returning_pct': 0.X},
+           ]}
+        """
+
+    @abc.abstractmethod
     def stats_snapshot(self, today, now_ts, free_quota_cap):
         """admin 대시보드용 집계 스냅샷.
 
@@ -143,6 +161,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT,
   display_name TEXT,
   created_at INTEGER NOT NULL,
+  last_seen_at INTEGER,                    -- 마지막 활동 (touch_user 가 갱신). retention 계산용.
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
   subscription_status TEXT,                -- 'active' | 'trialing' | 'past_due' | 'canceled' | NULL
@@ -153,11 +172,14 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE(provider, provider_user_id)
 );
 CREATE INDEX IF NOT EXISTS users_stripe_customer ON users(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS users_last_seen ON users(last_seen_at);
 """
 
 _MIGRATIONS = [
     ('subscription_cancel_at_period_end',
      'ALTER TABLE users ADD COLUMN subscription_cancel_at_period_end INTEGER NOT NULL DEFAULT 0'),
+    ('last_seen_at',
+     'ALTER TABLE users ADD COLUMN last_seen_at INTEGER'),
 ]
 
 
@@ -320,6 +342,56 @@ class SQLiteUserStore(UserStore):
         finally:
             conn.close()
 
+    def touch_user(self, user_id):
+        if not user_id:
+            return
+        conn = self._connect()
+        try:
+            conn.execute('UPDATE users SET last_seen_at=? WHERE user_id=?',
+                         (int(time.time()), user_id))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def retention_snapshot(self, now_ts):
+        DAY = 86400
+        conn = self._connect()
+        try:
+            # 활성 사용자 (last_seen 기준)
+            active_today = conn.execute(
+                'SELECT COUNT(*) AS n FROM users WHERE last_seen_at >= ?',
+                (now_ts - DAY,),
+            ).fetchone()['n']
+            active_7d = conn.execute(
+                'SELECT COUNT(*) AS n FROM users WHERE last_seen_at >= ?',
+                (now_ts - 7 * DAY,),
+            ).fetchone()['n']
+
+            def _cohort(name, days_ago):
+                """days_ago 일 전에 가입한 cohort 중 오늘 (24h 내) 복귀한 비율."""
+                start = now_ts - (days_ago + 1) * DAY
+                end = now_ts - days_ago * DAY
+                size = conn.execute(
+                    'SELECT COUNT(*) AS n FROM users WHERE created_at >= ? AND created_at < ?',
+                    (start, end),
+                ).fetchone()['n']
+                returned = conn.execute(
+                    'SELECT COUNT(*) AS n FROM users '
+                    'WHERE created_at >= ? AND created_at < ? AND last_seen_at >= ?',
+                    (start, end, now_ts - DAY),
+                ).fetchone()['n']
+                pct = (returned / size) if size > 0 else 0.0
+                return {'name': name, 'cohort_size': size, 'returned': returned,
+                        'returning_pct': round(pct, 3)}
+
+            return {
+                'active_today_count': active_today,
+                'active_7d_count': active_7d,
+                'cohorts': [_cohort('d1', 1), _cohort('d7', 7), _cohort('d30', 30)],
+            }
+        finally:
+            conn.close()
+
     def stats_snapshot(self, today, now_ts, free_quota_cap):
         conn = self._connect()
         try:
@@ -455,6 +527,18 @@ def clear_subscription(user_id):
 
 def delete_user(user_id):
     return _store.delete_user(user_id)
+
+
+def touch_user(user_id):
+    """사용자 활동 기록 — 매 /chat 호출에서 호출."""
+    return _store.touch_user(user_id)
+
+
+def retention_snapshot(now_ts=None):
+    """admin analytics 용."""
+    if now_ts is None:
+        now_ts = int(time.time())
+    return _store.retention_snapshot(now_ts)
 
 
 def stats_snapshot(today, now_ts, free_quota_cap=None):

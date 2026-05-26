@@ -165,6 +165,26 @@
         </div>
     </div>
 
+    <!-- 이용 분석: 캐릭터·시나리오·미션 인기 + retention -->
+    <div class="section-grid">
+        <div class="card">
+            <h2>🔥 인기 캐릭터 <span class="count">7일 / 채팅 수</span></h2>
+            <div id="analytics-characters"><div class="empty">—</div></div>
+        </div>
+        <div class="card">
+            <h2>🎭 인기 시나리오 <span class="count">7일 / 시작 수</span></h2>
+            <div id="analytics-scenarios"><div class="empty">—</div></div>
+        </div>
+        <div class="card">
+            <h2>🎯 미션 완료율 <span class="count">7일</span></h2>
+            <div id="analytics-missions"><div class="empty">—</div></div>
+        </div>
+        <div class="card">
+            <h2>📈 Retention cohort</h2>
+            <div id="analytics-retention"><div class="empty">—</div></div>
+        </div>
+    </div>
+
     <!-- 최근 critical/error 이벤트 -->
     <div class="card events-card">
         <h2>최근 이벤트 <span class="count" id="events-count"></span></h2>
@@ -234,6 +254,66 @@ async function loadAlertsHealth() {
     const r = await fetch('/admin/alerts-health', { credentials: 'same-origin' });
     if (!r.ok) return null;
     return r.json();
+}
+
+async function loadAnalytics() {
+    const r = await fetch('/admin/analytics?days=7', { credentials: 'same-origin' });
+    if (!r.ok) return null;
+    return r.json();
+}
+
+function renderAnalytics(a) {
+    if (!a) {
+        ['analytics-characters','analytics-scenarios','analytics-missions','analytics-retention']
+            .forEach(id => document.getElementById(id).innerHTML = '<div class="empty">조회 실패</div>');
+        return;
+    }
+    // 캐릭터 top
+    const chars = (a.chat?.top || []).slice(0, 8);
+    const charsHtml = chars.length
+        ? chars.map(([c, n]) =>
+            `<div class="stat-row"><span class="k">${c}</span><span class="v">${fmtNum(n)}</span></div>`
+          ).join('')
+        : '<div class="empty">아직 데이터 없음</div>';
+    document.getElementById('analytics-characters').innerHTML = charsHtml;
+
+    // 시나리오 top
+    const scs = (a.scenarios?.top || []).slice(0, 8);
+    const scHtml = scs.length
+        ? scs.map(([s, n]) =>
+            `<div class="stat-row"><span class="k">${s}</span><span class="v">${fmtNum(n)}</span></div>`
+          ).join('')
+        : '<div class="empty">아직 데이터 없음</div>';
+    document.getElementById('analytics-scenarios').innerHTML = scHtml;
+
+    // 미션
+    const m = a.missions || {};
+    const pct = Math.round((m.completion_rate || 0) * 100);
+    const missionsHtml = `
+        <div class="stat-row"><span class="k">시작</span><span class="v">${fmtNum(m.started_total)}</span></div>
+        <div class="stat-row"><span class="k">완료</span><span class="v">${fmtNum(m.completed_total)}</span></div>
+        <div class="stat-row"><span class="k"><strong>완료율</strong></span><span class="v"><strong>${pct}%</strong></span></div>
+        <div style="margin: 8px 0 4px; font-size: 11px; color: #aaa; text-transform: uppercase;">상위 미션 (완료)</div>
+        ${Object.entries(m.completed || {}).sort((a,b) => b[1]-a[1]).slice(0,5).map(
+            ([id, n]) => `<div class="stat-row"><span class="k">${id}</span><span class="v">${fmtNum(n)}</span></div>`
+        ).join('') || '<div class="empty">—</div>'}
+    `;
+    document.getElementById('analytics-missions').innerHTML = missionsHtml;
+
+    // Retention
+    const r = a.retention || {};
+    const cohorts = (r.cohorts || []).map(c => `
+        <div class="stat-row">
+            <span class="k">${c.name.toUpperCase()} cohort (${fmtNum(c.cohort_size)}명)</span>
+            <span class="v">${Math.round(c.returning_pct * 100)}% (${fmtNum(c.returned)}명)</span>
+        </div>
+    `).join('');
+    document.getElementById('analytics-retention').innerHTML = `
+        <div class="stat-row"><span class="k">오늘 활성</span><span class="v">${fmtNum(r.active_today_count)}</span></div>
+        <div class="stat-row"><span class="k">7일 활성</span><span class="v">${fmtNum(r.active_7d_count)}</span></div>
+        <div style="margin: 8px 0 4px; font-size: 11px; color: #aaa; text-transform: uppercase;">복귀율 (24h 활동 기준)</div>
+        ${cohorts || '<div class="empty">—</div>'}
+    `;
 }
 
 function renderKpi(stats) {
@@ -350,10 +430,11 @@ function setMeta(stats) {
 
 async function loadAll() {
     document.getElementById('error-area').innerHTML = '';
-    const [stats, ev, health] = await Promise.all([
+    const [stats, ev, health, analytics] = await Promise.all([
         loadStats(),
         loadEvents(currentSeverity),
         loadAlertsHealth(),
+        loadAnalytics(),
     ]);
     if (stats) {
         renderKpi(stats);
@@ -364,6 +445,7 @@ async function loadAll() {
     }
     if (ev) renderEvents(ev.events || []);
     if (health) renderAlertsHealth(health);
+    renderAnalytics(analytics);
 }
 
 function filterEvents(btn, severity) {

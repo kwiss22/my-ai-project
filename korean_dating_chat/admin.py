@@ -18,9 +18,15 @@ from users import (
     DAILY_FREE_QUOTA, _today,
     stats_snapshot as _users_stats_snapshot,
     reset_all as _users_reset_all,
+    retention_snapshot as _users_retention,
 )
-from events import read_recent as events_read_recent, summary_last_7d as events_summary_7d
+from events import (
+    read_recent as events_read_recent,
+    summary_last_7d as events_summary_7d,
+    EVENTS_LOG_PATH,
+)
 import alerts as _alerts
+import json as _json
 
 ADMIN_EMAILS = set(
     e.strip().lower() for e in (os.getenv('ADMIN_EMAILS', '') or '').split(',') if e.strip()
@@ -133,6 +139,106 @@ def events():
     kind_prefix = request.args.get('kind_prefix') or None
     recs = events_read_recent(limit=limit, severity=severity, kind=kind, kind_prefix=kind_prefix)
     return jsonify({'events': recs, 'count': len(recs)})
+
+
+def analytics():
+    """이용 분석 — 캐릭터·시나리오·미션 인기 + retention.
+
+    응답:
+      {
+        period_days: 7,
+        chat: {total, by_character: {jiwoo:N, ...}},
+        scenarios: {started: {confession:N, ...}, top: [[id,N], ...]},
+        missions: {started, completed, completion_rate},
+        retention: { active_today_count, active_7d_count,
+                     cohorts: [{name,cohort_size,returned,returning_pct}, ...] }
+      }
+
+    이벤트는 events.jsonl 에서 직접 집계 (별도 DB 없음).
+    events.jsonl 회전(~10MB) 후 데이터는 사라짐 — 장기 retention 추적은
+    /admin/snapshots 의 일일 스냅샷 사용.
+    """
+    ok, err = _require_admin()
+    if not ok:
+        return err
+
+    try:
+        period_days = max(1, min(30, int(request.args.get('days', '7'))))
+    except ValueError:
+        period_days = 7
+    cutoff = time.time() - period_days * 86400
+
+    chat_total = 0
+    chat_by_char = {}
+    scenarios_started = {}
+    missions_started = {}
+    missions_completed = {}
+
+    # events.jsonl 한 번 읽으면서 카테고리별 집계
+    try:
+        with open(EVENTS_LOG_PATH, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    rec = _json.loads(line)
+                except ValueError:
+                    continue
+                ts = rec.get('ts', '')
+                try:
+                    dt = datetime.strptime(ts[:19], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
+                    if dt.timestamp() < cutoff:
+                        continue
+                except (ValueError, TypeError):
+                    continue
+                kind = rec.get('kind', '')
+                if kind == 'chat.message':
+                    chat_total += 1
+                    c = rec.get('character', 'unknown')
+                    chat_by_char[c] = chat_by_char.get(c, 0) + 1
+                elif kind == 'scenario.started':
+                    sid = rec.get('scenario_id', 'unknown')
+                    scenarios_started[sid] = scenarios_started.get(sid, 0) + 1
+                elif kind == 'mission.started':
+                    mid = rec.get('mission_id', 'unknown')
+                    missions_started[mid] = missions_started.get(mid, 0) + 1
+                elif kind == 'mission.completed':
+                    mid = rec.get('mission_id', 'unknown')
+                    missions_completed[mid] = missions_completed.get(mid, 0) + 1
+    except FileNotFoundError:
+        pass
+
+    scenarios_top = sorted(scenarios_started.items(), key=lambda x: -x[1])[:10]
+    chars_top = sorted(chat_by_char.items(), key=lambda x: -x[1])
+
+    mission_total_started = sum(missions_started.values())
+    mission_total_completed = sum(missions_completed.values())
+    completion_rate = (
+        round(mission_total_completed / mission_total_started, 3)
+        if mission_total_started > 0 else 0.0
+    )
+
+    retention = _users_retention()
+
+    return jsonify({
+        'period_days': period_days,
+        'chat': {
+            'total': chat_total,
+            'by_character': chat_by_char,
+            'top': chars_top[:10],
+        },
+        'scenarios': {
+            'started': scenarios_started,
+            'top': scenarios_top,
+        },
+        'missions': {
+            'started': missions_started,
+            'completed': missions_completed,
+            'started_total': mission_total_started,
+            'completed_total': mission_total_completed,
+            'completion_rate': completion_rate,
+        },
+        'retention': retention,
+        'as_of': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+    })
 
 
 def alerts_health():
