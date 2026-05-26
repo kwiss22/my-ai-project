@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>접근 권한 없음 · K-Dating Chat Admin</title>
+    <meta name="robots" content="noindex">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            background: #2c2c3e; color: #fff; padding: 24px;
+        }
+        .card {
+            background: #1a1a2a; border-radius: 16px; padding: 36px 32px;
+            max-width: 420px; width: 100%; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+        .emoji { font-size: 48px; margin-bottom: 14px; }
+        h1 { font-size: 20px; margin-bottom: 8px; color: #fff; }
+        p { font-size: 14px; color: #bbb; line-height: 1.7; margin-bottom: 20px; }
+        code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #ffe9a8; }
+        a { color: #ffd700; text-decoration: none; }
+        .footer { margin-top: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        {% if reason == 'disabled' %}
+            <div class="emoji">🔒</div>
+            <h1>관리자 패널이 비활성 상태입니다</h1>
+            <p>
+                운영자 계정을 활성화하려면 환경변수<br>
+                <code>ADMIN_EMAILS</code> 에 본인 이메일을 등록한 뒤 재배포하세요.
+            </p>
+            <p>
+                예: <code>ADMIN_EMAILS=ops@example.com,founder@example.com</code>
+            </p>
+        {% else %}
+            <div class="emoji">🚫</div>
+            <h1>접근 권한이 없습니다</h1>
+            <p>
+                현재 로그인된 이메일(<code>{{ user_email or '—' }}</code>)은
+                관리자 화이트리스트에 등록돼 있지 않아요.
+            </p>
+            <p>
+                계정이 잘못됐다면 <a href="/chat">홈으로 돌아가</a> 다른 계정으로 로그인하세요.
+            </p>
+        {% endif %}
+        <div class="footer">
+            <a href="/chat">← K-Dating Chat</a>
+        </div>
+    </div>
+</body>
+</html>

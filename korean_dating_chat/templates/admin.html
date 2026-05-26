@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard · K-Dating Chat</title>
+    <meta name="robots" content="noindex">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: #f4f5f7; color: #222; min-height: 100vh; padding: 16px;
+        }
+        .wrap { max-width: 1100px; margin: 0 auto; }
+
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+        }
+        .topbar h1 { font-size: 18px; color: #222; }
+        .topbar h1 span.live { font-size: 11px; color: #4caf50; margin-left: 8px; }
+        .topbar .meta { font-size: 12px; color: #777; }
+        .topbar .actions { display: flex; gap: 8px; align-items: center; }
+        .topbar button {
+            background: #3c1e1e; color: white; border: none; padding: 8px 14px;
+            border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+        }
+        .topbar button:hover { transform: translateY(-1px); }
+        .topbar a { font-size: 12px; color: #667eea; text-decoration: none; }
+        .topbar a:hover { text-decoration: underline; }
+
+        /* Top KPI cards */
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px; margin-bottom: 18px;
+        }
+        .kpi {
+            background: white; border-radius: 12px; padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border-left: 4px solid #FEE500;
+        }
+        .kpi.kpi--mrr      { border-left-color: #4caf50; }
+        .kpi.kpi--users    { border-left-color: #2196f3; }
+        .kpi.kpi--paywall  { border-left-color: #ff9800; }
+        .kpi.kpi--critical { border-left-color: #f44336; }
+        .kpi-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.6px; }
+        .kpi-value { font-size: 32px; font-weight: 700; color: #222; margin: 4px 0 2px; line-height: 1.1; }
+        .kpi-unit  { font-size: 14px; color: #888; font-weight: 500; }
+        .kpi-sub   { font-size: 12px; color: #777; margin-top: 6px; }
+
+        /* Section cards */
+        .section-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 12px; margin-bottom: 16px;
+        }
+        .card {
+            background: white; border-radius: 10px; padding: 16px 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .card h2 { font-size: 13px; color: #444; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .card h2 .count { color: #888; font-weight: 500; font-size: 12px; margin-left: 6px; }
+
+        .stat-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
+        .stat-row .k { color: #555; }
+        .stat-row .v { color: #222; font-weight: 600; }
+        .stat-row .v.zero { color: #999; font-weight: 500; }
+
+        /* Events list */
+        .events-card { max-height: 480px; overflow-y: auto; }
+        .event-row {
+            display: grid; grid-template-columns: 80px 1fr auto;
+            gap: 10px; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #f3f3f3;
+            font-size: 12px;
+        }
+        .event-row:last-child { border-bottom: none; }
+        .sev-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .sev-info     { background: #e3f2fd; color: #1565c0; }
+        .sev-warn     { background: #fff3e0; color: #e65100; }
+        .sev-error    { background: #ffebee; color: #c62828; }
+        .sev-critical { background: #f44336; color: white; }
+        .event-kind { color: #444; font-weight: 600; word-break: break-all; }
+        .event-msg  { color: #888; font-size: 11px; margin-top: 2px; word-break: break-all; }
+        .event-time { color: #aaa; font-size: 10px; font-variant-numeric: tabular-nums; text-align: right; }
+
+        .empty { padding: 20px; text-align: center; color: #999; font-size: 13px; }
+        .error-banner {
+            background: #ffebee; border: 1px solid #ef9a9a; border-radius: 6px;
+            padding: 10px 14px; margin-bottom: 12px; color: #c62828; font-size: 13px;
+        }
+
+        /* Filters */
+        .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .filter-btn {
+            background: #eee; border: none; padding: 4px 10px; border-radius: 12px;
+            font-size: 11px; color: #555; cursor: pointer;
+        }
+        .filter-btn.active { background: #3c1e1e; color: white; }
+        .filter-btn:hover { transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="topbar">
+        <h1>📊 K-Dating Chat Admin<span class="live" id="live-indicator"></span></h1>
+        <div class="actions">
+            <span class="meta" id="meta">로딩 중...</span>
+            <button type="button" onclick="loadAll()">🔄 새로고침</button>
+            <a href="/chat">← 홈</a>
+        </div>
+    </div>
+
+    <div id="error-area"></div>
+
+    <!-- KPI 4종 -->
+    <div class="kpi-grid">
+        <div class="kpi kpi--mrr">
+            <div class="kpi-label">예상 월매출 (MRR)</div>
+            <div class="kpi-value" id="kpi-mrr">—</div>
+            <div class="kpi-sub" id="kpi-mrr-sub">활성 구독자 × 단가</div>
+        </div>
+        <div class="kpi kpi--users">
+            <div class="kpi-label">활성 구독자</div>
+            <div class="kpi-value" id="kpi-active">—</div>
+            <div class="kpi-sub" id="kpi-active-sub">trial · past_due · 해지 예정 포함</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">신규 가입 (오늘)</div>
+            <div class="kpi-value" id="kpi-new-today">—</div>
+            <div class="kpi-sub" id="kpi-new-sub">최근 24시간</div>
+        </div>
+        <div class="kpi kpi--paywall">
+            <div class="kpi-label">페이월 도달 (오늘)</div>
+            <div class="kpi-value" id="kpi-paywall">—</div>
+            <div class="kpi-sub">무료 한도 소진한 비구독자</div>
+        </div>
+    </div>
+
+    <div class="section-grid">
+        <!-- 구독자 분해 -->
+        <div class="card">
+            <h2>구독자 상태 분해</h2>
+            <div id="subscribers-detail"><div class="empty">—</div></div>
+        </div>
+
+        <!-- 가입자 -->
+        <div class="card">
+            <h2>가입자</h2>
+            <div id="users-detail"><div class="empty">—</div></div>
+        </div>
+
+        <!-- 7일 이벤트 요약 -->
+        <div class="card">
+            <h2>7일 이벤트 요약</h2>
+            <div id="events-summary"><div class="empty">—</div></div>
+        </div>
+
+        <!-- 알림 채널 -->
+        <div class="card">
+            <h2>알림 채널 상태</h2>
+            <div id="alerts-health"><div class="empty">—</div></div>
+        </div>
+    </div>
+
+    <!-- 최근 critical/error 이벤트 -->
+    <div class="card events-card">
+        <h2>최근 이벤트 <span class="count" id="events-count"></span></h2>
+        <div class="filters">
+            <button class="filter-btn active" data-severity="" onclick="filterEvents(this, '')">전체</button>
+            <button class="filter-btn" data-severity="critical" onclick="filterEvents(this, 'critical')">critical</button>
+            <button class="filter-btn" data-severity="error" onclick="filterEvents(this, 'error')">error</button>
+            <button class="filter-btn" data-severity="warn" onclick="filterEvents(this, 'warn')">warn</button>
+            <button class="filter-btn" data-severity="info" onclick="filterEvents(this, 'info')">info</button>
+        </div>
+        <div id="events-list"><div class="empty">로딩 중...</div></div>
+    </div>
+</div>
+
+<script>
+let currentSeverity = '';
+
+function fmtNum(n) {
+    if (n === null || n === undefined) return '—';
+    return Number(n).toLocaleString('ko-KR');
+}
+
+function fmtTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    const ms = Date.now() - d.getTime();
+    const sec = Math.floor(ms / 1000);
+    if (sec < 60) return sec + '초 전';
+    if (sec < 3600) return Math.floor(sec / 60) + '분 전';
+    if (sec < 86400) return Math.floor(sec / 3600) + '시간 전';
+    return Math.floor(sec / 86400) + '일 전';
+}
+
+function fmtTimeAbs(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString('ko-KR', { hour12: false });
+}
+
+function showError(msg) {
+    const area = document.getElementById('error-area');
+    area.innerHTML = `<div class="error-banner">⚠️ ${msg}</div>`;
+}
+
+async function loadStats() {
+    const r = await fetch('/admin/stats', { credentials: 'same-origin' });
+    if (!r.ok) {
+        showError('통계 조회 실패 (' + r.status + ')');
+        return null;
+    }
+    return r.json();
+}
+
+async function loadEvents(severity = '') {
+    const qs = severity ? `?limit=100&severity=${severity}` : '?limit=100';
+    const r = await fetch('/admin/events' + qs, { credentials: 'same-origin' });
+    if (!r.ok) {
+        showError('이벤트 조회 실패 (' + r.status + ')');
+        return { events: [], count: 0 };
+    }
+    return r.json();
+}
+
+async function loadAlertsHealth() {
+    const r = await fetch('/admin/alerts-health', { credentials: 'same-origin' });
+    if (!r.ok) return null;
+    return r.json();
+}
+
+function renderKpi(stats) {
+    document.getElementById('kpi-mrr').innerHTML =
+        '$' + fmtNum(Math.round(stats.revenue.estimated_mrr_usd));
+    document.getElementById('kpi-mrr-sub').textContent =
+        `${stats.subscribers.active}명 × $${stats.revenue.price_assumed_usd}/월`;
+    document.getElementById('kpi-active').textContent = fmtNum(stats.subscribers.active);
+    const tr = stats.subscribers.trialing, pd = stats.subscribers.past_due;
+    document.getElementById('kpi-active-sub').textContent =
+        `trial ${tr} · past_due ${pd} · 해지 예정 ${stats.subscribers.cancel_at_period_end}`;
+    document.getElementById('kpi-new-today').textContent = fmtNum(stats.users.new_today);
+    document.getElementById('kpi-paywall').textContent = fmtNum(stats.quota.today_capped);
+}
+
+function renderSubscribers(stats) {
+    const s = stats.subscribers;
+    const rows = [
+        ['active', '활성', s.active],
+        ['trialing', '체험 중', s.trialing],
+        ['past_due', '결제 재시도', s.past_due],
+        ['cancel_at_period_end', '해지 예정', s.cancel_at_period_end],
+        ['canceled', '만료', s.canceled],
+    ];
+    document.getElementById('subscribers-detail').innerHTML = rows.map(
+        ([_, label, val]) => `<div class="stat-row">
+            <span class="k">${label}</span>
+            <span class="v ${val === 0 ? 'zero' : ''}">${fmtNum(val)}</span>
+        </div>`
+    ).join('');
+}
+
+function renderUsers(stats) {
+    const u = stats.users;
+    const providers = Object.entries(u.by_provider || {})
+        .map(([p, n]) => `<div class="stat-row">
+            <span class="k">${p}</span>
+            <span class="v ${n === 0 ? 'zero' : ''}">${fmtNum(n)}</span>
+        </div>`).join('');
+    document.getElementById('users-detail').innerHTML = `
+        <div class="stat-row">
+            <span class="k"><strong>전체</strong></span>
+            <span class="v"><strong>${fmtNum(u.total)}</strong></span>
+        </div>
+        <div class="stat-row"><span class="k">최근 7일</span><span class="v">${fmtNum(u.new_7days)}</span></div>
+        <div class="stat-row"><span class="k">최근 30일</span><span class="v">${fmtNum(u.new_30days)}</span></div>
+        <div style="margin: 8px 0 4px; font-size: 11px; color: #aaa; text-transform: uppercase;">provider 별</div>
+        ${providers || '<div class="empty">데이터 없음</div>'}
+    `;
+}
+
+function renderEventsSummary(stats) {
+    const e7 = stats.events_7d || { by_severity: {}, by_kind: {} };
+    const sevOrder = ['critical', 'error', 'warn', 'info'];
+    const sevRows = sevOrder.map(s => {
+        const n = e7.by_severity[s] || 0;
+        return `<div class="stat-row">
+            <span class="k"><span class="sev-badge sev-${s}">${s}</span></span>
+            <span class="v ${n === 0 ? 'zero' : ''}">${fmtNum(n)}</span>
+        </div>`;
+    }).join('');
+    const topKinds = Object.entries(e7.by_kind || {})
+        .sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const kindRows = topKinds.map(([k, n]) =>
+        `<div class="stat-row"><span class="k" style="font-size:12px">${k}</span><span class="v">${n}</span></div>`
+    ).join('');
+    document.getElementById('events-summary').innerHTML = sevRows +
+        '<div style="margin: 8px 0 4px; font-size: 11px; color: #aaa; text-transform: uppercase;">상위 kind</div>' +
+        (kindRows || '<div class="empty">데이터 없음</div>');
+}
+
+function renderAlertsHealth(h) {
+    if (!h) {
+        document.getElementById('alerts-health').innerHTML = '<div class="empty">조회 실패</div>';
+        return;
+    }
+    const ch = h.channels || {};
+    const row = (label, on) => `<div class="stat-row">
+        <span class="k">${label}</span>
+        <span class="v">${on ? '✅ 활성' : '⚪ 비활성'}</span>
+    </div>`;
+    document.getElementById('alerts-health').innerHTML =
+        row('Slack', ch.slack) +
+        row('SMTP', ch.smtp) +
+        row('Test sink', ch.test_sink) +
+        `<div class="stat-row"><span class="k">알림 임계값</span><span class="v">${h.min_severity}</span></div>` +
+        `<div class="stat-row"><span class="k">Dedup 윈도</span><span class="v">${h.dedup_seconds}초</span></div>`;
+}
+
+function renderEvents(events) {
+    const list = document.getElementById('events-list');
+    document.getElementById('events-count').textContent = `(${events.length})`;
+    if (!events.length) {
+        list.innerHTML = '<div class="empty">표시할 이벤트가 없어요</div>';
+        return;
+    }
+    list.innerHTML = events.map(e => `
+        <div class="event-row" title="${fmtTimeAbs(e.ts)}">
+            <div><span class="sev-badge sev-${e.severity}">${e.severity}</span></div>
+            <div>
+                <div class="event-kind">${e.kind}</div>
+                <div class="event-msg">${(e.message || '').substring(0, 200)}</div>
+            </div>
+            <div class="event-time">${fmtTime(e.ts)}</div>
+        </div>
+    `).join('');
+}
+
+function setMeta(stats) {
+    if (!stats) return;
+    document.getElementById('meta').textContent = '업데이트 ' + fmtTimeAbs(stats.as_of);
+    document.getElementById('live-indicator').textContent = '● live';
+}
+
+async function loadAll() {
+    document.getElementById('error-area').innerHTML = '';
+    const [stats, ev, health] = await Promise.all([
+        loadStats(),
+        loadEvents(currentSeverity),
+        loadAlertsHealth(),
+    ]);
+    if (stats) {
+        renderKpi(stats);
+        renderSubscribers(stats);
+        renderUsers(stats);
+        renderEventsSummary(stats);
+        setMeta(stats);
+    }
+    if (ev) renderEvents(ev.events || []);
+    if (health) renderAlertsHealth(health);
+}
+
+function filterEvents(btn, severity) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSeverity = severity;
+    loadEvents(severity).then(r => renderEvents(r.events || []));
+}
+
+// 30초마다 자동 새로고침
+loadAll();
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>

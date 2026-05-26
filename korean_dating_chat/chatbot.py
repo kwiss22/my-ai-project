@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
+from flask import Flask, render_template, request, jsonify, send_from_directory, make_response, redirect
 from google import genai
 from google.genai import types
 import os
@@ -1827,6 +1827,8 @@ from admin import (
     alerts_health as admin_alerts_health,
     alerts_test_sink as admin_alerts_test_sink,
     test_reset as admin_test_reset,
+    is_admin as _is_admin,
+    admin_enabled as _admin_enabled,
 )
 from events import log_event
 
@@ -1862,6 +1864,26 @@ app.add_url_rule('/admin/events',         'admin_events',         admin_events)
 app.add_url_rule('/admin/alerts-health',  'admin_alerts_health',  admin_alerts_health)
 app.add_url_rule('/admin/alerts-test',    'admin_alerts_test',    admin_alerts_test_sink)
 app.add_url_rule('/admin/test-reset',     'admin_test_reset',     admin_test_reset, methods=['POST'])
+
+
+@app.route('/admin')
+def admin_page():
+    """운영자 HTML 대시보드. ADMIN_EMAILS 화이트리스트 사용자만.
+
+    가드:
+      - 미인증 → /chat 으로 redirect (로그인 모달이 처리)
+      - ADMIN_EMAILS 미설정 → 503
+      - 인증됐지만 비관리자 → 403 friendly 페이지
+    """
+    user = current_user()
+    if not user:
+        return redirect('/chat')
+    if not _admin_enabled():
+        return render_template('admin_forbidden.html', reason='disabled'), 503
+    if not _is_admin(user):
+        return render_template('admin_forbidden.html', reason='not_admin',
+                               user_email=user.get('email', '')), 403
+    return render_template('admin.html')
 
 
 # 5xx 핸들러 — 모든 unhandled exception 을 events 에 critical 로 기록.

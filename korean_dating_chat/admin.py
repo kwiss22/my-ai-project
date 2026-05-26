@@ -28,6 +28,16 @@ ADMIN_EMAILS = set(
 PRICE_USD_MONTHLY = float(os.getenv('PRICE_USD_MONTHLY', '4.99'))
 
 
+def is_admin(user):
+    """공개 헬퍼 — HTML 페이지 가드 등 외부에서 호출."""
+    return _is_admin(user)
+
+
+def admin_enabled():
+    """ADMIN_EMAILS 화이트리스트가 설정돼 있는지."""
+    return bool(ADMIN_EMAILS)
+
+
 def _is_admin(user):
     if not user or not user.get('email'):
         return False
