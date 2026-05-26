@@ -1866,36 +1866,69 @@ app.add_url_rule('/admin/test-reset',     'admin_test_reset',     admin_test_res
 
 # 5xx 핸들러 — 모든 unhandled exception 을 events 에 critical 로 기록.
 # Flask 의 errorhandler 는 우리 라우트 함수가 raise 한 예외를 잡음.
+
+def _wants_json():
+    """이 요청이 JSON 응답을 기대하는지. 브라우저는 text/html, fetch 는 application/json 또는 */*.
+    경로가 API 엔드포인트면 JSON 강제."""
+    p = request.path or ''
+    if any(p.startswith(prefix) for prefix in (
+        '/auth/', '/billing/', '/admin/', '/api/', '/me', '/tts', '/transcribe',
+        '/translate', '/vocab', '/scenario/', '/start-mission', '/check-mission',
+        '/daily-mission', '/select-character', '/new-session', '/sessions',
+        '/save-session', '/history',
+    )):
+        return True
+    # 브라우저는 text/html 명시. fetch with Accept: */* 도 JSON 으로 침
+    best = request.accept_mimetypes.best_match(['text/html', 'application/json'])
+    return best != 'text/html'
+
+
+@app.errorhandler(404)
+def _handle_404(e):
+    if _wants_json():
+        return jsonify({'error': 'not found', 'path': request.path}), 404
+    return render_template('404.html'), 404
+
+
 @app.errorhandler(500)
 def _handle_500(e):
+    import uuid
+    error_id = uuid.uuid4().hex[:12]
     try:
         log_event('error', 'http.500',
                   message=str(e)[:200],
                   path=request.path, method=request.method,
-                  remote_addr=request.remote_addr)
+                  remote_addr=request.remote_addr, error_id=error_id)
     except Exception:
         pass
-    return jsonify({'error': '서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.'}), 500
+    if _wants_json():
+        return jsonify({'error': '서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.',
+                        'error_id': error_id}), 500
+    return render_template('500.html', error_id=error_id), 500
 
 
 @app.errorhandler(Exception)
 def _handle_uncaught(e):
+    import uuid
     # 라이브러리가 던지는 예외 중 일부는 5xx 가 아닐 수도. 그래도 unhandled 면 기록.
     try:
         from werkzeug.exceptions import HTTPException
         if isinstance(e, HTTPException):
-            # 4xx 는 정상 흐름 — 로그하지 않음
+            # 4xx 는 정상 흐름 — 로그하지 않음. 404 는 위에서 따로 처리.
             return e
     except Exception:
         pass
+    error_id = uuid.uuid4().hex[:12]
     try:
         log_event('error', 'http.500',
                   message=f'{type(e).__name__}: {str(e)[:200]}',
                   path=request.path, method=request.method,
-                  remote_addr=request.remote_addr)
+                  remote_addr=request.remote_addr, error_id=error_id)
     except Exception:
         pass
-    return jsonify({'error': '서버 오류가 발생했어요.'}), 500
+    if _wants_json():
+        return jsonify({'error': '서버 오류가 발생했어요.', 'error_id': error_id}), 500
+    return render_template('500.html', error_id=error_id), 500
 
 
 @app.route('/billing/cancel-subscription', methods=['POST'])
@@ -2176,116 +2209,81 @@ def ads_txt():
 def manifest():
     return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
 
+def _public_base_url():
+    """공개 URL — APP_BASE_URL env 우선, 없으면 request.host_url 의 trailing slash 제거."""
+    env_url = os.getenv('APP_BASE_URL', '').strip()
+    if env_url:
+        return env_url.rstrip('/')
+    # request.host_url 는 'https://example.com/' 형태
+    return (request.host_url or '').rstrip('/')
+
+
 @app.route('/robots.txt')
 def robots_txt():
-    content = """User-agent: *
+    base = _public_base_url()
+    # 공개 페이지(/ + 마케팅 + chat 랜딩 + privacy/terms) 크롤 허용.
+    # API + admin + 결제·인증 콜백은 차단.
+    content = f"""User-agent: *
 Allow: /
-Disallow: /chat
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /billing/
+Disallow: /me
+Disallow: /tts
+Disallow: /transcribe
+Disallow: /translate
+Disallow: /vocab
+Disallow: /scenario/
+Disallow: /select-character
+Disallow: /start-mission
+Disallow: /check-mission
+Disallow: /daily-mission
 Disallow: /new-session
 Disallow: /sessions
-Disallow: /tts
-Disallow: /translate
+Disallow: /save-session
+Disallow: /history
 
-Sitemap: https://kdate.store/sitemap.xml
+Sitemap: {base}/sitemap.xml
 """
-    return content, 200, {'Content-Type': 'text/plain'}
+    return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 @app.route('/sitemap.xml')
 def sitemap():
-    content = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://kdate.store/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/culture</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/tips</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/characters</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/slang</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/kdrama</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/confession</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/phrases</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/anniversary</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/kakaotalk</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/honorifics</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/kpop-korean</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/first-date</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/nunchi</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/food-dates</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/pet-names</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/privacy</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://kdate.store/terms</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-</urlset>"""
-    return content, 200, {'Content-Type': 'application/xml'}
+    base = _public_base_url()
+    # (path, changefreq, priority). 마케팅·랜딩 페이지는 매월, 약관은 매년, 홈은 매주.
+    pages = [
+        ('/',             'weekly',  '1.0'),
+        ('/culture',      'monthly', '0.9'),
+        ('/tips',         'monthly', '0.9'),
+        ('/characters',   'monthly', '0.8'),
+        ('/slang',        'monthly', '0.9'),
+        ('/kdrama',       'monthly', '0.9'),
+        ('/confession',   'monthly', '0.9'),
+        ('/phrases',      'monthly', '0.9'),
+        ('/anniversary',  'monthly', '0.8'),
+        ('/kakaotalk',    'monthly', '0.8'),
+        ('/honorifics',   'monthly', '0.9'),
+        ('/kpop-korean',  'monthly', '0.9'),
+        ('/first-date',   'monthly', '0.9'),
+        ('/nunchi',       'monthly', '0.8'),
+        ('/food-dates',   'monthly', '0.8'),
+        ('/pet-names',    'monthly', '0.9'),
+        ('/privacy',      'yearly',  '0.3'),
+        ('/terms',        'yearly',  '0.3'),
+    ]
+    urls = '\n'.join(
+        f'  <url>\n    <loc>{base}{path}</loc>\n'
+        f'    <changefreq>{cf}</changefreq>\n'
+        f'    <priority>{pr}</priority>\n  </url>'
+        for path, cf, pr in pages
+    )
+    content = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f'{urls}\n'
+        '</urlset>'
+    )
+    return content, 200, {'Content-Type': 'application/xml; charset=utf-8'}
 
 @app.route('/culture')
 def culture():
