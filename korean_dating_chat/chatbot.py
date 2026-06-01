@@ -33,6 +33,10 @@ GEMINI_FAST_MODEL = os.getenv('GEMINI_FAST_MODEL', 'gemini-2.5-flash-lite')
 ENABLE_VOCAB_EXTRACTION = os.getenv('ENABLE_VOCAB_EXTRACTION', 'true').lower() != 'false'
 VOCAB_MIN_CHARS = int(os.getenv('VOCAB_MIN_CHARS', '12'))
 
+# 유료 구독자 일일 fair-use 한도 — 와일 사용자가 Gemini 토큰 비용을 폭증시키는 것 방지.
+# 일반 사용자(하루 10-50개)는 절대 안 닿는 고한도. 자정 리셋.
+SUBSCRIBER_DAILY_CAP = int(os.getenv('SUBSCRIBER_DAILY_CAP', '200'))
+
 # ==========================================
 # [인증 체크] API 키 검증
 # ==========================================
@@ -2537,7 +2541,18 @@ def chat():
     user = current_user()
     if not user:
         return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
-    if not has_active_subscription(user):
+    if has_active_subscription(user):
+        # 유료 구독자도 fair-use cap 적용 (와일 사용자에 의한 토큰 비용 폭주 방지).
+        # 99% 사용자는 영향 받지 않는 고한도, 자정 리셋.
+        allowed, _remaining, reset_date = consume_quota(user['user_id'], cap=SUBSCRIBER_DAILY_CAP)
+        if not allowed:
+            return jsonify({
+                'error': f'오늘은 정말 많이 대화하셨네요! 공정 이용을 위해 일일 한도({SUBSCRIBER_DAILY_CAP}개)가 있어요. 자정에 리셋됩니다.',
+                'paywall': 'fair_use',
+                'reset_date': reset_date,
+                'subscriber_cap': SUBSCRIBER_DAILY_CAP,
+            }), 429
+    else:
         allowed, _remaining, reset_date = consume_quota(user['user_id'])
         if not allowed:
             return jsonify({

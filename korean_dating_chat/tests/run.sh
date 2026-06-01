@@ -19,6 +19,7 @@ KEEP_SERVER="${KEEP_SERVER:-0}"   # 1 이면 회귀 후 서버 살려두기 (디
 # 회귀가 가정하는 canonical 환경
 export GEMINI_API_KEY="${GEMINI_API_KEY:-dev_placeholder}"
 export DAILY_FREE_QUOTA=5
+export SUBSCRIBER_DAILY_CAP=3
 export PAYPAL_TRIAL_DAYS=7
 # PayPal 통합 — 시뮬레이터가 서명 없이 webhook 보낼 수 있게 우회 활성화 (테스트 전용)
 export PAYPAL_WEBHOOK_TEST_BYPASS=1

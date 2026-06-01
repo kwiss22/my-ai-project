@@ -4596,7 +4596,7 @@
 
                 if (!response.ok) {
                     const errData = await response.json().catch(() => ({}));
-                    // 401 = 로그인 필요, 402 = quota 초과 (둘 다 paywall 분기)
+                    // 401 = 로그인 필요, 402 = quota 초과 (paywall), 429 = 유료자 fair-use 한도
                     if (response.status === 401 && errData.paywall === 'login') {
                         typingIndicator.remove();
                         document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
@@ -4607,6 +4607,12 @@
                         typingIndicator.remove();
                         document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
                         openPaywallModal(errData);
+                        return;
+                    }
+                    if (response.status === 429 && errData.paywall === 'fair_use') {
+                        typingIndicator.remove();
+                        document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                        if (typeof showToast === 'function') showToast(errData.error || '오늘 한도에 도달했어요. 자정에 리셋됩니다.');
                         return;
                     }
                     throw new Error(errData.error || '서버 응답에 문제가 있어요.');

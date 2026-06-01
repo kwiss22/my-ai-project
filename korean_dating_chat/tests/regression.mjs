@@ -115,6 +115,15 @@ check('activate 직후 active=true', r.json?.subscription?.active === true);
 check('  status = active', r.json?.subscription?.status === 'active');
 check('  unlimited = true', r.json?.quota?.unlimited === true);
 
+// Fair-use cap — SUBSCRIBER_DAILY_CAP=3 (테스트), 4번째에 429
+// 실 메시지 전송으로 quota 소비 시도 (Gemini placeholder 라 200 응답 안 와도 quota 는 차감됨)
+for (let i = 1; i <= 3; i++) {
+    await req('POST', '/chat', `message=s${i}&character=jiwoo`, subCookie);
+}
+r = await req('POST', '/chat', 'message=s4&character=jiwoo', subCookie);
+check('유료자 4번째 → 429 paywall=fair_use',
+    r.status === 429 && r.json?.paywall === 'fair_use' && r.json?.subscriber_cap === 3);
+
 sim(`suspend --subscription I-LCC`);
 r = await req('GET', '/me', null, subCookie);
 check('suspend 도 active 취급 (past_due grace)',
