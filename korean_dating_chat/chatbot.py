@@ -1826,6 +1826,7 @@ from billing import (
     TRIAL_DAYS,
 )
 from rate_limit import limit as rate_limit
+import prompt_cache
 from admin import (
     stats as admin_stats,
     events as admin_events,
@@ -1875,6 +1876,16 @@ app.add_url_rule('/cron/daily-snapshot',  'cron_daily_snapshot',  admin_cron_sna
 app.add_url_rule('/admin/alerts-health',  'admin_alerts_health',  admin_alerts_health)
 app.add_url_rule('/admin/alerts-test',    'admin_alerts_test',    admin_alerts_test_sink)
 app.add_url_rule('/admin/test-reset',     'admin_test_reset',     admin_test_reset, methods=['POST'])
+
+
+@app.route('/admin/prompt-cache')
+def admin_prompt_cache():
+    """현재 캐시된 캐릭터 페르소나 목록 + 만료 시간. 관측용."""
+    from admin import _require_admin
+    ok, err = _require_admin()
+    if not ok:
+        return err
+    return jsonify(prompt_cache.stats())
 
 
 @app.route('/admin')
@@ -2163,13 +2174,14 @@ INTIMACY_TONE_GUIDE = {
 INTIMACY_LEVEL_NAMES = {1: '처음 만남', 2: '친해지는 중', 3: '친구', 4: '썸', 5: '연인'}
 
 
-def get_system_prompt(character, profile=None, scenario_id=None, intimacy_level=None):
-    """캐릭터 + 유저 프로필 + (옵션) 시나리오 + (옵션) 호감도 레벨을 합쳐서 system_instruction 반환.
+def _build_dynamic_addition(profile=None, scenario_id=None, intimacy_level=None):
+    """get_system_prompt 의 동적(profile/intimacy/scenario) 추가분만 반환.
 
-    Stateless: 모든 컨텍스트는 인자로 전달받는다.
+    Prompt caching 분기에서 base 페르소나는 캐시로, 이 동적 추가분만 contents 의
+    leading turn 으로 주입하기 위해 분리. profile/intimacy/scenario 모두 None 이면
+    빈 문자열 반환.
     """
-    base = CHARACTER_PROMPTS.get(character, JIWOO_SYSTEM_PROMPT)
-    prompt = base
+    addition = ''
 
     if profile:
         profile_lines = []
@@ -2188,7 +2200,7 @@ def get_system_prompt(character, profile=None, scenario_id=None, intimacy_level=
             user_context += "\n- 관심사 주제가 나오면 더 적극적으로 반응하세요."
             if profile.get('nickname'):
                 user_context += f"\n- 가끔 '{profile['nickname']}'라고 이름을 불러주세요."
-            prompt = prompt + user_context
+            addition += user_context
 
     if intimacy_level:
         try:
@@ -2199,7 +2211,7 @@ def get_system_prompt(character, profile=None, scenario_id=None, intimacy_level=
         guide = INTIMACY_TONE_GUIDE.get(lv)
         if guide:
             level_name = INTIMACY_LEVEL_NAMES.get(lv, '')
-            prompt += (
+            addition += (
                 f"\n\n[관계 단계 - Lv{lv} {level_name}]\n{guide}\n"
                 "- 단계 변화는 점진적으로. 갑자기 말투를 확 바꾸지 말고 이 단계에 맞는 일관된 톤을 유지해."
                 "\n\n[호감도 신호 - 매우 중요]\n"
@@ -2218,9 +2230,18 @@ def get_system_prompt(character, profile=None, scenario_id=None, intimacy_level=
     if scenario_id:
         scenario_prompt = SCENARIO_PROMPTS.get(scenario_id, '')
         if scenario_prompt:
-            prompt = prompt + scenario_prompt
+            addition += scenario_prompt
 
-    return prompt
+    return addition
+
+
+def get_system_prompt(character, profile=None, scenario_id=None, intimacy_level=None):
+    """캐릭터 + 유저 프로필 + (옵션) 시나리오 + (옵션) 호감도 레벨을 합쳐서 system_instruction 반환.
+
+    Stateless: 모든 컨텍스트는 인자로 전달받는다.
+    """
+    base = CHARACTER_PROMPTS.get(character, JIWOO_SYSTEM_PROMPT)
+    return base + _build_dynamic_addition(profile, scenario_id, intimacy_level)
 
 def get_character_name(character):
     """캐릭터 이름 반환 (한국어 표시용)"""
@@ -2632,7 +2653,8 @@ def chat():
     if len(user_message) > 4000:
         user_message = user_message[:4000]
 
-    system_instruction = get_system_prompt(character, user_profile, scenario_id, intimacy_level)
+    base_persona = CHARACTER_PROMPTS.get(character, JIWOO_SYSTEM_PROMPT)
+    dynamic_addition = _build_dynamic_addition(user_profile, scenario_id, intimacy_level)
 
     effective_message = user_message
     if grammar_mode:
@@ -2644,7 +2666,34 @@ def chat():
 
     # 최근 30개만 (토큰/레이턴시 제한)
     trimmed_history = history[-30:] if len(history) > 30 else history
-    contents = trimmed_history + [{'role': 'user', 'parts': [{'text': effective_message}]}]
+    base_contents = trimmed_history + [{'role': 'user', 'parts': [{'text': effective_message}]}]
+
+    def _build_request(model_name):
+        """캐시 hit 이면 cached_content + 동적 컨텍스트 leading turn 주입,
+        miss 면 full system_instruction 으로 fallback. (contents, config) 반환."""
+        cache_name = prompt_cache.get_or_create(
+            genai_client, types, model_name, character, base_persona,
+        )
+        if cache_name:
+            if dynamic_addition:
+                leading = [
+                    {'role': 'user', 'parts': [{'text': '[Session context — apply to the whole conversation]' + dynamic_addition}]},
+                    {'role': 'model', 'parts': [{'text': '응, 알았어!'}]},
+                ]
+            else:
+                leading = []
+            cfg = types.GenerateContentConfig(
+                cached_content=cache_name,
+                max_output_tokens=400,
+                temperature=0.9,
+            )
+            return leading + base_contents, cfg, cache_name
+        cfg = types.GenerateContentConfig(
+            system_instruction=base_persona + dynamic_addition,
+            max_output_tokens=400,
+            temperature=0.9,
+        )
+        return base_contents, cfg, None
 
     def generate():
         import time as _time
@@ -2665,15 +2714,12 @@ def chat():
         for idx, (model_name, backoff) in enumerate(attempts):
             if backoff:
                 _time.sleep(backoff)
+            req_contents, req_config, used_cache = _build_request(model_name)
             try:
                 stream = genai_client.models.generate_content_stream(
                     model=model_name,
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_instruction,
-                        max_output_tokens=400,
-                        temperature=0.9
-                    )
+                    contents=req_contents,
+                    config=req_config,
                 )
                 for chunk in stream:
                     if chunk.text:
@@ -2689,6 +2735,10 @@ def chat():
                 # 스트림이 이미 일부 전송된 경우엔 재시도하면 중복 응답이 되므로 중단
                 if stream_opened:
                     break
+                # 업스트림 캐시 expired/missing → 로컬 무효화 후 다음 시도(재생성)
+                if used_cache and ('cached_content' in err_str.lower() or 'cache' in err_str.lower()):
+                    prompt_cache.invalidate(model=model_name, character_id=character)
+                    continue
                 # 재시도 가능한 에러(503/504/일시 네트워크)만 다음 시도
                 if _is_unavailable_error(e):
                     continue

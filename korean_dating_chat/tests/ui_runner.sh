@@ -32,6 +32,7 @@ fi
 export GEMINI_API_KEY="${GEMINI_API_KEY:-dev_placeholder}"
 export DAILY_FREE_QUOTA=5
 export SUBSCRIBER_DAILY_CAP=200
+export PROMPT_CACHE_ENABLED=0
 export PAYPAL_TRIAL_DAYS=7
 export PAYPAL_WEBHOOK_TEST_BYPASS=1
 export ADMIN_EMAILS=admin@example.com

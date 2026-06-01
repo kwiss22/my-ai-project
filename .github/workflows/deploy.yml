@@ -45,6 +45,8 @@ jobs:
             DEV_LOGIN_ENABLED=0,
             DAILY_FREE_QUOTA=10,
             SUBSCRIBER_DAILY_CAP=200,
+            PROMPT_CACHE_ENABLED=1,
+            PROMPT_CACHE_TTL_SECONDS=3600,
             PAYPAL_TRIAL_DAYS=7,
             PAYPAL_API_BASE=https://api-m.paypal.com,
             QUOTA_TIMEZONE=Asia/Seoul,
