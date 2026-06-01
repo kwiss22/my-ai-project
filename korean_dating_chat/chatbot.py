@@ -1816,8 +1816,8 @@ from billing import (
     create_checkout_session,
     create_portal_session,
     billing_success,
-    webhook as stripe_webhook,
-    stripe_enabled,
+    webhook as billing_webhook_handler,
+    billing_enabled,
     cancel_user_subscription,
     TRIAL_DAYS,
 )
@@ -1859,7 +1859,7 @@ app.add_url_rule('/auth/logout',          'auth_logout',          auth_logout,  
 app.add_url_rule('/auth/dev-login',       'auth_dev_login',       _rl_dev_login(dev_login),    methods=['POST'])
 app.add_url_rule('/billing/checkout',     'billing_checkout',     _rl_checkout(create_checkout_session), methods=['POST'])
 app.add_url_rule('/billing/portal',       'billing_portal',       _rl_portal(create_portal_session),     methods=['POST'])
-app.add_url_rule('/billing/webhook',      'billing_webhook',      stripe_webhook,                         methods=['POST'])
+app.add_url_rule('/billing/webhook',      'billing_webhook',      billing_webhook_handler,                methods=['POST'])
 app.add_url_rule('/billing/success',      'billing_success',      billing_success)
 
 # 관리자 통계 + 이벤트 로그 + 알림 채널 진단
@@ -1963,7 +1963,7 @@ def _handle_uncaught(e):
 @app.route('/billing/cancel-subscription', methods=['POST'])
 @_rl_cancel
 def cancel_subscription_route():
-    """현재 사용자의 Stripe 구독을 cancel_at_period_end=True 로 표시.
+    """현재 사용자의 구독을 cancel_at_period_end=True 로 표시.
     period_end 까지 무제한 유지, 그 후 자동 만료."""
     user = current_user()
     if not user:
@@ -1977,19 +1977,19 @@ def cancel_subscription_route():
 @app.route('/auth/delete-account', methods=['POST'])
 @_rl_delete
 def delete_account():
-    """계정 완전 삭제. Stripe 구독이 있으면 먼저 해지 후 DB 행 삭제 + 세션 cookie 무효화.
+    """계정 완전 삭제. 구독이 있으면 먼저 해지 후 DB 행 삭제 + 세션 cookie 무효화.
     개인정보보호법·GDPR·Apple/Google 정책상 유료 서비스는 사용자가 셀프-삭제 가능해야 함."""
     from auth import clear_session_cookie
     user = current_user()
     if not user:
         return jsonify({'error': '로그인이 필요해요.'}), 401
-    # Stripe 구독이 있으면 즉시 해지 시도 (실패해도 계정 삭제는 진행 — 사용자가 다시 가입 못 해도 그만)
-    if user.get('stripe_subscription_id'):
+    # 구독이 있으면 즉시 해지 시도 (실패해도 계정 삭제는 진행 — 사용자가 다시 가입 못 해도 그만)
+    if user.get('subscription_id'):
         cancel_user_subscription(user)
     users_delete(user['user_id'])
     log_event('warn', 'account.deleted',
               message=f'user={user["user_id"]} provider={user.get("provider")}',
-              user_id=user['user_id'], had_subscription=bool(user.get('stripe_subscription_id')))
+              user_id=user['user_id'], had_subscription=bool(user.get('subscription_id')))
     resp = jsonify({'ok': True})
     return clear_session_cookie(resp)
 
@@ -2000,7 +2000,7 @@ def export_data():
     """본인이 보유한 모든 개인정보 JSON 으로 다운로드.
 
     GDPR Art. 20 (portability) + 개인정보보호법 §35 (자기정보결정권) 권리 행사용.
-    Stripe 카드번호는 우리가 안 갖고 있으니 ID·상태만 포함.
+    PayPal 카드번호는 우리가 안 갖고 있으니 ID·상태만 포함.
     채팅 기록은 클라이언트 IndexedDB 에 있으므로 별도 안내.
     """
     from datetime import datetime as _dt, timezone as _tz
@@ -2037,8 +2037,8 @@ def export_data():
             'created_at_iso': created_iso,
         },
         'subscription': {
-            'stripe_customer_id': user.get('stripe_customer_id'),
-            'stripe_subscription_id': user.get('stripe_subscription_id'),
+            'paypal_payer_id': user.get('subscription_customer_id'),
+            'paypal_subscription_id': user.get('subscription_id'),
             'status': user.get('subscription_status'),
             'period_end_unix': user.get('subscription_period_end'),
             'period_end_iso': period_end_iso,
@@ -2054,9 +2054,9 @@ def export_data():
                             '설정 → 대화 기록에서 직접 백업 가능합니다. '
                             'Chat history is stored locally in your browser (IndexedDB); '
                             'export it from Settings → History.',
-            'payment_card': '카드 번호는 저희 서버에 저장되지 않고 Stripe 가 직접 처리합니다. '
-                            'We never store your card number; Stripe handles payment data directly. '
-                            '결제 영수증은 Stripe 고객 포털(설정 → 구독 관리)에서 다운로드 가능.',
+            'payment_card': '결제 정보는 저희 서버에 저장되지 않고 PayPal 이 직접 처리합니다. '
+                            'We never store your payment details; PayPal handles them directly. '
+                            '결제 영수증은 PayPal 계정 페이지(설정 → 구독 관리)에서 다운로드 가능.',
         },
     }
     log_event('info', 'account.export',
@@ -2098,7 +2098,7 @@ def me():
             'quota': {'used': 0, 'cap': DAILY_FREE_QUOTA, 'remaining': 0,
                       'reset_date': None, 'timezone': QUOTA_TIMEZONE},
             'login_methods': methods,
-            'billing_enabled': stripe_enabled(),
+            'billing_enabled': billing_enabled(),
             'trial_days': TRIAL_DAYS,
         })
     active = has_active_subscription(user)
@@ -2126,7 +2126,7 @@ def me():
             'unlimited': active,
         },
         'login_methods': methods,
-        'billing_enabled': stripe_enabled(),
+        'billing_enabled': billing_enabled(),
         'trial_days': TRIAL_DAYS,
     })
 

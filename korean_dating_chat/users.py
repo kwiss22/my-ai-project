@@ -6,8 +6,8 @@
 
 - 신규 가입은 OAuth(Google) 콜백에서 get_or_create_oauth_user 로만 진행
 - 일일 quota 는 QUOTA_TIMEZONE 자정 기준 자동 리셋 (기본 UTC, 'Asia/Seoul' 권장)
-- 구독 상태는 Stripe webhook 이 set_subscription / clear_subscription 호출
-- past_due (결제 재시도 중) 와 cancel_at_period_end 둘 다 grace 처리
+- 구독 상태는 결제 provider webhook (PayPal 등) 이 set_subscription / clear_subscription 호출
+- past_due/suspended (결제 재시도 중) 와 cancel_at_period_end 둘 다 grace 처리
 
 향후 Firestore 백엔드 추가하려면:
   1. UserStore 를 상속한 FirestoreUserStore 클래스 작성 (이 파일에 추가하거나 별도 모듈)
@@ -51,7 +51,7 @@ def has_active_subscription(user):
 
     grace policy:
       - 'active', 'trialing' : 정상 활성
-      - 'past_due'           : Stripe 가 결제 재시도 중 (보통 ~1주). period_end 까지는 활성 유지.
+      - 'past_due'/'suspended' : provider 가 결제 재시도 중. period_end 까지는 활성 유지.
       - 'canceled'           : 즉시 만료. 단, period_end 가 미래면 cancel_at_period_end 해지 예약
                                이라 기간 끝까지는 활성. period_end 가 지났으면 비활성.
     """
@@ -85,8 +85,13 @@ class UserStore(abc.ABC):
         """user_id 로 조회. 없으면 None."""
 
     @abc.abstractmethod
-    def get_user_by_stripe_customer(self, customer_id):
-        """Stripe customer_id 로 조회. webhook 처리용."""
+    def get_user_by_subscription_customer(self, customer_id):
+        """결제 provider 의 customer/payer ID 로 조회 (PayPal: payer_id, Stripe: cus_*)."""
+
+    @abc.abstractmethod
+    def get_user_by_subscription_id(self, subscription_id):
+        """결제 provider 의 subscription ID 로 조회 (PayPal: I-*, Stripe: sub_*).
+        PayPal webhook 은 customer_id 보다 subscription_id 로 매핑하는 게 신뢰성 높음."""
 
     @abc.abstractmethod
     def consume_quota(self, user_id, cap):
@@ -99,9 +104,10 @@ class UserStore(abc.ABC):
         """차감 없이 조회. (used, cap, remaining, reset_date)."""
 
     @abc.abstractmethod
-    def set_subscription(self, user_id, stripe_customer_id, stripe_subscription_id,
-                         status, period_end, cancel_at_period_end=None):
-        """구독 상태 저장. cancel_at_period_end=None 이면 기존 값 유지."""
+    def set_subscription(self, user_id, payment_provider, subscription_customer_id,
+                         subscription_id, status, period_end, cancel_at_period_end=None):
+        """구독 상태 저장. provider-agnostic.
+        cancel_at_period_end=None 이면 기존 값 유지."""
 
     @abc.abstractmethod
     def clear_subscription(self, user_id):
@@ -156,14 +162,16 @@ class UserStore(abc.ABC):
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
   user_id TEXT PRIMARY KEY,
-  provider TEXT NOT NULL,                  -- 'google' | 'dev'
+  provider TEXT NOT NULL,                  -- 'google' | 'dev'  (OAuth provider, 결제 provider 와 별개)
   provider_user_id TEXT NOT NULL,
   email TEXT,
   display_name TEXT,
   created_at INTEGER NOT NULL,
-  last_seen_at INTEGER,                    -- 마지막 활동 (touch_user 가 갱신). retention 계산용.
-  stripe_customer_id TEXT,
-  stripe_subscription_id TEXT,
+  last_seen_at INTEGER,                    -- 마지막 활동. retention 계산용.
+  -- 결제 provider — 'paypal' | 'stripe' | NULL. 향후 추가 provider 도 같은 컬럼 재사용.
+  payment_provider TEXT,
+  subscription_customer_id TEXT,           -- 제공자의 customer/payer 식별자 (PayPal: payer_id, Stripe: cus_)
+  subscription_id TEXT,                    -- 제공자의 subscription 식별자 (PayPal: I-XXX, Stripe: sub_)
   subscription_status TEXT,                -- 'active' | 'trialing' | 'past_due' | 'canceled' | NULL
   subscription_period_end INTEGER,         -- unix seconds (현재 결제 주기 종료)
   subscription_cancel_at_period_end INTEGER NOT NULL DEFAULT 0,  -- 1=해지 예약됨
@@ -171,7 +179,8 @@ CREATE TABLE IF NOT EXISTS users (
   daily_reset_date TEXT NOT NULL,          -- 'YYYY-MM-DD' (QUOTA_TIMEZONE 기준)
   UNIQUE(provider, provider_user_id)
 );
-CREATE INDEX IF NOT EXISTS users_stripe_customer ON users(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS users_subscription_customer ON users(subscription_customer_id);
+CREATE INDEX IF NOT EXISTS users_subscription_id ON users(subscription_id);
 CREATE INDEX IF NOT EXISTS users_last_seen ON users(last_seen_at);
 """
 
@@ -180,6 +189,14 @@ _MIGRATIONS = [
      'ALTER TABLE users ADD COLUMN subscription_cancel_at_period_end INTEGER NOT NULL DEFAULT 0'),
     ('last_seen_at',
      'ALTER TABLE users ADD COLUMN last_seen_at INTEGER'),
+    # 결제 provider 일반화 — 기존 stripe_customer_id/stripe_subscription_id 가 있는 DB 라면
+    # 데이터 보존을 위해 새 컬럼 추가하고 _migrate_payment_columns 가 값 복사.
+    ('payment_provider',
+     'ALTER TABLE users ADD COLUMN payment_provider TEXT'),
+    ('subscription_customer_id',
+     'ALTER TABLE users ADD COLUMN subscription_customer_id TEXT'),
+    ('subscription_id',
+     'ALTER TABLE users ADD COLUMN subscription_id TEXT'),
 ]
 
 
@@ -203,6 +220,19 @@ class SQLiteUserStore(UserStore):
                         conn.execute(ddl)
                     except sqlite3.OperationalError:
                         pass  # idempotent
+            # Stripe → generic 마이그레이션 (옛 컬럼 데이터 보존)
+            cols = {row['name'] for row in conn.execute('PRAGMA table_info(users)').fetchall()}
+            if 'stripe_customer_id' in cols and 'subscription_customer_id' in cols:
+                conn.execute(
+                    "UPDATE users SET subscription_customer_id = stripe_customer_id "
+                    "WHERE subscription_customer_id IS NULL AND stripe_customer_id IS NOT NULL"
+                )
+            if 'stripe_subscription_id' in cols and 'subscription_id' in cols:
+                conn.execute(
+                    "UPDATE users SET subscription_id = stripe_subscription_id, "
+                    "                  payment_provider = COALESCE(payment_provider, 'stripe') "
+                    "WHERE subscription_id IS NULL AND stripe_subscription_id IS NOT NULL"
+                )
             conn.commit()
         finally:
             conn.close()
@@ -244,12 +274,26 @@ class SQLiteUserStore(UserStore):
         finally:
             conn.close()
 
-    def get_user_by_stripe_customer(self, customer_id):
+    def get_user_by_subscription_customer(self, customer_id):
         if not customer_id:
             return None
         conn = self._connect()
         try:
-            row = conn.execute('SELECT * FROM users WHERE stripe_customer_id=?', (customer_id,)).fetchone()
+            row = conn.execute(
+                'SELECT * FROM users WHERE subscription_customer_id=?', (customer_id,)
+            ).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def get_user_by_subscription_id(self, subscription_id):
+        if not subscription_id:
+            return None
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                'SELECT * FROM users WHERE subscription_id=?', (subscription_id,)
+            ).fetchone()
             return dict(row) if row else None
         finally:
             conn.close()
@@ -297,23 +341,25 @@ class SQLiteUserStore(UserStore):
         finally:
             conn.close()
 
-    def set_subscription(self, user_id, stripe_customer_id, stripe_subscription_id,
-                         status, period_end, cancel_at_period_end=None):
+    def set_subscription(self, user_id, payment_provider, subscription_customer_id,
+                         subscription_id, status, period_end, cancel_at_period_end=None):
         conn = self._connect()
         try:
             if cancel_at_period_end is None:
                 conn.execute(
-                    'UPDATE users SET stripe_customer_id=?, stripe_subscription_id=?, '
-                    'subscription_status=?, subscription_period_end=? WHERE user_id=?',
-                    (stripe_customer_id, stripe_subscription_id, status, period_end, user_id),
+                    'UPDATE users SET payment_provider=?, subscription_customer_id=?, '
+                    'subscription_id=?, subscription_status=?, subscription_period_end=? '
+                    'WHERE user_id=?',
+                    (payment_provider, subscription_customer_id, subscription_id,
+                     status, period_end, user_id),
                 )
             else:
                 conn.execute(
-                    'UPDATE users SET stripe_customer_id=?, stripe_subscription_id=?, '
-                    'subscription_status=?, subscription_period_end=?, '
+                    'UPDATE users SET payment_provider=?, subscription_customer_id=?, '
+                    'subscription_id=?, subscription_status=?, subscription_period_end=?, '
                     'subscription_cancel_at_period_end=? WHERE user_id=?',
-                    (stripe_customer_id, stripe_subscription_id, status, period_end,
-                     1 if cancel_at_period_end else 0, user_id),
+                    (payment_provider, subscription_customer_id, subscription_id, status,
+                     period_end, 1 if cancel_at_period_end else 0, user_id),
                 )
             conn.commit()
         finally:
@@ -499,8 +545,12 @@ def get_user(user_id):
     return _store.get_user(user_id)
 
 
-def get_user_by_stripe_customer(customer_id):
-    return _store.get_user_by_stripe_customer(customer_id)
+def get_user_by_subscription_customer(customer_id):
+    return _store.get_user_by_subscription_customer(customer_id)
+
+
+def get_user_by_subscription_id(subscription_id):
+    return _store.get_user_by_subscription_id(subscription_id)
 
 
 def consume_quota(user_id, cap=None):
@@ -515,10 +565,10 @@ def peek_quota(user_id, cap=None):
     return _store.peek_quota(user_id, cap)
 
 
-def set_subscription(user_id, stripe_customer_id, stripe_subscription_id, status, period_end,
-                     cancel_at_period_end=None):
-    return _store.set_subscription(user_id, stripe_customer_id, stripe_subscription_id,
-                                   status, period_end, cancel_at_period_end)
+def set_subscription(user_id, payment_provider, subscription_customer_id, subscription_id,
+                     status, period_end, cancel_at_period_end=None):
+    return _store.set_subscription(user_id, payment_provider, subscription_customer_id,
+                                   subscription_id, status, period_end, cancel_at_period_end)
 
 
 def clear_subscription(user_id):

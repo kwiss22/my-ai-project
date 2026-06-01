@@ -5799,7 +5799,7 @@
             await refreshAuthState();
             const params = new URLSearchParams(window.location.search);
             if (params.get('billing') === 'success') {
-                // Stripe 성공 콜백 후 페이지 진입 — webhook 처리 지연 대비 1초 후 다시 fetch
+                // PayPal 성공 콜백 후 페이지 진입 — webhook 처리 지연 대비 1초 후 다시 fetch
                 if (typeof showToast === 'function') showToast('구독이 시작됐어요 ✨');
                 setTimeout(refreshAuthState, 1500);
                 // URL 정리

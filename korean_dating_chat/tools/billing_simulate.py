@@ -1,53 +1,47 @@
-"""Stripe webhook 시뮬레이터.
+"""PayPal webhook 시뮬레이터 (통합 테스트용).
 
-실 Stripe 계정 없이도 로컬에서 결제 flow 검증용. STRIPE_WEBHOOK_SECRET 만 설정돼 있으면
-Stripe 의 서명 규약(t=...,v1=HMAC) 그대로 만들어 /billing/webhook 에 POST 한다.
+실 PayPal 계정 없이 결제 lifecycle 검증. 서명 검증은 PAYPAL_WEBHOOK_TEST_BYPASS=1
+서버에서만 우회 가능 — 운영에선 미설정.
 
 사용 예:
-  # checkout.session.completed
-  python3 tools/billing_simulate.py checkout \\
-      --user-id USR123 --customer cus_test_123 --subscription sub_test_456
+  python3 tools/billing_simulate.py activate \\
+      --user-id USR123 --subscription I-TEST123 --payer-id ABC123 --days 30
 
-  # customer.subscription.updated (active, period_end 30일 뒤)
-  python3 tools/billing_simulate.py sub-update \\
-      --customer cus_test_123 --subscription sub_test_456 --status active --days 30
+  python3 tools/billing_simulate.py update \\
+      --subscription I-TEST123 --status ACTIVE --days 30
 
-  # customer.subscription.deleted
-  python3 tools/billing_simulate.py sub-delete \\
-      --customer cus_test_123 --subscription sub_test_456
+  python3 tools/billing_simulate.py cancel \\
+      --subscription I-TEST123
 
-서명 검증을 통과시키려면 시뮬레이터와 서버가 같은 STRIPE_WEBHOOK_SECRET 을 봐야 함.
+  python3 tools/billing_simulate.py expire \\
+      --subscription I-TEST123
+
+  python3 tools/billing_simulate.py suspend \\
+      --subscription I-TEST123
+
+  python3 tools/billing_simulate.py payment-failed \\
+      --subscription I-TEST123 --attempt 3
+
+  python3 tools/billing_simulate.py payment-succeeded \\
+      --subscription I-TEST123 --amount 4.99
+
+각 명령은 PayPal 의 실제 이벤트 페이로드 모양을 흉내내서 /billing/webhook 에 POST.
 """
 import argparse
-import hashlib
-import hmac
 import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.request
+from datetime import datetime, timezone, timedelta
 
 
-def _sign(payload_bytes, secret, ts=None):
-    """Stripe webhook 서명 헤더(Stripe-Signature) 값을 만든다.
-
-    포맷: t=<unix_ts>,v1=<HEX(HMAC-SHA256(secret, "{ts}.{payload}"))>
-    """
-    ts = ts if ts is not None else int(time.time())
-    signed_payload = f'{ts}.'.encode() + payload_bytes
-    sig = hmac.new(secret.encode(), signed_payload, hashlib.sha256).hexdigest()
-    return f't={ts},v1={sig}'
-
-
-def _post(url, body, sig):
+def _post(url, body):
+    """서명 헤더 없이 POST. 서버는 PAYPAL_WEBHOOK_TEST_BYPASS=1 일 때만 받음."""
     req = urllib.request.Request(
-        url,
-        data=body,
-        method='POST',
-        headers={
-            'Content-Type': 'application/json',
-            'Stripe-Signature': sig,
-        },
+        url, data=body, method='POST',
+        headers={'Content-Type': 'application/json'},
     )
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
@@ -56,99 +50,155 @@ def _post(url, body, sig):
         return e.code, e.read().decode('utf-8', errors='replace')
 
 
-def _event(event_type, data_object):
-    """Stripe event 페이로드 형식. `object: "event"` 가 반드시 있어야 SDK 가 받아준다."""
+def _event(event_type, resource):
+    """PayPal webhook event 페이로드 형식."""
+    now = datetime.now(timezone.utc)
     return {
-        'id': f'evt_test_{int(time.time() * 1000)}',
-        'object': 'event',
-        'type': event_type,
-        'api_version': '2024-04-10',
-        'created': int(time.time()),
-        'data': {'object': data_object},
-        'livemode': False,
+        'id':                  f'WH-TEST-{int(time.time() * 1000)}',
+        'event_version':       '1.0',
+        'create_time':         now.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        'resource_type':       'subscription' if 'SUBSCRIPTION' in event_type else 'sale',
+        'event_type':          event_type,
+        'summary':             f'test event {event_type}',
+        'resource':            resource,
     }
 
 
-def cmd_checkout(args, secret, url):
-    obj = {
-        'object': 'checkout.session',
-        'id': f'cs_test_{int(time.time())}',
-        'client_reference_id': args.user_id,
-        'customer': args.customer,
-        'subscription': args.subscription,
-        'mode': 'subscription',
-        'payment_status': 'paid',
-    }
-    return _send_event('checkout.session.completed', obj, secret, url)
+def _iso_in(days):
+    """N일 뒤 ISO 8601 (PayPal 형식)."""
+    return (datetime.now(timezone.utc) + timedelta(days=days)).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-def cmd_sub_update(args, secret, url):
-    period_end = int(time.time()) + args.days * 24 * 60 * 60
-    obj = {
-        'object': 'subscription',
-        'id': args.subscription,
-        'customer': args.customer,
-        'status': args.status,
-        'current_period_end': period_end,
-        'cancel_at_period_end': False,
-    }
-    et = 'customer.subscription.created' if args.created else 'customer.subscription.updated'
-    return _send_event(et, obj, secret, url)
-
-
-def cmd_sub_delete(args, secret, url):
-    obj = {
-        'object': 'subscription',
-        'id': args.subscription,
-        'customer': args.customer,
-        'status': 'canceled',
-        'current_period_end': int(time.time()),
-    }
-    return _send_event('customer.subscription.deleted', obj, secret, url)
-
-
-def _send_event(event_type, data_object, secret, url):
-    body = json.dumps(_event(event_type, data_object)).encode()
-    sig = _sign(body, secret)
-    status, text = _post(url, body, sig)
+def _send(event_type, resource, url):
+    body = json.dumps(_event(event_type, resource)).encode()
+    status, text = _post(url, body)
     print(f'[simulate] {event_type} → {status}')
     if text:
         print(f'  {text[:300]}')
     return status == 200
 
 
-def main():
-    p = argparse.ArgumentParser(description='Stripe webhook 시뮬레이터')
-    p.add_argument('--url', default=os.getenv('WEBHOOK_URL', 'http://127.0.0.1:8080/billing/webhook'))
-    p.add_argument('--secret', default=os.getenv('STRIPE_WEBHOOK_SECRET'),
-                   help='webhook 서명 비밀키 (또는 환경변수)')
+def cmd_activate(args, url):
+    return _send('BILLING.SUBSCRIPTION.ACTIVATED', {
+        'id':           args.subscription,
+        'plan_id':      'P-TEST-PLAN',
+        'status':       'ACTIVE',
+        'custom_id':    args.user_id,
+        'subscriber': {
+            'payer_id':       args.payer_id,
+            'email_address':  args.email or 'test@example.com',
+        },
+        'billing_info': {
+            'next_billing_time': _iso_in(args.days),
+            'failed_payments_count': 0,
+        },
+    }, url)
 
+
+def cmd_update(args, url):
+    return _send('BILLING.SUBSCRIPTION.UPDATED', {
+        'id':         args.subscription,
+        'status':     args.status,
+        'billing_info': {
+            'next_billing_time': _iso_in(args.days),
+        },
+    }, url)
+
+
+def cmd_cancel(args, url):
+    """사용자가 cancel — PayPal CANCELLED. period_end 미래라 우리는 grace."""
+    return _send('BILLING.SUBSCRIPTION.CANCELLED', {
+        'id':     args.subscription,
+        'status': 'CANCELLED',
+        'billing_info': {
+            'next_billing_time': _iso_in(args.days),
+        },
+    }, url)
+
+
+def cmd_expire(args, url):
+    """주기 끝나 완전 만료."""
+    return _send('BILLING.SUBSCRIPTION.EXPIRED', {
+        'id':     args.subscription,
+        'status': 'EXPIRED',
+    }, url)
+
+
+def cmd_suspend(args, url):
+    """결제 실패로 suspend (past_due)."""
+    return _send('BILLING.SUBSCRIPTION.SUSPENDED', {
+        'id':     args.subscription,
+        'status': 'SUSPENDED',
+    }, url)
+
+
+def cmd_payment_failed(args, url):
+    return _send('BILLING.SUBSCRIPTION.PAYMENT.FAILED', {
+        'id':     args.subscription,
+        'billing_info': {
+            'failed_payments_count': args.attempt,
+        },
+    }, url)
+
+
+def cmd_payment_succeeded(args, url):
+    return _send('PAYMENT.SALE.COMPLETED', {
+        'id':                    f'PAY-{int(time.time())}',
+        'billing_agreement_id':  args.subscription,
+        'amount': {
+            'total':    f'{args.amount:.2f}',
+            'currency': args.currency,
+        },
+    }, url)
+
+
+def main():
+    p = argparse.ArgumentParser(description='PayPal webhook 시뮬레이터')
+    p.add_argument('--url',
+                   default=os.getenv('WEBHOOK_URL', 'http://127.0.0.1:8080/billing/webhook'))
     sub = p.add_subparsers(dest='cmd', required=True)
 
-    c = sub.add_parser('checkout', help='checkout.session.completed')
-    c.add_argument('--user-id', required=True)
-    c.add_argument('--customer', required=True)
-    c.add_argument('--subscription', required=True)
-    c.set_defaults(func=cmd_checkout)
+    a = sub.add_parser('activate', help='BILLING.SUBSCRIPTION.ACTIVATED')
+    a.add_argument('--user-id', required=True, help='우리 user_id (custom_id 로 PayPal 에 전달된 값)')
+    a.add_argument('--subscription', required=True, help='PayPal subscription ID (I-XXX)')
+    a.add_argument('--payer-id', default='PAYER-TEST', help='PayPal payer_id')
+    a.add_argument('--email', default=None)
+    a.add_argument('--days', type=int, default=30, help='next_billing_time 까지 일수')
+    a.set_defaults(func=cmd_activate)
 
-    u = sub.add_parser('sub-update', help='customer.subscription.updated')
-    u.add_argument('--customer', required=True)
+    u = sub.add_parser('update', help='BILLING.SUBSCRIPTION.UPDATED')
     u.add_argument('--subscription', required=True)
-    u.add_argument('--status', default='active', choices=['active', 'trialing', 'past_due', 'canceled', 'incomplete'])
-    u.add_argument('--days', type=int, default=30, help='period_end 까지 일수')
-    u.add_argument('--created', action='store_true', help='created 이벤트로 발송')
-    u.set_defaults(func=cmd_sub_update)
+    u.add_argument('--status', default='ACTIVE',
+                   choices=['ACTIVE', 'SUSPENDED', 'CANCELLED', 'EXPIRED'])
+    u.add_argument('--days', type=int, default=30)
+    u.set_defaults(func=cmd_update)
 
-    d = sub.add_parser('sub-delete', help='customer.subscription.deleted')
-    d.add_argument('--customer', required=True)
-    d.add_argument('--subscription', required=True)
-    d.set_defaults(func=cmd_sub_delete)
+    c = sub.add_parser('cancel', help='BILLING.SUBSCRIPTION.CANCELLED (사용자 직접 해지)')
+    c.add_argument('--subscription', required=True)
+    c.add_argument('--days', type=int, default=30, help='남은 period 일수')
+    c.set_defaults(func=cmd_cancel)
+
+    e = sub.add_parser('expire', help='BILLING.SUBSCRIPTION.EXPIRED (period_end 후 완전 만료)')
+    e.add_argument('--subscription', required=True)
+    e.set_defaults(func=cmd_expire)
+
+    s = sub.add_parser('suspend', help='BILLING.SUBSCRIPTION.SUSPENDED (결제 실패 past_due)')
+    s.add_argument('--subscription', required=True)
+    s.set_defaults(func=cmd_suspend)
+
+    pf = sub.add_parser('payment-failed', help='BILLING.SUBSCRIPTION.PAYMENT.FAILED')
+    pf.add_argument('--subscription', required=True)
+    pf.add_argument('--attempt', type=int, default=1)
+    pf.set_defaults(func=cmd_payment_failed)
+
+    ps = sub.add_parser('payment-succeeded', help='PAYMENT.SALE.COMPLETED')
+    ps.add_argument('--subscription', required=True)
+    ps.add_argument('--amount', type=float, default=4.99)
+    ps.add_argument('--currency', default='USD')
+    ps.set_defaults(func=cmd_payment_succeeded)
 
     args = p.parse_args()
-    if not args.secret:
-        print('ERROR: STRIPE_WEBHOOK_SECRET 환경변수 또는 --secret 필요', file=sys.stderr)
-        sys.exit(2)
-    ok = args.func(args, args.secret, args.url)
+    ok = args.func(args, args.url)
     sys.exit(0 if ok else 1)
 
 

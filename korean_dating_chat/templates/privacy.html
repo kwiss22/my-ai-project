@@ -117,12 +117,12 @@
     <h3 class="en">b. Subscription &amp; payment information</h3>
     <h3 class="ko">나. 구독 및 결제 정보</h3>
     <ul class="en">
-        <li>Stripe customer ID, subscription ID, status (active / past_due / canceled), and current billing period end date.</li>
-        <li><strong>We do not store, see, or process your card number.</strong> All payment data is handled directly by Stripe, Inc., a PCI-DSS Level 1 certified processor. See <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe's Privacy Policy</a>.</li>
+        <li>PayPal payer ID, subscription ID, status (active / suspended / canceled), and current billing period end date.</li>
+        <li><strong>We do not store, see, or process your card or PayPal account credentials.</strong> All payment data is handled directly by PayPal, Inc., a PCI-DSS certified processor. See <a href="https://www.paypal.com/us/legalhub/privacy-full" target="_blank" rel="noopener">PayPal's Privacy Statement</a>.</li>
     </ul>
     <ul class="ko">
-        <li>Stripe 고객 ID, 구독 ID, 상태(active / past_due / canceled), 현재 결제 주기 종료일.</li>
-        <li><strong>카드 번호는 저희가 저장·열람·처리하지 않습니다.</strong> 결제 정보는 PCI-DSS Level 1 인증을 받은 Stripe, Inc. 가 직접 처리합니다. <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe 개인정보처리방침</a> 참조.</li>
+        <li>PayPal 결제자 ID, 구독 ID, 상태(active / suspended / canceled), 현재 결제 주기 종료일.</li>
+        <li><strong>카드 번호 및 PayPal 계정 자격 증명은 저희가 저장·열람·처리하지 않습니다.</strong> 결제 정보는 PCI-DSS 인증을 받은 PayPal, Inc. 가 직접 처리합니다. <a href="https://www.paypal.com/us/legalhub/privacy-full" target="_blank" rel="noopener">PayPal 개인정보처리방침</a> 참조.</li>
     </ul>
 
     <h3 class="en">c. Service usage data</h3>
@@ -176,20 +176,20 @@
     <p class="ko">서비스 운영에 필요한 범위에서만 다음 처리자와 데이터를 공유합니다:</p>
     <ul class="en">
         <li><strong>Google LLC</strong> (USA) — OAuth login, Gemini API for AI responses, Cloud Translate, Cloud Datastore (server-side persistence), Firebase Cloud Messaging (push), AdSense (advertising), Analytics. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.</li>
-        <li><strong>Stripe, Inc.</strong> (USA) — Subscription processing, billing, customer portal, webhook events. <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe Privacy Policy</a>.</li>
+        <li><strong>PayPal, Inc.</strong> (USA) — Subscription processing, billing, automatic-payment management, webhook events. <a href="https://www.paypal.com/us/legalhub/privacy-full" target="_blank" rel="noopener">PayPal Privacy Statement</a>.</li>
         <li><strong>Microsoft Corporation</strong> (USA) — Azure Speech for Korean text-to-speech and speech-to-text. <a href="https://privacy.microsoft.com" target="_blank" rel="noopener">Microsoft Privacy</a>.</li>
     </ul>
     <ul class="ko">
         <li><strong>Google LLC</strong> (미국) — OAuth 로그인, Gemini API (AI 응답), Cloud Translate, Cloud Datastore (서버 저장), Firebase Cloud Messaging (푸시), AdSense (광고), Analytics. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google 개인정보처리방침</a>.</li>
-        <li><strong>Stripe, Inc.</strong> (미국) — 구독 결제, 청구, 고객 포털, webhook 이벤트. <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe 개인정보처리방침</a>.</li>
+        <li><strong>PayPal, Inc.</strong> (미국) — 구독 결제, 청구, 자동 결제 관리, webhook 이벤트. <a href="https://www.paypal.com/us/legalhub/privacy-full" target="_blank" rel="noopener">PayPal 개인정보처리방침</a>.</li>
         <li><strong>Microsoft Corporation</strong> (미국) — Azure Speech (한국어 TTS / STT). <a href="https://privacy.microsoft.com" target="_blank" rel="noopener">Microsoft 개인정보보호 정책</a>.</li>
     </ul>
     <p class="en"><strong>Chat content disclosure to AI providers.</strong> When you send a message, the message text, your selected character, your stated proficiency level, and recent conversation context are transmitted to Google Gemini to generate the response. Google may retain this content per its API terms. Do not send personally identifying information, financial details, or sensitive content you do not want shared.</p>
     <p class="ko"><strong>AI 제공자에게 대화 내용이 전송됩니다.</strong> 메시지 전송 시 메시지 텍스트·선택 캐릭터·한국어 수준·최근 대화 맥락이 Google Gemini 에 전송되어 응답을 생성합니다. Google 은 API 약관에 따라 이를 보관할 수 있습니다. 식별 정보·금융 정보·민감한 내용은 입력하지 마세요.</p>
 
     <h2>4. <span class="en">International Data Transfers</span><span class="ko">국외 이전</span></h2>
-    <p class="en">Our processors (Google, Stripe, Microsoft) operate globally and your data is processed primarily in the United States. By using the Service you consent to your data being transferred and processed there. We rely on Standard Contractual Clauses, the EU-US Data Privacy Framework, and equivalent mechanisms where applicable.</p>
-    <p class="ko">처리자(Google, Stripe, Microsoft) 는 글로벌로 운영되며 데이터는 주로 미국에서 처리됩니다. 서비스 이용 시 이에 동의하신 것으로 간주됩니다. EU 표준계약조항(SCC), EU-US Data Privacy Framework 등 적합한 보호 장치를 활용합니다.</p>
+    <p class="en">Our processors (Google, PayPal, Microsoft) operate globally and your data is processed primarily in the United States. By using the Service you consent to your data being transferred and processed there. We rely on Standard Contractual Clauses, the EU-US Data Privacy Framework, and equivalent mechanisms where applicable.</p>
+    <p class="ko">처리자(Google, PayPal, Microsoft) 는 글로벌로 운영되며 데이터는 주로 미국에서 처리됩니다. 서비스 이용 시 이에 동의하신 것으로 간주됩니다. EU 표준계약조항(SCC), EU-US Data Privacy Framework 등 적합한 보호 장치를 활용합니다.</p>
 
     <h2>5. <span class="en">Data Retention</span><span class="ko">보관 기간</span></h2>
     <ul class="en">
@@ -252,14 +252,14 @@
         <li>HTTPS / TLS for all traffic in production.</li>
         <li>Session cookies are signed (HMAC-SHA256) and httpOnly.</li>
         <li>OAuth flows use state-cookie CSRF protection.</li>
-        <li>Stripe webhook signatures are verified before any state change.</li>
+        <li>PayPal webhook signatures are verified via PayPal's signature-verification API before any state change.</li>
         <li>Payment card data never touches our servers.</li>
     </ul>
     <ul class="ko">
         <li>운영 환경 전체 트래픽 HTTPS / TLS.</li>
         <li>세션 cookie 는 서명(HMAC-SHA256) + httpOnly.</li>
         <li>OAuth 흐름에 state cookie CSRF 방지 적용.</li>
-        <li>Stripe webhook 서명 검증 후 상태 변경.</li>
+        <li>PayPal webhook 은 PayPal 서명 검증 API 로 확인 후 상태 변경.</li>
         <li>카드 정보는 저희 서버를 거치지 않습니다.</li>
     </ul>
     <p class="en">No system is perfectly secure. We encourage you to use a unique, strong password on your Google account and enable 2-factor authentication.</p>

@@ -101,9 +101,10 @@ for s in \
     SESSION_SECRET \
     GOOGLE_OAUTH_CLIENT_ID \
     GOOGLE_OAUTH_CLIENT_SECRET \
-    STRIPE_SECRET_KEY \
-    STRIPE_PRICE_ID \
-    STRIPE_WEBHOOK_SECRET \
+    PAYPAL_CLIENT_ID \
+    PAYPAL_CLIENT_SECRET \
+    PAYPAL_PLAN_ID \
+    PAYPAL_WEBHOOK_ID \
     AZURE_SPEECH_KEY \
     ALERT_SLACK_WEBHOOK_URL \
     ALERT_SMTP_PASSWORD
@@ -119,8 +120,10 @@ echo -n "AIzaSy..." | gcloud secrets versions add GEMINI_API_KEY --data-file=-  
 
 각 secret 의 실제 값은 가입 진행에 따라 천천히 채우면 됨:
 ```bash
-echo -n "sk_live_..." | gcloud secrets versions add STRIPE_SECRET_KEY --data-file=-
-echo -n "whsec_..."   | gcloud secrets versions add STRIPE_WEBHOOK_SECRET --data-file=-
+echo -n "AYY..."  | gcloud secrets versions add PAYPAL_CLIENT_ID --data-file=-
+echo -n "EHH..."  | gcloud secrets versions add PAYPAL_CLIENT_SECRET --data-file=-
+echo -n "P-XXX"   | gcloud secrets versions add PAYPAL_PLAN_ID --data-file=-
+echo -n "WH-XXX"  | gcloud secrets versions add PAYPAL_WEBHOOK_ID --data-file=-
 # ...
 ```
 
@@ -160,18 +163,18 @@ https://kdating-chat-xxxxxxxx-an.a.run.app
    ```
    https://kdating-chat-xxxxxxxx-an.a.run.app/auth/google/callback
    ```
-4. **Stripe Dashboard** → Webhooks → Add endpoint:
+4. **PayPal Developer Dashboard** → My Apps → 앱 → Webhooks → Add Webhook:
    ```
    https://kdating-chat-xxxxxxxx-an.a.run.app/billing/webhook
    ```
-   이벤트: `checkout.session.completed`, `customer.subscription.created`,
-   `customer.subscription.updated`, `customer.subscription.deleted`,
-   `customer.subscription.trial_will_end`, `invoice.payment_succeeded`,
-   `invoice.payment_failed`
-   생성된 webhook secret (whsec_...) 을 Secret Manager 에 업데이트:
+   이벤트: `BILLING.SUBSCRIPTION.ACTIVATED`, `BILLING.SUBSCRIPTION.UPDATED`,
+   `BILLING.SUBSCRIPTION.CANCELLED`, `BILLING.SUBSCRIPTION.EXPIRED`,
+   `BILLING.SUBSCRIPTION.SUSPENDED`, `BILLING.SUBSCRIPTION.PAYMENT.FAILED`,
+   `PAYMENT.SALE.COMPLETED`
+   생성된 Webhook ID (WH-...) 를 Secret Manager 에 업데이트:
    ```bash
-   echo -n "whsec_..." | gcloud secrets versions add STRIPE_WEBHOOK_SECRET --data-file=-
-   gcloud run services update kdating-chat --region=asia-northeast3 --update-secrets=STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest
+   echo -n "WH-..." | gcloud secrets versions add PAYPAL_WEBHOOK_ID --data-file=-
+   gcloud run services update kdating-chat --region=asia-northeast3 --update-secrets=PAYPAL_WEBHOOK_ID=PAYPAL_WEBHOOK_ID:latest
    ```
 
 ## 8. OAuth 동의 화면 게시

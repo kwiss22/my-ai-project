@@ -31,8 +31,8 @@ fi
 # regression.mjs 와 동일한 canonical 환경
 export GEMINI_API_KEY="${GEMINI_API_KEY:-dev_placeholder}"
 export DAILY_FREE_QUOTA=5
-export STRIPE_TRIAL_DAYS=7
-export STRIPE_WEBHOOK_SECRET=whsec_local_test_123
+export PAYPAL_TRIAL_DAYS=7
+export PAYPAL_WEBHOOK_TEST_BYPASS=1
 export ADMIN_EMAILS=admin@example.com
 export RATELIMIT_BYPASS_TOKEN=test_bypass
 export ALERT_TEST_SINK=1

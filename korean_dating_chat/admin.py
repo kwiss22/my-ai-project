@@ -5,7 +5,7 @@
 
 ENV:
   ADMIN_EMAILS=ops@example.com,founder@example.com
-  PRICE_USD_MONTHLY=4.99    # MRR 계산용. Stripe 가격과 일치시키기.
+  PRICE_USD_MONTHLY=4.99    # MRR 계산용. PayPal Plan 가격과 일치시키기.
 """
 import os
 import time

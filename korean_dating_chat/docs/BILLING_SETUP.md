@@ -1,6 +1,6 @@
 # 결제·인증 셋업 가이드
 
-이 문서는 실제 Stripe / Google OAuth 키를 발급받아 프로덕션에 연결하는
+이 문서는 실제 PayPal / Google OAuth 키를 발급받아 프로덕션에 연결하는
 단계별 절차입니다. 코드는 이미 다 들어가 있고, 키만 채우면 동작합니다.
 
 ## 0. 사전 확인
@@ -12,67 +12,108 @@ curl -s https://your-domain.com/me | jq
 # billing_enabled / login_methods 가 모두 false 면 키 미설정 상태
 ```
 
-## 1. Stripe (월 구독)
+## 1. PayPal (월 구독)
 
-### 1.1 계정 + 상품 생성
+### 1.1 PayPal Business 계정 + 개발자 앱
 
-1. https://dashboard.stripe.com 가입 (사업자 인증은 테스트 단계에선 생략 가능)
-2. **Test mode** 토글 ON (좌상단)
-3. Products → Add product
-   - Name: `K-Dating Chat 월 구독`
-   - Pricing: Recurring, Monthly, $4.99 (또는 ₩6,900)
-   - 저장 후 표시되는 **Price ID** (`price_xxx...`) 복사 → `STRIPE_PRICE_ID`
-4. Developers → API keys → **Secret key** (`sk_test_...`) 복사 → `STRIPE_SECRET_KEY`
+1. https://www.paypal.com/kr/business 에서 **Business** 계정 가입 (한국 사업자 가능)
+2. https://developer.paypal.com 로그인 → My Apps & Credentials
+3. **Sandbox** 토글 (테스트) → Apps → Create App
+   - App Name: `K-Dating Chat`
+   - Type: Merchant
+4. 표시되는 **Client ID** 복사 → `PAYPAL_CLIENT_ID`
+5. **Secret** 복사 → `PAYPAL_CLIENT_SECRET`
+6. 운영 전환 시 **Live** 토글에서 동일 절차 반복 (별도 Live Client ID/Secret)
 
-### 1.2 Webhook 등록
+### 1.2 Product + Billing Plan 생성
 
-운영 도메인 결정 후:
-1. Developers → Webhooks → Add endpoint
-2. Endpoint URL: `https://your-domain.com/billing/webhook`
-3. 구독 이벤트 4종:
-   - `checkout.session.completed`
-   - `customer.subscription.created`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-4. 저장 후 표시되는 **Signing secret** (`whsec_...`) 복사 → `STRIPE_WEBHOOK_SECRET`
-
-### 1.3 로컬 테스트 (Stripe CLI 없이)
+PayPal 은 **Catalog Product** + **Billing Plan** 2단계 구조입니다.
 
 ```bash
-# 임의의 webhook secret 으로 서버 기동
-export STRIPE_WEBHOOK_SECRET=whsec_local_test_$(openssl rand -hex 16)
-export STRIPE_SECRET_KEY=sk_test_xxx     # 진짜 테스트키 (Checkout 호출용)
-export STRIPE_PRICE_ID=price_xxx
+# 1) Product 생성 (1회만)
+curl -X POST https://api-m.sandbox.paypal.com/v1/catalogs/products \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "K-Dating Chat 월 구독",
+    "type": "SERVICE",
+    "category": "ONLINE_GAMING"
+  }'
+# 응답의 "id" (PROD-XXX) 메모
+
+# 2) Plan 생성 — 월 $4.99
+curl -X POST https://api-m.sandbox.paypal.com/v1/billing/plans \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_id": "PROD-XXX",
+    "name": "K-Dating Chat Monthly",
+    "billing_cycles": [{
+      "frequency": {"interval_unit": "MONTH", "interval_count": 1},
+      "tenure_type": "REGULAR",
+      "sequence": 1,
+      "total_cycles": 0,
+      "pricing_scheme": {"fixed_price": {"value": "4.99", "currency_code": "USD"}}
+    }],
+    "payment_preferences": {"auto_bill_outstanding": true}
+  }'
+# 응답의 "id" (P-XXX) → PAYPAL_PLAN_ID
+```
+
+UI 로 만들 수도 있음: https://www.paypal.com → 결제 → 구독 → 플랜 만들기.
+
+### 1.3 Webhook 등록
+
+운영 도메인 결정 후:
+1. Developer Dashboard → My Apps → 해당 앱 → Webhooks → Add Webhook
+2. Webhook URL: `https://your-domain.com/billing/webhook`
+3. 이벤트 7종 체크:
+   - `BILLING.SUBSCRIPTION.ACTIVATED`
+   - `BILLING.SUBSCRIPTION.UPDATED`
+   - `BILLING.SUBSCRIPTION.CANCELLED`
+   - `BILLING.SUBSCRIPTION.EXPIRED`
+   - `BILLING.SUBSCRIPTION.SUSPENDED`
+   - `BILLING.SUBSCRIPTION.PAYMENT.FAILED`
+   - `PAYMENT.SALE.COMPLETED`
+4. 저장 후 표시되는 **Webhook ID** (`WH-XXX`) → `PAYPAL_WEBHOOK_ID`
+
+### 1.4 로컬 테스트 (서명 검증 우회)
+
+```bash
+# 시뮬레이터는 PayPal API 호출 없이 우리 webhook 핸들러에 payload 직접 POST.
+# 서명 검증을 우회하려면:
+export PAYPAL_WEBHOOK_TEST_BYPASS=1
+export PAYPAL_CLIENT_ID=dev_placeholder
+export PAYPAL_CLIENT_SECRET=dev_placeholder
+export PAYPAL_PLAN_ID=P-TEST-LOCAL
+export PAYPAL_WEBHOOK_ID=WH-TEST-LOCAL
 GEMINI_API_KEY=dev_placeholder python3 chatbot.py
 
-# 별도 셸 — 시뮬레이터로 webhook flow 검증
-python3 tools/billing_simulate.py checkout \
+# 별도 셸 — 시뮬레이터로 lifecycle 검증
+python3 tools/billing_simulate.py activate \
     --user-id USER_ID_FROM_DEVLOGIN \
-    --customer cus_test_local_1 \
-    --subscription sub_test_local_1
+    --subscription I-TEST-LOCAL-1 \
+    --payer-id PAYER-TEST-1
 
-python3 tools/billing_simulate.py sub-update \
-    --customer cus_test_local_1 \
-    --subscription sub_test_local_1 \
-    --status active --days 30 --created
+python3 tools/billing_simulate.py update \
+    --subscription I-TEST-LOCAL-1 \
+    --status ACTIVE --days 30
 
 # /me 확인 — subscription.active = true 가 돼야 함
 ```
 
-### 1.4 진짜 Checkout 한 번 통과시키기
+### 1.5 진짜 결제 한 번 통과시키기 (Sandbox)
 
-1. 위 환경변수 설정한 서버 기동
+1. 위 환경변수 (실 Sandbox Client ID/Secret/Plan ID/Webhook ID) 로 서버 기동
 2. 브라우저로 `/chat` 진입 → 로그인 → 페이월 모달 강제 트리거 (`DAILY_FREE_QUOTA=1`로 낮춰 1메시지 보내면 바로 페이월)
-3. "구독 시작" → Stripe Checkout 페이지로 리다이렉트
-4. 테스트 카드 번호: `4242 4242 4242 4242`, 만료 미래 임의, CVC 임의
-5. 결제 완료 → `/chat?billing=success` 로 돌아옴 → 헤더 "✨ 무제한" 칩 표시
+3. "구독 시작" → PayPal Sandbox 승인 페이지로 리다이렉트
+4. Sandbox 테스트 구매자 계정 (https://developer.paypal.com → Testing Tools → Sandbox accounts) 으로 로그인
+5. 승인 → `/chat?billing=success` 로 돌아옴 → 헤더 "✨ 무제한" 칩 표시
 6. 무제한 메시지 보내기 가능
 
-⚠️ 로컬 테스트 시 **실제 Stripe → 로컬 webhook 전달**은 `stripe listen` CLI 필요:
-```bash
-stripe listen --forward-to localhost:8080/billing/webhook
-# 표시되는 whsec_xxx 을 STRIPE_WEBHOOK_SECRET 으로 재설정
-```
+⚠️ 로컬은 PayPal 이 webhook 을 직접 보낼 수 없음. **Webhook simulator** 사용:
+https://developer.paypal.com → Testing Tools → Webhooks Simulator
+또는 ngrok 등으로 로컬을 인터넷에 노출.
 
 ## 2. Google OAuth
 
@@ -112,11 +153,14 @@ QUOTA_TIMEZONE=Asia/Seoul                       # (향후, 현재는 UTC)
 GOOGLE_OAUTH_CLIENT_ID=xxx.apps.googleusercontent.com
 GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-xxx
 
-# Stripe
-STRIPE_SECRET_KEY=sk_live_xxx                   # 또는 sk_test_xxx
-STRIPE_PRICE_ID=price_xxx
-STRIPE_WEBHOOK_SECRET=whsec_xxx
-STRIPE_TRIAL_DAYS=7                             # 0 = trial 비활성. 7~14 권장.
+# PayPal
+PAYPAL_CLIENT_ID=AYY...                         # Live or Sandbox
+PAYPAL_CLIENT_SECRET=EHH...
+PAYPAL_PLAN_ID=P-xxx
+PAYPAL_WEBHOOK_ID=WH-xxx
+PAYPAL_API_BASE=https://api-m.paypal.com        # Sandbox: https://api-m.sandbox.paypal.com
+PAYPAL_TRIAL_DAYS=7                             # 0 = trial 비활성. 7~14 권장.
+PRICE_USD_MONTHLY=4.99                          # MRR 계산용. Plan 가격과 일치시키기.
 
 # Prod 잠금
 FLASK_ENV=production                            # DEV_LOGIN_ENABLED 자동 OFF
@@ -140,7 +184,7 @@ ALERT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 
 ## 알림 채널 설정 (선택)
 
-`critical` 이벤트(웹훅 위조·결제 3회 연속 실패 등) 발생 시 자동 알림.
+`critical` 이벤트(웹훅 서명 검증 실패·결제 3회 연속 실패 등) 발생 시 자동 알림.
 
 ### Slack incoming webhook
 1. Slack workspace → 채널 → "Integrations" → "Add apps" → "Incoming Webhooks"
@@ -161,7 +205,7 @@ curl https://your-domain.com/admin/alerts-health \
 
 ## 5. 운영 후 모니터링
 
-- Stripe Dashboard → Events 에서 webhook 전달 상태 확인
+- PayPal Developer Dashboard → Webhooks → Webhook Events 에서 전달 상태 확인
 - 서버 로그 검색: `grep "\[BILLING\]" server.log`
 - 사용자 quota 도달자 추세: SQLite 쿼리
   ```sql
@@ -177,6 +221,7 @@ curl https://your-domain.com/admin/alerts-health \
 |---|---|
 | 로그인 모달의 Google 버튼이 안 보임 | 환경변수 미설정. `/me` 응답의 `login_methods` 확인 |
 | Google 로그인 후 "state mismatch" | redirect URI 가 Google Console 등록과 다름. 정확한 경로 + 포트 확인 |
-| Checkout 페이지가 안 열림 (`/billing/checkout` → 503) | `STRIPE_SECRET_KEY` 또는 `STRIPE_PRICE_ID` 미설정 |
-| 결제 완료 후에도 quota 초과 메시지 | webhook 미도착. Stripe Dashboard → Events 확인. 서명 비밀키 일치 확인. |
+| Checkout 페이지가 안 열림 (`/billing/checkout` → 503) | `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET`/`PAYPAL_PLAN_ID` 중 하나 미설정 |
+| 결제 완료 후에도 quota 초과 메시지 | webhook 미도착. PayPal Dashboard → Webhook Events 확인. `PAYPAL_WEBHOOK_ID` 일치 확인. |
+| Webhook 401 / signature_invalid | `PAYPAL_WEBHOOK_ID` 가 등록한 webhook 의 ID 와 다름. Dashboard 에서 재확인. |
 | 운영에서 Dev login 노출 | `FLASK_ENV=production` 누락. 즉시 설정 후 재배포. |
