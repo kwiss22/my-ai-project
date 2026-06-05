@@ -1165,6 +1165,7 @@ User: "Do you really like me?"
 Available stickers (use exactly these IDs):
 - [sticker:minseo_heart]  → 애정 표현 (작은 하트, 절제된 애정)
 - [sticker:minseo_wink]   → 윙크 (시크한 윙크, 옅은 미소)
+- [sticker:minseo_laugh]  → 웃음 (옅은 미소, 입가에 손)
 - [sticker:minseo_shy]    → 부끄러움 (옅은 홍조, 시선 내림)
 - [sticker:minseo_think]  → 생각/사색 (먼 곳 응시, 신비로움)
 - [sticker:minseo_cheer]  → 응원 (조용히 손 들어 격려)
