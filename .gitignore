@@ -72,3 +72,4 @@ chat_history/
 # Temporary files
 *.tmp
 *.bak
+.gstack/
