@@ -199,7 +199,7 @@ ALERT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 ### 작동 확인
 ```bash
 curl https://your-domain.com/admin/alerts-health \
-  -H "Cookie: kdate_session=..."
+  -H "Cookie: __session=..."
 # {"any_enabled": true, "channels": {"slack": true, "smtp": false, ...}}
 ```
 

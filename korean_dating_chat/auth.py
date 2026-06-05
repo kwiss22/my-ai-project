@@ -24,7 +24,11 @@ from users import get_or_create_oauth_user, get_user
 
 # 세션 비밀키. 프로덕션에서는 반드시 강한 값으로 고정 — 변경되면 모든 세션이 무효화됨.
 SESSION_SECRET = os.getenv('SESSION_SECRET') or ('dev-only-' + secrets.token_hex(16))
-SESSION_COOKIE_NAME = 'kdate_session'
+# Firebase Hosting 은 Cloud Run 백엔드로 요청을 넘길 때 '__session' 이외의 모든 쿠키를
+# 제거한다 (CDN 캐싱 정책). kdate.store 가 Firebase Hosting 경유라 세션/OAuth state 쿠키
+# 모두 '__session' 이어야 백엔드에 도달한다. state 와 session 은 동시에 필요하지 않아
+# (state 는 OAuth 왕복 중에만, 로그인 후 session 으로 교체) 같은 이름을 순차 공유한다.
+SESSION_COOKIE_NAME = '__session'
 SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60  # 30일
 
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID', '')
@@ -37,7 +41,8 @@ DEV_LOGIN_ENABLED = (
 )
 
 _serializer = URLSafeTimedSerializer(SESSION_SECRET, salt='kdate-session-v1')
-_STATE_COOKIE = 'kdate_oauth_state'
+# Firebase Hosting 제약으로 '__session' 사용 (위 SESSION_COOKIE_NAME 주석 참조).
+_STATE_COOKIE = '__session'
 
 
 # ---- 세션 cookie -------------------------------------------------------------
@@ -100,8 +105,9 @@ def google_start():
     resp = make_response(redirect(
         f'https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}'
     ))
+    # path='/' (세션 쿠키와 동일) — '__session' 단일 쿠키로 통일해 경로 중복을 피한다.
     resp.set_cookie(_STATE_COOKIE, state, max_age=600, httponly=True,
-                    samesite='Lax', path='/auth/google/')
+                    samesite='Lax', secure=BASE_URL.startswith('https://'), path='/')
     return resp
 
 

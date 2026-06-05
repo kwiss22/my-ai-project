@@ -233,13 +233,11 @@
 
     <h2>7. <span class="en">Cookies</span><span class="ko">쿠키</span></h2>
     <ul class="en">
-        <li><code>kdate_session</code> — signed session cookie holding only your internal user ID (httpOnly, SameSite=Lax, 30-day expiry).</li>
-        <li><code>kdate_oauth_state</code> — short-lived OAuth state cookie for CSRF protection (deleted after login).</li>
+        <li><code>__session</code> — signed session cookie holding only your internal user ID, and (briefly during Google sign-in) the OAuth state value for CSRF protection (httpOnly, SameSite=Lax, 30-day expiry).</li>
         <li>Google Analytics, AdSense cookies — set by Google for measurement and advertising. You can opt out via <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics Opt-out</a>.</li>
     </ul>
     <ul class="ko">
-        <li><code>kdate_session</code> — 사용자 내부 ID 만 담은 서명된 세션 cookie (httpOnly, SameSite=Lax, 30일 만료).</li>
-        <li><code>kdate_oauth_state</code> — CSRF 방지용 단기 OAuth state cookie (로그인 후 삭제).</li>
+        <li><code>__session</code> — 사용자 내부 ID 를 담은 서명된 세션 cookie. 구글 로그인 중에는 잠시 CSRF 방지용 OAuth state 값도 담음 (httpOnly, SameSite=Lax, 30일 만료).</li>
         <li>Google Analytics, AdSense cookies — Google 이 분석·광고용으로 설정. <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics Opt-out</a> 으로 거부 가능.</li>
     </ul>
 

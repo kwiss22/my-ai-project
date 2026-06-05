@@ -69,7 +69,7 @@ async function reset() {
     }
 }
 function getCookie(setCookieArr) {
-    return setCookieArr.find(c => c.startsWith('kdate_session='))?.split(';')[0] || '';
+    return setCookieArr.find(c => c.startsWith('__session='))?.split(';')[0] || '';
 }
 
 // ============================================================

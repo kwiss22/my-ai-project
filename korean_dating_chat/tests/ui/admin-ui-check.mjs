@@ -46,7 +46,7 @@ check('  Location: /chat', r.location === '/chat');
 console.log('\n=== 2. 비관리자 → 403 ===');
 const nonAdmin = await req('POST', '/auth/dev-login',
     { provider_user_id: 'nonadmin', email: 'someone@example.com' });
-const nonAdminCookie = nonAdmin.setCookie.find(c => c.startsWith('kdate_session='))?.split(';')[0] || '';
+const nonAdminCookie = nonAdmin.setCookie.find(c => c.startsWith('__session='))?.split(';')[0] || '';
 r = await req('GET', '/admin', null, nonAdminCookie);
 check('403 status', r.status === 403);
 check('  HTML 응답 (forbidden 페이지)', /접근 권한이 없습니다/.test(r.body));
@@ -55,7 +55,7 @@ check('  현재 이메일 표시', /someone@example\.com/.test(r.body));
 console.log('\n=== 3. 관리자 → 200 + admin.html ===');
 const admin = await req('POST', '/auth/dev-login',
     { provider_user_id: 'admin', email: 'admin@example.com' });
-const adminCookie = admin.setCookie.find(c => c.startsWith('kdate_session='))?.split(';')[0] || '';
+const adminCookie = admin.setCookie.find(c => c.startsWith('__session='))?.split(';')[0] || '';
 r = await req('GET', '/admin', null, adminCookie);
 check('200', r.status === 200);
 check('  text/html', /text\/html/.test(r.body) === false && /<!DOCTYPE html>/.test(r.body));
@@ -70,8 +70,8 @@ page.on('pageerror', (e) => failures.push('pageerror: ' + e.message));
 
 // admin 세션 cookie 주입
 await ctx.addCookies([{
-    name: 'kdate_session',
-    value: adminCookie.replace('kdate_session=', ''),
+    name: '__session',
+    value: adminCookie.replace('__session=', ''),
     domain: '127.0.0.1',
     path: '/',
 }]);
