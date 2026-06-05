@@ -156,7 +156,42 @@ def create_checkout_session():
 
 
 def billing_success():
-    """PayPal 승인 후 사용자가 돌아오는 곳. ?subscription_id=I-XXX 포함됨."""
+    """PayPal 승인 후 사용자가 돌아오는 곳. ?subscription_id=I-XXX 포함됨.
+
+    비동기 webhook(BILLING.SUBSCRIPTION.ACTIVATED)은 늦거나 누락될 수 있어
+    (특히 sandbox), 복귀 시점에 PayPal 에서 구독을 직접 조회해 즉시 활성화한다.
+    webhook 은 백업으로 남는다 (custom_id 로 동일 사용자 매핑, set_subscription 멱등).
+    """
+    user = current_user()
+    sub_id = request.args.get('subscription_id', '')
+    if user and sub_id and paypal_enabled():
+        try:
+            token = _get_access_token()
+            r = requests.get(
+                f'{PAYPAL_API_BASE}/v1/billing/subscriptions/{sub_id}',
+                headers={'Authorization': f'Bearer {token}'},
+                timeout=15,
+            )
+            if r.status_code == 200:
+                sub = r.json()
+                # 이 구독이 정말 이 사용자 것인지(custom_id) + active 인지 확인 후에만 활성화
+                if sub.get('custom_id') == user['user_id'] and sub.get('status') in ('ACTIVE', 'APPROVED'):
+                    billing = sub.get('billing_info') or {}
+                    period_end = _parse_paypal_time(billing.get('next_billing_time')) or (int(time.time()) + 30 * 86400)
+                    set_subscription(
+                        user['user_id'],
+                        payment_provider='paypal',
+                        subscription_customer_id=(sub.get('subscriber') or {}).get('payer_id'),
+                        subscription_id=sub_id,
+                        status='active',
+                        period_end=period_end,
+                    )
+                    log_event('info', 'subscription.activated_on_return',
+                              message=f'user={user["user_id"]} sub={sub_id}', user_id=user['user_id'])
+            else:
+                print(f'[BILLING] success lookup {r.status_code}: {r.text[:160]}')
+        except (requests.RequestException, RuntimeError) as e:
+            print(f'[BILLING] success activation error: {str(e)[:160]}')
     return redirect('/chat?billing=success')
 
 
