@@ -27,6 +27,9 @@ DB_PATH = os.getenv('USERS_DB_PATH', os.path.join(os.path.dirname(__file__), 'kd
 # 무료 일일 메시지 한도. 환경변수로 운영 중에도 조정 가능.
 DAILY_FREE_QUOTA = int(os.getenv('DAILY_FREE_QUOTA', '25'))
 
+# 오늘의 목표 XP (습관 형성용 일일 목표). 메시지=2xp, 복습정답=3xp 기준 적당히 낮게.
+DAILY_XP_GOAL = int(os.getenv('DAILY_XP_GOAL', '10'))
+
 # Quota 자정 리셋 기준 timezone. 한국 사용자 위주면 'Asia/Seoul' 권장.
 # zoneinfo 가 인식 못 하면 UTC 로 폴백.
 QUOTA_TIMEZONE = os.getenv('QUOTA_TIMEZONE', 'UTC')
@@ -182,6 +185,7 @@ CREATE TABLE IF NOT EXISTS users (
   best_streak INTEGER NOT NULL DEFAULT 0,
   last_study_date TEXT,                    -- 마지막 학습일 'YYYY-MM-DD'
   xp INTEGER NOT NULL DEFAULT 0,
+  daily_xp INTEGER NOT NULL DEFAULT 0,     -- 오늘 획득 XP (새 날에 초기화). 오늘의 목표용.
   UNIQUE(provider, provider_user_id)
 );
 CREATE INDEX IF NOT EXISTS users_subscription_customer ON users(subscription_customer_id);
@@ -230,6 +234,8 @@ _MIGRATIONS = [
      'ALTER TABLE users ADD COLUMN last_study_date TEXT'),
     ('xp',
      'ALTER TABLE users ADD COLUMN xp INTEGER NOT NULL DEFAULT 0'),
+    ('daily_xp',
+     'ALTER TABLE users ADD COLUMN daily_xp INTEGER NOT NULL DEFAULT 0'),
 ]
 
 
@@ -656,9 +662,10 @@ class SQLiteUserStore(UserStore):
         return lvl, 50 * (lvl - 1) ** 2, 50 * lvl ** 2
 
     @classmethod
-    def _progress_from(cls, streak, best, last_date, xp, today):
+    def _progress_from(cls, streak, best, last_date, xp, today, daily_xp=0):
         lvl, base, nxt = cls._level_for_xp(xp)
         alive = last_date in (today, cls._yesterday(today))  # 어제/오늘이면 스트릭 살아있음
+        today_xp = daily_xp if last_date == today else 0     # 어제값은 0 처리
         return {
             'streak': streak if alive else 0,
             'best_streak': best,
@@ -667,30 +674,37 @@ class SQLiteUserStore(UserStore):
             'level': lvl,
             'level_xp': xp - base,        # 현재 레벨 내 누적
             'level_need': nxt - base,     # 이번 레벨 총 필요량
+            'daily_xp': today_xp,         # 오늘 획득 XP
+            'daily_goal': DAILY_XP_GOAL,  # 오늘의 목표
+            'goal_met': today_xp >= DAILY_XP_GOAL,
         }
 
     def record_study(self, user_id, xp_gain=0, today=None):
-        """학습 활동 1회 기록: 스트릭 갱신(하루 1회) + XP 누적. 진척 dict 반환."""
+        """학습 활동 1회 기록: 스트릭 갱신(하루 1회) + XP 누적 + 오늘 XP. 진척 dict 반환."""
         today = today or _today()
+        gain = max(0, int(xp_gain))
         conn = self._connect()
         try:
             row = conn.execute(
-                "SELECT study_streak, best_streak, last_study_date, xp FROM users WHERE user_id=?",
+                "SELECT study_streak, best_streak, last_study_date, xp, daily_xp FROM users WHERE user_id=?",
                 (user_id,)).fetchone()
             if not row:
                 return None
             streak = row['study_streak'] or 0
             best = row['best_streak'] or 0
             last = row['last_study_date']
-            xp = (row['xp'] or 0) + max(0, int(xp_gain))
-            if last != today:  # 오늘 첫 활동 → 스트릭 갱신
+            xp = (row['xp'] or 0) + gain
+            if last != today:  # 오늘 첫 활동 → 스트릭 갱신 + 오늘 XP 초기화
                 streak = streak + 1 if last == self._yesterday(today) else 1
                 best = max(best, streak)
+                daily_xp = gain
+            else:
+                daily_xp = (row['daily_xp'] or 0) + gain
             conn.execute(
-                "UPDATE users SET study_streak=?, best_streak=?, last_study_date=?, xp=? WHERE user_id=?",
-                (streak, best, today, xp, user_id))
+                "UPDATE users SET study_streak=?, best_streak=?, last_study_date=?, xp=?, daily_xp=? WHERE user_id=?",
+                (streak, best, today, xp, daily_xp, user_id))
             conn.commit()
-            return self._progress_from(streak, best, today, xp, today)
+            return self._progress_from(streak, best, today, xp, today, daily_xp)
         finally:
             conn.close()
 
@@ -699,12 +713,12 @@ class SQLiteUserStore(UserStore):
         conn = self._connect()
         try:
             row = conn.execute(
-                "SELECT study_streak, best_streak, last_study_date, xp FROM users WHERE user_id=?",
+                "SELECT study_streak, best_streak, last_study_date, xp, daily_xp FROM users WHERE user_id=?",
                 (user_id,)).fetchone()
             if not row:
-                return self._progress_from(0, 0, None, 0, today)
+                return self._progress_from(0, 0, None, 0, today, 0)
             return self._progress_from(row['study_streak'] or 0, row['best_streak'] or 0,
-                                       row['last_study_date'], row['xp'] or 0, today)
+                                       row['last_study_date'], row['xp'] or 0, today, row['daily_xp'] or 0)
         finally:
             conn.close()
 

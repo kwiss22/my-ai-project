@@ -5658,10 +5658,28 @@
             let words = { total:0, learned:0 };
             try { const r = await fetch('/vocab/stats', {credentials:'same-origin'}); const d = await r.json(); words = d.stats || words; } catch(e){}
             const pct = Math.max(4, Math.round((p.level_xp / Math.max(1, p.level_need)) * 100));
+            const goal = p.daily_goal || 10, dxp = p.daily_xp || 0;
+            const gpct = Math.min(100, Math.round((dxp / Math.max(1, goal)) * 100));
+            const goalCard = p.goal_met
+                ? `<div style="background:linear-gradient(135deg,#e9fbef,#d8f5e1);border:1px solid #b8e6c6;border-radius:14px;padding:16px;text-align:center;">
+                       <div style="font-size:16px;font-weight:800;color:#2e9e54;">✅ 오늘 목표 달성!</div>
+                       <div style="font-size:12px;color:#5aa873;margin-top:3px;">오늘 학습 완료 · 스트릭 안전 🔥</div>
+                   </div>`
+                : `<div style="background:#fff;border:1px solid #f0e0ef;border-radius:14px;padding:16px;">
+                       <div style="display:flex;justify-content:space-between;align-items:center;">
+                           <span style="font-weight:800;color:#333;font-size:15px;">🎯 오늘의 목표</span>
+                           <span style="color:#aaa;font-size:12px;">${dxp} / ${goal} XP</span>
+                       </div>
+                       <div style="margin-top:8px;height:9px;background:#eee;border-radius:6px;overflow:hidden;">
+                           <div style="height:100%;width:${Math.max(4, gpct)}%;background:linear-gradient(90deg,#f093fb,#f5576c);border-radius:6px;"></div>
+                       </div>
+                       <div style="margin-top:8px;font-size:12px;color:#999;">${goal - dxp} XP 더 채우면 달성! (대화 ${Math.ceil((goal - dxp) / 2)}번 정도)</div>
+                   </div>`;
             el.innerHTML = `
-                <div style="text-align:center;">
-                    <div style="font-size:44px;line-height:1;">🔥</div>
-                    <div style="font-size:25px;font-weight:800;color:#333;margin-top:6px;">${p.streak}일 연속 학습</div>
+                ${goalCard}
+                <div style="text-align:center;margin-top:18px;">
+                    <div style="font-size:40px;line-height:1;">🔥</div>
+                    <div style="font-size:24px;font-weight:800;color:#333;margin-top:4px;">${p.streak}일 연속 학습</div>
                     <div style="color:#999;font-size:13px;margin-top:2px;">최고 기록 ${p.best_streak}일</div>
                 </div>
                 <div style="margin-top:22px;background:#faf4fb;border-radius:14px;padding:16px;">
