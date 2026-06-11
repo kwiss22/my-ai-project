@@ -2487,6 +2487,7 @@
             <div style="padding: 0 20px;">
                 <div class="vocab-tabs">
                     <button class="vocab-tab active" id="tab-list" onclick="switchVocabTab('list')">저장된 단어</button>
+                    <button class="vocab-tab" id="tab-srs" onclick="switchVocabTab('srs')">🔁 복습</button>
                     <button class="vocab-tab" id="tab-quiz" onclick="switchVocabTab('quiz')">🎯 퀴즈</button>
                 </div>
             </div>
@@ -2494,6 +2495,10 @@
                 <!-- 단어 목록 탭 -->
                 <div id="vocab-list-pane">
                     <div id="vocab-list-content"></div>
+                </div>
+                <!-- 복습 탭 (서버 SRS — 기기 바뀌어도 유지, 간격반복) -->
+                <div id="vocab-srs-pane" style="display:none;">
+                    <div id="srs-content"></div>
                 </div>
                 <!-- 퀴즈 탭 -->
                 <div id="vocab-quiz-pane" style="display:none;">
@@ -4239,6 +4244,7 @@
         function openVocabModal() {
             document.getElementById('vocab-modal-overlay').classList.add('show');
             switchVocabTab('list');
+            updateVocabDueBadge();
         }
         function closeVocabModal(e) {
             if (!e || e.target === document.getElementById('vocab-modal-overlay')) {
@@ -4248,10 +4254,114 @@
         function switchVocabTab(tab) {
             document.getElementById('tab-list').classList.toggle('active', tab === 'list');
             document.getElementById('tab-quiz').classList.toggle('active', tab === 'quiz');
+            const tabSrs = document.getElementById('tab-srs');
+            if (tabSrs) tabSrs.classList.toggle('active', tab === 'srs');
             document.getElementById('vocab-list-pane').style.display = tab === 'list' ? '' : 'none';
             document.getElementById('vocab-quiz-pane').style.display = tab === 'quiz' ? '' : 'none';
+            const srsPane = document.getElementById('vocab-srs-pane');
+            if (srsPane) srsPane.style.display = tab === 'srs' ? '' : 'none';
             if (tab === 'list') renderVocabList();
             if (tab === 'quiz') initQuiz();
+            if (tab === 'srs') renderSrsReview();
+        }
+
+        // =============================================
+        // 복습 (서버 SRS — 로그인 시 기기 바뀌어도 유지, 간격반복)
+        // =============================================
+        let srsState = { cards: [], idx: 0, correct: 0 };
+
+        async function updateVocabDueBadge() {
+            try {
+                const r = await fetch('/vocab/stats', { credentials: 'same-origin' });
+                const d = await r.json();
+                const due = (d.stats && d.stats.due) || 0;
+                const t = document.getElementById('tab-srs');
+                if (t) t.textContent = due > 0 ? `🔁 복습 (${due})` : '🔁 복습';
+            } catch (e) { /* non-fatal */ }
+        }
+
+        async function renderSrsReview() {
+            const el = document.getElementById('srs-content');
+            el.innerHTML = '<div class="vocab-empty">불러오는 중...</div>';
+            let data;
+            try {
+                const r = await fetch('/vocab/review', { credentials: 'same-origin' });
+                if (r.status === 401) {
+                    el.innerHTML = '<div class="vocab-empty">로그인하면 대화에서 나온 단어가 자동으로 저장되고,<br>기기가 바뀌어도 복습할 수 있어요. 📚<br><br>'
+                        + '<button class="vocab-tab active" onclick="closeVocabModal(); (window.openLoginModal&&openLoginModal())">로그인</button></div>';
+                    return;
+                }
+                data = await r.json();
+            } catch (e) {
+                el.innerHTML = '<div class="vocab-empty">불러오기 실패. 잠시 후 다시 시도해주세요.</div>';
+                return;
+            }
+            srsState = { cards: data.cards || [], idx: 0, correct: 0 };
+            if (srsState.cards.length === 0) {
+                const total = (data.stats && data.stats.total) || 0;
+                el.innerHTML = total > 0
+                    ? `<div class="vocab-empty">🎉 지금 복습할 단어가 없어요!<br>전체 ${total}개 저장됨 · 곧 복습 시간이 와요.</div>`
+                    : '<div class="vocab-empty">아직 저장된 단어가 없어요.<br>캐릭터와 대화하면 어려운 단어가 자동으로 쌓여요! 💬</div>';
+                return;
+            }
+            renderSrsCard();
+        }
+
+        function renderSrsCard() {
+            const el = document.getElementById('srs-content');
+            const c = srsState.cards[srsState.idx];
+            if (!c) { renderSrsDone(); return; }
+            el.innerHTML = `
+                <div style="text-align:center;color:#bbb;font-size:12px;margin-bottom:10px;">복습 ${srsState.idx + 1} / ${srsState.cards.length}</div>
+                <div style="background:#fff;border:1px solid #f0e0ef;border-radius:16px;padding:30px 18px;text-align:center;box-shadow:0 6px 20px rgba(240,147,251,0.12);">
+                    <div style="font-size:30px;font-weight:800;color:#333;">${escHtml(c.word)}</div>
+                    ${c.romanization ? `<div style="color:#f093fb;font-size:14px;margin-top:6px;">${escHtml(c.romanization)}</div>` : ''}
+                    <div id="srs-answer" style="display:none;margin-top:16px;">
+                        <div style="font-size:17px;color:#444;">${escHtml(c.meaning || '')}</div>
+                        ${c.example ? `<div style="margin-top:12px;font-size:13px;color:#999;line-height:1.5;">“${escHtml(c.example)}”</div>` : ''}
+                    </div>
+                </div>
+                <div id="srs-actions" style="margin-top:16px;">
+                    <button onclick="revealSrs()" style="width:100%;padding:14px;border:none;border-radius:12px;background:#f093fb;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">뜻 보기</button>
+                </div>`;
+        }
+
+        function revealSrs() {
+            const ans = document.getElementById('srs-answer');
+            if (ans) ans.style.display = 'block';
+            document.getElementById('srs-actions').innerHTML = `
+                <div style="display:flex;gap:10px;">
+                    <button onclick="answerSrs(false)" style="flex:1;padding:14px;border:1px solid #ffccd5;border-radius:12px;background:#fff5f7;color:#ff4d6d;font-size:15px;font-weight:700;cursor:pointer;">다시 🔁</button>
+                    <button onclick="answerSrs(true)" style="flex:1;padding:14px;border:none;border-radius:12px;background:#4caf50;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">알아요 ✓</button>
+                </div>`;
+        }
+
+        async function answerSrs(correct) {
+            const c = srsState.cards[srsState.idx];
+            if (correct) srsState.correct++;
+            try {
+                await fetch('/vocab/review', {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ vocab_id: c.id, correct: !!correct }),
+                });
+            } catch (e) { /* non-fatal */ }
+            srsState.idx++;
+            if (srsState.idx >= srsState.cards.length) renderSrsDone();
+            else renderSrsCard();
+        }
+
+        function renderSrsDone() {
+            const el = document.getElementById('srs-content');
+            const n = srsState.cards.length;
+            el.innerHTML = `
+                <div class="vocab-empty" style="padding:28px 16px;">
+                    <div style="font-size:40px;">🎉</div>
+                    <div style="font-size:18px;font-weight:800;color:#333;margin-top:8px;">복습 완료!</div>
+                    <div style="margin-top:8px;color:#888;">${n}개 중 <b style="color:#4caf50;">${srsState.correct}</b>개 알아요</div>
+                    <button class="vocab-tab active" style="margin-top:18px;" onclick="renderSrsReview()">더 복습하기</button>
+                </div>`;
+            updateVocabDueBadge();
         }
 
         function renderVocabList() {

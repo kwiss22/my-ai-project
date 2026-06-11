@@ -182,6 +182,25 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS users_subscription_customer ON users(subscription_customer_id);
 CREATE INDEX IF NOT EXISTS users_subscription_id ON users(subscription_id);
 CREATE INDEX IF NOT EXISTS users_last_seen ON users(last_seen_at);
+
+-- 단어장 / 간격반복(SRS) 복습. 대화에서 추출된 단어를 저장하고 Leitner box 로 복습.
+CREATE TABLE IF NOT EXISTS vocab (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  word TEXT NOT NULL,
+  meaning TEXT,
+  romanization TEXT,
+  example TEXT,                            -- 단어가 나온 문장/맥락
+  character TEXT,                          -- 누가 말했나 (jiwoo 등)
+  created_at INTEGER NOT NULL,
+  srs_box INTEGER NOT NULL DEFAULT 0,      -- 0..5 Leitner box
+  next_review_at INTEGER NOT NULL,         -- unix sec, <=now 이면 복습 대상
+  last_reviewed_at INTEGER,
+  review_count INTEGER NOT NULL DEFAULT 0,
+  correct_count INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(user_id, word)
+);
+CREATE INDEX IF NOT EXISTS vocab_user_due ON vocab(user_id, next_review_at);
 """
 
 _MIGRATIONS = [
@@ -510,7 +529,101 @@ class SQLiteUserStore(UserStore):
         conn = self._connect()
         try:
             conn.execute('DELETE FROM users')
+            conn.execute('DELETE FROM vocab')
             conn.commit()
+        finally:
+            conn.close()
+
+    # ---- 단어장 / SRS (Leitner box) ------------------------------------------
+    # box 별 다음 복습까지 간격(초). box 0 은 +600(10분, 틀린 직후) 으로 따로 처리.
+    _SRS_INTERVALS = [0, 86400, 3 * 86400, 7 * 86400, 16 * 86400, 35 * 86400]
+
+    def add_vocab(self, user_id, items, example=None, character=None, now_ts=None):
+        """추출된 단어들을 단어장에 저장. 이미 있는 단어(user_id,word)는 무시. 추가된 개수 반환."""
+        import time as _t
+        if not items:
+            return 0
+        now = int(now_ts if now_ts is not None else _t.time())
+        conn = self._connect()
+        added = 0
+        try:
+            for it in items:
+                word = (it.get('word') or '').strip()
+                if not word:
+                    continue
+                try:
+                    cur = conn.execute(
+                        "INSERT OR IGNORE INTO vocab "
+                        "(user_id, word, meaning, romanization, example, character, created_at, srs_box, next_review_at) "
+                        "VALUES (?,?,?,?,?,?,?,0,?)",
+                        (user_id, word, it.get('meaning'), it.get('romanization'),
+                         (example or '')[:300], character, now, now),
+                    )
+                    added += cur.rowcount
+                except sqlite3.Error:
+                    pass
+            conn.commit()
+            return added
+        finally:
+            conn.close()
+
+    def list_vocab(self, user_id, limit=200):
+        conn = self._connect()
+        try:
+            rows = conn.execute(
+                "SELECT * FROM vocab WHERE user_id=? ORDER BY created_at DESC LIMIT ?",
+                (user_id, limit),
+            ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def due_vocab(self, user_id, now_ts=None, limit=20):
+        import time as _t
+        now = int(now_ts if now_ts is not None else _t.time())
+        conn = self._connect()
+        try:
+            rows = conn.execute(
+                "SELECT * FROM vocab WHERE user_id=? AND next_review_at<=? "
+                "ORDER BY next_review_at ASC LIMIT ?",
+                (user_id, now, limit),
+            ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def review_vocab(self, user_id, vocab_id, correct, now_ts=None):
+        import time as _t
+        now = int(now_ts if now_ts is not None else _t.time())
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT srs_box FROM vocab WHERE id=? AND user_id=?",
+                (vocab_id, user_id),
+            ).fetchone()
+            if not row:
+                return False
+            box = min(row['srs_box'] + 1, len(self._SRS_INTERVALS) - 1) if correct else 0
+            nxt = now + (self._SRS_INTERVALS[box] if box > 0 else 600)  # 틀리면 10분 뒤 다시
+            conn.execute(
+                "UPDATE vocab SET srs_box=?, next_review_at=?, last_reviewed_at=?, "
+                "review_count=review_count+1, correct_count=correct_count+? WHERE id=? AND user_id=?",
+                (box, nxt, now, 1 if correct else 0, vocab_id, user_id),
+            )
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+
+    def vocab_stats(self, user_id, now_ts=None):
+        import time as _t
+        now = int(now_ts if now_ts is not None else _t.time())
+        conn = self._connect()
+        try:
+            total = conn.execute("SELECT COUNT(*) c FROM vocab WHERE user_id=?", (user_id,)).fetchone()['c']
+            due = conn.execute("SELECT COUNT(*) c FROM vocab WHERE user_id=? AND next_review_at<=?", (user_id, now)).fetchone()['c']
+            learned = conn.execute("SELECT COUNT(*) c FROM vocab WHERE user_id=? AND srs_box>=4", (user_id,)).fetchone()['c']
+            return {'total': total, 'due': due, 'learned': learned}
         finally:
             conn.close()
 
@@ -563,6 +676,27 @@ def peek_quota(user_id, cap=None):
     if cap is None:
         cap = DAILY_FREE_QUOTA
     return _store.peek_quota(user_id, cap)
+
+
+# ---- 단어장 / SRS ------------------------------------------------------------
+def add_vocab(user_id, items, example=None, character=None):
+    return _store.add_vocab(user_id, items, example, character)
+
+
+def list_vocab(user_id, limit=200):
+    return _store.list_vocab(user_id, limit)
+
+
+def due_vocab(user_id, limit=20):
+    return _store.due_vocab(user_id, limit=limit)
+
+
+def review_vocab(user_id, vocab_id, correct):
+    return _store.review_vocab(user_id, vocab_id, correct)
+
+
+def vocab_stats(user_id):
+    return _store.vocab_stats(user_id)
 
 
 def set_subscription(user_id, payment_provider, subscription_customer_id, subscription_id,

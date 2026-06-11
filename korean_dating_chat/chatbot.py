@@ -1882,6 +1882,11 @@ from users import (
     has_active_subscription,
     delete_user as users_delete,
     touch_user as users_touch,
+    add_vocab,
+    list_vocab,
+    due_vocab,
+    review_vocab,
+    vocab_stats,
     DAILY_FREE_QUOTA,
     QUOTA_TIMEZONE,
 )
@@ -2865,6 +2870,12 @@ def chat():
                 full_response,
                 user_profile.get('level', 'intermediate')
             )
+            # 로그인 사용자면 단어장에 저장 → 복습 루프(SRS)로 연결
+            if user and vocab:
+                try:
+                    add_vocab(user['user_id'], vocab, example=full_response, character=character)
+                except Exception as _ve:
+                    print(f"[Vocab] save error (non-fatal): {_ve}")
 
         yield f"data: {json.dumps({'done': True, 'session_id': session_id_passthru, 'vocab': vocab, 'scenario_done': scenario_done})}\n\n"
         print(f"[CHAT] OK - 스트림 완료 ({len(full_response)} chars)")
@@ -2874,6 +2885,61 @@ def chat():
         content_type='text/event-stream',
         headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'}
     )
+
+
+# ============================================================
+# 단어장 / 복습 (SRS) — 로그인 사용자 전용
+# ============================================================
+@app.route('/vocab/list', methods=['GET'])
+def vocab_list_route():
+    """내 단어장 전체 + 통계."""
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    return jsonify({
+        'words': list_vocab(user['user_id']),
+        'stats': vocab_stats(user['user_id']),
+    })
+
+
+@app.route('/vocab/review', methods=['GET'])
+def vocab_review_get():
+    """복습할 단어(SRS due) 카드."""
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    return jsonify({
+        'cards': due_vocab(user['user_id'], limit=20),
+        'stats': vocab_stats(user['user_id']),
+    })
+
+
+@app.route('/vocab/review', methods=['POST'])
+def vocab_review_post():
+    """복습 결과 제출 → SRS 갱신. body: {vocab_id, correct}"""
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    data = request.get_json(silent=True) or {}
+    vid = data.get('vocab_id')
+    if vid is None:
+        return jsonify({'error': 'vocab_id required'}), 400
+    try:
+        vid = int(vid)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'vocab_id must be int'}), 400
+    ok = review_vocab(user['user_id'], vid, bool(data.get('correct')))
+    return jsonify({'ok': ok, 'stats': vocab_stats(user['user_id'])})
+
+
+@app.route('/vocab/stats', methods=['GET'])
+def vocab_stats_route():
+    """헤더 배지용 가벼운 통계 (미로그인이면 0)."""
+    user = current_user()
+    if not user:
+        return jsonify({'authenticated': False, 'stats': {'total': 0, 'due': 0, 'learned': 0}})
+    return jsonify({'authenticated': True, 'stats': vocab_stats(user['user_id'])})
+
 
 @app.route('/scenario/list', methods=['GET'])
 def scenario_list():
