@@ -1887,6 +1887,8 @@ from users import (
     due_vocab,
     review_vocab,
     vocab_stats,
+    record_study,
+    get_progress,
     DAILY_FREE_QUOTA,
     QUOTA_TIMEZONE,
 )
@@ -2220,6 +2222,7 @@ def me():
             'timezone': QUOTA_TIMEZONE,
             'unlimited': active,
         },
+        'progress': get_progress(user['user_id']),
         'login_methods': methods,
         'billing_enabled': billing_enabled(),
         'trial_days': TRIAL_DAYS,
@@ -2670,6 +2673,12 @@ def chat():
     except Exception:
         pass
 
+    # 학습 진척(Tier 1.2): 메시지 1건 = 학습 활동 → 스트릭 갱신 + XP
+    try:
+        record_study(user['user_id'], 2)
+    except Exception:
+        pass
+
     user_message = request.form.get('message', '').strip()
     grammar_mode = request.form.get('grammar_mode', 'false') == 'true'
     extract_vocab_flag = request.form.get('extract_vocab', 'false') == 'true'
@@ -2928,7 +2937,13 @@ def vocab_review_post():
         vid = int(vid)
     except (TypeError, ValueError):
         return jsonify({'error': 'vocab_id must be int'}), 400
-    ok = review_vocab(user['user_id'], vid, bool(data.get('correct')))
+    correct = bool(data.get('correct'))
+    ok = review_vocab(user['user_id'], vid, correct)
+    if ok and correct:
+        try:
+            record_study(user['user_id'], 3)  # 복습 정답 = 학습 활동 + XP
+        except Exception:
+            pass
     return jsonify({'ok': ok, 'stats': vocab_stats(user['user_id'])})
 
 

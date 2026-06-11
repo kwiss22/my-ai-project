@@ -177,6 +177,11 @@ CREATE TABLE IF NOT EXISTS users (
   subscription_cancel_at_period_end INTEGER NOT NULL DEFAULT 0,  -- 1=해지 예약됨
   daily_chat_count INTEGER NOT NULL DEFAULT 0,
   daily_reset_date TEXT NOT NULL,          -- 'YYYY-MM-DD' (QUOTA_TIMEZONE 기준)
+  -- 학습 진척 (Tier 1.2): 연속 학습일(스트릭) + 누적 XP(레벨 도출)
+  study_streak INTEGER NOT NULL DEFAULT 0,
+  best_streak INTEGER NOT NULL DEFAULT 0,
+  last_study_date TEXT,                    -- 마지막 학습일 'YYYY-MM-DD'
+  xp INTEGER NOT NULL DEFAULT 0,
   UNIQUE(provider, provider_user_id)
 );
 CREATE INDEX IF NOT EXISTS users_subscription_customer ON users(subscription_customer_id);
@@ -216,6 +221,15 @@ _MIGRATIONS = [
      'ALTER TABLE users ADD COLUMN subscription_customer_id TEXT'),
     ('subscription_id',
      'ALTER TABLE users ADD COLUMN subscription_id TEXT'),
+    # 학습 진척 (Tier 1.2)
+    ('study_streak',
+     'ALTER TABLE users ADD COLUMN study_streak INTEGER NOT NULL DEFAULT 0'),
+    ('best_streak',
+     'ALTER TABLE users ADD COLUMN best_streak INTEGER NOT NULL DEFAULT 0'),
+    ('last_study_date',
+     'ALTER TABLE users ADD COLUMN last_study_date TEXT'),
+    ('xp',
+     'ALTER TABLE users ADD COLUMN xp INTEGER NOT NULL DEFAULT 0'),
 ]
 
 
@@ -627,6 +641,73 @@ class SQLiteUserStore(UserStore):
         finally:
             conn.close()
 
+    # ---- 학습 진척 (스트릭 / XP / 레벨) ---------------------------------------
+    @staticmethod
+    def _yesterday(today_str):
+        from datetime import date, timedelta
+        y, m, d = map(int, today_str.split('-'))
+        return (date(y, m, d) - timedelta(days=1)).strftime('%Y-%m-%d')
+
+    @staticmethod
+    def _level_for_xp(xp):
+        # level = floor(sqrt(xp/50)) + 1 ; 레벨 L 도달에 필요한 xp = 50*(L-1)^2 (이차곡선)
+        import math
+        lvl = int(math.isqrt(max(0, int(xp)) // 50)) + 1
+        return lvl, 50 * (lvl - 1) ** 2, 50 * lvl ** 2
+
+    @classmethod
+    def _progress_from(cls, streak, best, last_date, xp, today):
+        lvl, base, nxt = cls._level_for_xp(xp)
+        alive = last_date in (today, cls._yesterday(today))  # 어제/오늘이면 스트릭 살아있음
+        return {
+            'streak': streak if alive else 0,
+            'best_streak': best,
+            'studied_today': last_date == today,
+            'xp': xp,
+            'level': lvl,
+            'level_xp': xp - base,        # 현재 레벨 내 누적
+            'level_need': nxt - base,     # 이번 레벨 총 필요량
+        }
+
+    def record_study(self, user_id, xp_gain=0, today=None):
+        """학습 활동 1회 기록: 스트릭 갱신(하루 1회) + XP 누적. 진척 dict 반환."""
+        today = today or _today()
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT study_streak, best_streak, last_study_date, xp FROM users WHERE user_id=?",
+                (user_id,)).fetchone()
+            if not row:
+                return None
+            streak = row['study_streak'] or 0
+            best = row['best_streak'] or 0
+            last = row['last_study_date']
+            xp = (row['xp'] or 0) + max(0, int(xp_gain))
+            if last != today:  # 오늘 첫 활동 → 스트릭 갱신
+                streak = streak + 1 if last == self._yesterday(today) else 1
+                best = max(best, streak)
+            conn.execute(
+                "UPDATE users SET study_streak=?, best_streak=?, last_study_date=?, xp=? WHERE user_id=?",
+                (streak, best, today, xp, user_id))
+            conn.commit()
+            return self._progress_from(streak, best, today, xp, today)
+        finally:
+            conn.close()
+
+    def get_progress(self, user_id, today=None):
+        today = today or _today()
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT study_streak, best_streak, last_study_date, xp FROM users WHERE user_id=?",
+                (user_id,)).fetchone()
+            if not row:
+                return self._progress_from(0, 0, None, 0, today)
+            return self._progress_from(row['study_streak'] or 0, row['best_streak'] or 0,
+                                       row['last_study_date'], row['xp'] or 0, today)
+        finally:
+            conn.close()
+
 
 # =============================================================================
 # 백엔드 인스턴스 선택 + 모듈 레벨 thin wrapper
@@ -697,6 +778,15 @@ def review_vocab(user_id, vocab_id, correct):
 
 def vocab_stats(user_id):
     return _store.vocab_stats(user_id)
+
+
+# ---- 학습 진척 (스트릭 / XP / 레벨) ------------------------------------------
+def record_study(user_id, xp_gain=0):
+    return _store.record_study(user_id, xp_gain)
+
+
+def get_progress(user_id):
+    return _store.get_progress(user_id)
 
 
 def set_subscription(user_id, payment_provider, subscription_customer_id, subscription_id,

@@ -2221,6 +2221,10 @@
                     <span id="heart-level-badge">Lv1</span>
                     <span aria-hidden="true">❤️</span> <span id="heart-count">0</span>
                 </div>
+                <!-- 학습 스트릭 (클릭 → 진척 모달) -->
+                <div id="streak-chip" role="button" tabindex="0" title="학습 진척" aria-label="학습 진척 보기" onclick="openProgressModal()" style="display:none;align-items:center;gap:3px;background:rgba(255,255,255,0.18);border-radius:14px;padding:3px 9px;cursor:pointer;font-size:13px;font-weight:700;color:#fff;">
+                    <span aria-hidden="true">🔥</span><span id="streak-count">0</span>
+                </div>
                 <!-- 대화기록 -->
                 <button class="header-btn icon-btn" onclick="openHistoryModal()" title="대화 기록" aria-label="대화 기록 열기">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -2505,6 +2509,17 @@
                     <div id="quiz-content"></div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- 학습 진척 모달 (스트릭 / 레벨 / 단어) -->
+    <div class="modal-overlay" id="progress-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" onclick="closeProgressModal(event)">
+        <div class="modal-sheet" style="max-width:400px;">
+            <div class="modal-header">
+                <h3>🔥 학습 진척</h3>
+                <button class="modal-close" aria-label="닫기" onclick="closeProgressModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="progress-body" style="padding:18px 20px 24px;"></div>
         </div>
     </div>
 
@@ -5556,6 +5571,7 @@
                 renderAuthHeader();
                 renderLoginMethodsUI();
                 renderAuthBanner();
+                renderStreakChip();
                 if (opts.warnLowQuota) maybeWarnLowQuota();
                 return data;
             } catch (e) {
@@ -5607,6 +5623,69 @@
             const lowClass = remaining <= 3 ? ' auth-chip--low' : '';
             slot.innerHTML =
                 `<button class="auth-chip auth-chip--quota${lowClass}" type="button" onclick="openSettingsModal()" title="${name} · 오늘 남은 메시지">${remaining}/${q.cap}</button>`;
+        }
+
+        // ============================================================
+        // 학습 진척 (스트릭 / 레벨 / XP) — Tier 1.2
+        // ============================================================
+        function renderStreakChip() {
+            const chip = document.getElementById('streak-chip');
+            if (!chip) return;
+            const p = (authState && authState.progress) || null;
+            if (!p || !authState.authenticated || !p.streak) { chip.style.display = 'none'; return; }
+            chip.style.display = 'flex';
+            const c = document.getElementById('streak-count');
+            if (c) c.textContent = p.streak;
+        }
+
+        function openProgressModal() {
+            document.getElementById('progress-modal-overlay').classList.add('show');
+            renderProgressModal();
+        }
+        function closeProgressModal(e) {
+            if (!e || e.target === document.getElementById('progress-modal-overlay')) {
+                document.getElementById('progress-modal-overlay').classList.remove('show');
+            }
+        }
+        async function renderProgressModal() {
+            const el = document.getElementById('progress-body');
+            if (!authState || !authState.authenticated) {
+                el.innerHTML = '<div class="vocab-empty">로그인하면 학습 스트릭과 레벨이 기록돼요. 🔥<br><br>'
+                    + '<button class="vocab-tab active" onclick="closeProgressModal(); (window.openLoginModal&&openLoginModal())">로그인</button></div>';
+                return;
+            }
+            const p = authState.progress || { streak:0, best_streak:0, level:1, level_xp:0, level_need:50, xp:0 };
+            let words = { total:0, learned:0 };
+            try { const r = await fetch('/vocab/stats', {credentials:'same-origin'}); const d = await r.json(); words = d.stats || words; } catch(e){}
+            const pct = Math.max(4, Math.round((p.level_xp / Math.max(1, p.level_need)) * 100));
+            el.innerHTML = `
+                <div style="text-align:center;">
+                    <div style="font-size:44px;line-height:1;">🔥</div>
+                    <div style="font-size:25px;font-weight:800;color:#333;margin-top:6px;">${p.streak}일 연속 학습</div>
+                    <div style="color:#999;font-size:13px;margin-top:2px;">최고 기록 ${p.best_streak}일</div>
+                </div>
+                <div style="margin-top:22px;background:#faf4fb;border-radius:14px;padding:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-weight:800;color:#f093fb;font-size:16px;">Lv.${p.level}</span>
+                        <span style="color:#aaa;font-size:12px;">${p.level_xp} / ${p.level_need} XP</span>
+                    </div>
+                    <div style="margin-top:8px;height:9px;background:#eee;border-radius:6px;overflow:hidden;">
+                        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#f093fb,#f5576c);border-radius:6px;"></div>
+                    </div>
+                </div>
+                <div style="margin-top:14px;display:flex;gap:10px;">
+                    <div style="flex:1;text-align:center;background:#fff;border:1px solid #f0e6f2;border-radius:12px;padding:14px 6px;">
+                        <div style="font-size:22px;font-weight:800;color:#333;">${words.total}</div>
+                        <div style="font-size:12px;color:#999;margin-top:2px;">📚 모은 단어</div>
+                    </div>
+                    <div style="flex:1;text-align:center;background:#fff;border:1px solid #f0e6f2;border-radius:12px;padding:14px 6px;">
+                        <div style="font-size:22px;font-weight:800;color:#4caf50;">${words.learned}</div>
+                        <div style="font-size:12px;color:#999;margin-top:2px;">✅ 외운 단어</div>
+                    </div>
+                </div>
+                <div style="margin-top:18px;text-align:center;">
+                    <button class="vocab-tab active" onclick="closeProgressModal(); (window.openVocabModal&&openVocabModal()); (window.switchVocabTab&&switchVocabTab('srs'))">🔁 단어 복습하러 가기</button>
+                </div>`;
         }
 
         // ============================================================
