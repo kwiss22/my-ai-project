@@ -1889,6 +1889,8 @@ from users import (
     vocab_stats,
     record_study,
     get_progress,
+    get_referral_info,
+    claim_referral,
     DAILY_FREE_QUOTA,
     QUOTA_TIMEZONE,
 )
@@ -2954,6 +2956,31 @@ def vocab_stats_route():
     if not user:
         return jsonify({'authenticated': False, 'stats': {'total': 0, 'due': 0, 'learned': 0}})
     return jsonify({'authenticated': True, 'stats': vocab_stats(user['user_id'])})
+
+
+# ============================================================
+# 친구 초대 (referral) — 초대하면 둘 다 7일 무제한
+# ============================================================
+@app.route('/referral', methods=['GET'])
+def referral_info_route():
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    info = get_referral_info(user['user_id'])
+    base = os.getenv('APP_BASE_URL', '').rstrip('/') or request.host_url.rstrip('/')
+    info['link'] = f"{base}/?ref={info['code']}" if info.get('code') else None
+    info['bonus_days'] = 7
+    return jsonify(info)
+
+
+@app.route('/referral/claim', methods=['POST'])
+def referral_claim_route():
+    """초대 코드 사용 (로그인 직후 클라이언트가 1회 호출). body: {code}"""
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.'}), 401
+    data = request.get_json(silent=True) or {}
+    return jsonify(claim_referral(user['user_id'], data.get('code', '')))
 
 
 @app.route('/scenario/list', methods=['GET'])

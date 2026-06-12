@@ -2523,6 +2523,17 @@
         </div>
     </div>
 
+    <!-- 친구 초대 모달 -->
+    <div class="modal-overlay" id="referral-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" onclick="closeReferralModal(event)">
+        <div class="modal-sheet" style="max-width:400px;">
+            <div class="modal-header">
+                <h3>🎁 친구 초대</h3>
+                <button class="modal-close" aria-label="닫기" onclick="closeReferralModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="referral-body" style="padding:18px 20px 24px;"></div>
+        </div>
+    </div>
+
     <!-- =====================
          설정 모달
     ===================== -->
@@ -2594,6 +2605,14 @@
                 <div>
                     <div class="nav-label">단어장 / 퀴즈</div>
                     <div class="nav-desc">저장된 단어 복습하기</div>
+                </div>
+            </button>
+
+            <button class="nav-sheet-item" onclick="closeNavSheet(); openReferralModal()">
+                <div class="nav-icon" style="background:#fff0f6;">🎁</div>
+                <div>
+                    <div class="nav-label">친구 초대</div>
+                    <div class="nav-desc">초대하면 둘 다 7일 무제한</div>
                 </div>
             </button>
 
@@ -5572,6 +5591,7 @@
                 renderLoginMethodsUI();
                 renderAuthBanner();
                 renderStreakChip();
+                maybeClaimReferral();
                 if (opts.warnLowQuota) maybeWarnLowQuota();
                 return data;
             } catch (e) {
@@ -5704,6 +5724,95 @@
                 <div style="margin-top:18px;text-align:center;">
                     <button class="vocab-tab active" onclick="closeProgressModal(); (window.openVocabModal&&openVocabModal()); (window.switchVocabTab&&switchVocabTab('srs'))">🔁 단어 복습하러 가기</button>
                 </div>`;
+        }
+
+        // ============================================================
+        // 친구 초대 (referral) — 초대하면 둘 다 7일 무제한
+        // ============================================================
+        (function captureRef() {
+            try {
+                const ref = new URLSearchParams(location.search).get('ref');
+                if (ref) localStorage.setItem('kdate_ref', ref.trim().toUpperCase());
+            } catch (e) {}
+        })();
+
+        let _refClaiming = false;
+        async function maybeClaimReferral() {
+            if (_refClaiming || !authState || !authState.authenticated) return;
+            let code; try { code = localStorage.getItem('kdate_ref'); } catch (e) { return; }
+            if (!code) return;
+            _refClaiming = true;
+            try {
+                const r = await fetch('/referral/claim', {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code }),
+                });
+                const d = await r.json().catch(() => ({}));
+                try { localStorage.removeItem('kdate_ref'); } catch (e) {}
+                if (d && d.ok) {
+                    if (typeof showToast === 'function') showToast(`🎁 초대 완료! ${d.bonus_days || 7}일 무제한 받았어요`);
+                    refreshAuthState();
+                }
+            } catch (e) { /* non-fatal */ }
+            finally { _refClaiming = false; }
+        }
+
+        function openReferralModal() {
+            document.getElementById('referral-modal-overlay').classList.add('show');
+            renderReferralModal();
+        }
+        function closeReferralModal(e) {
+            if (!e || e.target === document.getElementById('referral-modal-overlay')) {
+                document.getElementById('referral-modal-overlay').classList.remove('show');
+            }
+        }
+        async function renderReferralModal() {
+            const el = document.getElementById('referral-body');
+            if (!authState || !authState.authenticated) {
+                el.innerHTML = '<div class="vocab-empty">로그인하면 초대 링크가 생겨요. 친구를 초대하면 둘 다 7일 무제한! 🎁<br><br>'
+                    + '<button class="vocab-tab active" onclick="closeReferralModal(); (window.openLoginModal&&openLoginModal())">로그인</button></div>';
+                return;
+            }
+            el.innerHTML = '<div class="vocab-empty">불러오는 중...</div>';
+            let d;
+            try { const r = await fetch('/referral', { credentials: 'same-origin' }); d = await r.json(); }
+            catch (e) { el.innerHTML = '<div class="vocab-empty">불러오기 실패. 잠시 후 다시.</div>'; return; }
+            const link = (d.link || '').replace(/"/g, '&quot;');
+            el.innerHTML = `
+                <div style="text-align:center;">
+                    <div style="font-size:40px;">🎁</div>
+                    <div style="font-size:17px;font-weight:800;color:#333;margin-top:6px;">친구를 초대하면 둘 다 7일 무제한!</div>
+                    <div style="color:#999;font-size:13px;margin-top:4px;">친구가 가입하면 나도, 친구도 7일 무료 ✨</div>
+                </div>
+                <div style="margin-top:20px;background:#faf4fb;border-radius:12px;padding:14px;">
+                    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">내 초대 링크</div>
+                    <div style="display:flex;gap:8px;">
+                        <input id="ref-link-input" readonly value="${link}" style="flex:1;min-width:0;border:1px solid #eaddee;border-radius:8px;padding:9px 10px;font-size:12px;color:#555;background:#fff;">
+                        <button onclick="copyReferralLink()" style="border:none;border-radius:8px;background:#f093fb;color:#fff;font-weight:700;padding:0 14px;cursor:pointer;white-space:nowrap;">복사</button>
+                    </div>
+                    <div style="margin-top:8px;font-size:12px;color:#888;">코드: <b style="color:#f093fb;letter-spacing:1px;">${d.code || '-'}</b></div>
+                </div>
+                <div style="margin-top:14px;text-align:center;color:#666;font-size:14px;">
+                    지금까지 <b style="color:#f093fb;font-size:18px;">${d.count || 0}</b>명 초대했어요
+                </div>
+                <div style="margin-top:16px;text-align:center;">
+                    <button class="vocab-tab active" onclick="shareReferral()">📤 공유하기</button>
+                </div>`;
+        }
+        function copyReferralLink() {
+            const inp = document.getElementById('ref-link-input');
+            if (!inp) return;
+            inp.select();
+            try { navigator.clipboard.writeText(inp.value); } catch (e) { try { document.execCommand('copy'); } catch (e2) {} }
+            if (typeof showToast === 'function') showToast('링크 복사됐어요! 📋');
+        }
+        function shareReferral() {
+            const inp = document.getElementById('ref-link-input');
+            const url = inp ? inp.value : '';
+            const text = 'K-Dating Chat에서 한국인 AI랑 카톡하며 한국어 배워요! 같이 하면 둘 다 7일 무제한 🎁';
+            if (navigator.share) { navigator.share({ title: 'K-Dating Chat', text, url }).catch(() => {}); }
+            else { copyReferralLink(); }
         }
 
         // ============================================================

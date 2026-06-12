@@ -1223,6 +1223,12 @@ function runTypingAnimation(typingId, message, delay) {
 }
 runTypingAnimation('jiwoo-typing', '같이 가면 너무 좋겠다 💕', 1000);
 runTypingAnimation('hyunwoo-typing', '보고싶었어 솔직히 🥺', 600);
+
+// 친구 초대 코드 캡처 (?ref=CODE) → localStorage. /chat 로그인 후 자동 사용.
+try {
+    var _ref = new URLSearchParams(location.search).get('ref');
+    if (_ref) localStorage.setItem('kdate_ref', _ref.trim().toUpperCase());
+} catch (e) {}
 </script>
 
 <!-- 푸터 -->

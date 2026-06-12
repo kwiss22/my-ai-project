@@ -49,6 +49,14 @@ def _today():
     return datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
 
+# 친구 초대 코드 알파벳 (헷갈리는 0/O/1/I 제외)
+_REF_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+
+def _gen_ref_code(n=6):
+    return ''.join(secrets.choice(_REF_ALPHABET) for _ in range(n))
+
+
 def has_active_subscription(user):
     """user dict 가 현재 시점에 유효 구독자인지. 순수 함수 — 백엔드 무관.
 
@@ -60,6 +68,9 @@ def has_active_subscription(user):
     """
     if not user:
         return False
+    # 친구 초대 보너스 기간 = 무제한 이용 (referral 보상)
+    if (user.get('bonus_until') or 0) > int(time.time()):
+        return True
     status = user.get('subscription_status')
     if status not in ('active', 'trialing', 'past_due', 'canceled'):
         return False
@@ -186,6 +197,11 @@ CREATE TABLE IF NOT EXISTS users (
   last_study_date TEXT,                    -- 마지막 학습일 'YYYY-MM-DD'
   xp INTEGER NOT NULL DEFAULT 0,
   daily_xp INTEGER NOT NULL DEFAULT 0,     -- 오늘 획득 XP (새 날에 초기화). 오늘의 목표용.
+  -- 친구 초대(referral)
+  referral_code TEXT,                      -- 내 초대 코드 (유니크 인덱스는 init 에서)
+  referred_by TEXT,                        -- 나를 초대한 user_id (1회만)
+  referral_count INTEGER NOT NULL DEFAULT 0,
+  bonus_until INTEGER,                     -- 초대 보상 무제한 만료 (unix sec)
   UNIQUE(provider, provider_user_id)
 );
 CREATE INDEX IF NOT EXISTS users_subscription_customer ON users(subscription_customer_id);
@@ -236,6 +252,11 @@ _MIGRATIONS = [
      'ALTER TABLE users ADD COLUMN xp INTEGER NOT NULL DEFAULT 0'),
     ('daily_xp',
      'ALTER TABLE users ADD COLUMN daily_xp INTEGER NOT NULL DEFAULT 0'),
+    # 친구 초대(referral)
+    ('referral_code', 'ALTER TABLE users ADD COLUMN referral_code TEXT'),
+    ('referred_by', 'ALTER TABLE users ADD COLUMN referred_by TEXT'),
+    ('referral_count', 'ALTER TABLE users ADD COLUMN referral_count INTEGER NOT NULL DEFAULT 0'),
+    ('bonus_until', 'ALTER TABLE users ADD COLUMN bonus_until INTEGER'),
 ]
 
 
@@ -259,6 +280,11 @@ class SQLiteUserStore(UserStore):
                         conn.execute(ddl)
                     except sqlite3.OperationalError:
                         pass  # idempotent
+            # referral_code 유니크 인덱스 (컬럼 추가 후 생성). SQLite 는 NULL 다중 허용.
+            try:
+                conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS users_referral_code ON users(referral_code)')
+            except sqlite3.OperationalError:
+                pass
             # Stripe → generic 마이그레이션 (옛 컬럼 데이터 보존)
             cols = {row['name'] for row in conn.execute('PRAGMA table_info(users)').fetchall()}
             if 'stripe_customer_id' in cols and 'subscription_customer_id' in cols:
@@ -293,11 +319,19 @@ class SQLiteUserStore(UserStore):
                 conn.commit()
                 return dict(conn.execute('SELECT * FROM users WHERE user_id=?', (row['user_id'],)).fetchone())
             user_id = secrets.token_urlsafe(16)
-            conn.execute(
-                'INSERT INTO users (user_id, provider, provider_user_id, email, display_name, '
-                'created_at, daily_chat_count, daily_reset_date) VALUES (?, ?, ?, ?, ?, ?, 0, ?)',
-                (user_id, provider, provider_user_id, email, display_name, now, today),
-            )
+            for _attempt in range(6):
+                code = _gen_ref_code()
+                try:
+                    conn.execute(
+                        'INSERT INTO users (user_id, provider, provider_user_id, email, display_name, '
+                        'created_at, daily_chat_count, daily_reset_date, referral_code) VALUES (?,?,?,?,?,?,0,?,?)',
+                        (user_id, provider, provider_user_id, email, display_name, now, today, code),
+                    )
+                    break
+                except sqlite3.IntegrityError as e:
+                    if 'referral_code' in str(e).lower():
+                        continue  # 코드 충돌 → 재생성
+                    raise
             conn.commit()
             return dict(conn.execute('SELECT * FROM users WHERE user_id=?', (user_id,)).fetchone())
         finally:
@@ -722,6 +756,73 @@ class SQLiteUserStore(UserStore):
         finally:
             conn.close()
 
+    # ---- 친구 초대 (referral) -------------------------------------------------
+    def _ensure_referral_code(self, conn, user_id):
+        row = conn.execute('SELECT referral_code FROM users WHERE user_id=?', (user_id,)).fetchone()
+        if row and row['referral_code']:
+            return row['referral_code']
+        for _ in range(6):
+            code = _gen_ref_code()
+            try:
+                conn.execute(
+                    "UPDATE users SET referral_code=? WHERE user_id=? AND (referral_code IS NULL OR referral_code='')",
+                    (code, user_id))
+                got = conn.execute('SELECT referral_code FROM users WHERE user_id=?', (user_id,)).fetchone()
+                if got and got['referral_code']:
+                    conn.commit()
+                    return got['referral_code']
+            except sqlite3.IntegrityError:
+                continue
+        return None
+
+    def get_referral_info(self, user_id):
+        conn = self._connect()
+        try:
+            code = self._ensure_referral_code(conn, user_id)
+            row = conn.execute(
+                'SELECT referral_count, bonus_until, referred_by FROM users WHERE user_id=?',
+                (user_id,)).fetchone()
+            return {
+                'code': code,
+                'count': (row['referral_count'] or 0) if row else 0,
+                'bonus_until': (row['bonus_until'] or 0) if row else 0,
+                'referred': bool(row and row['referred_by']),
+            }
+        finally:
+            conn.close()
+
+    def claim_referral(self, user_id, code, now=None):
+        """초대 코드 사용. 성공 시 초대자·피초대자 둘 다 7일 무제한 보너스."""
+        now = int(now if now is not None else time.time())
+        code = (code or '').strip().upper()
+        if not code:
+            return {'ok': False, 'reason': 'no_code'}
+        conn = self._connect()
+        try:
+            me = conn.execute('SELECT created_at, referred_by FROM users WHERE user_id=?', (user_id,)).fetchone()
+            if not me:
+                return {'ok': False, 'reason': 'no_user'}
+            if me['referred_by']:
+                return {'ok': False, 'reason': 'already'}
+            if now - (me['created_at'] or 0) > 14 * 86400:   # 오래된 계정 farming 방지
+                return {'ok': False, 'reason': 'too_late'}
+            ref = conn.execute('SELECT user_id FROM users WHERE referral_code=?', (code,)).fetchone()
+            if not ref or ref['user_id'] == user_id:
+                return {'ok': False, 'reason': 'invalid'}
+            referrer_id = ref['user_id']
+            BONUS = 7 * 86400
+            conn.execute(
+                'UPDATE users SET referred_by=?, bonus_until=MAX(COALESCE(bonus_until,0), ?)+? WHERE user_id=?',
+                (referrer_id, now, BONUS, user_id))
+            conn.execute(
+                'UPDATE users SET referral_count=COALESCE(referral_count,0)+1, '
+                'bonus_until=MAX(COALESCE(bonus_until,0), ?)+? WHERE user_id=?',
+                (now, BONUS, referrer_id))
+            conn.commit()
+            return {'ok': True, 'bonus_days': 7}
+        finally:
+            conn.close()
+
 
 # =============================================================================
 # 백엔드 인스턴스 선택 + 모듈 레벨 thin wrapper
@@ -801,6 +902,15 @@ def record_study(user_id, xp_gain=0):
 
 def get_progress(user_id):
     return _store.get_progress(user_id)
+
+
+# ---- 친구 초대 (referral) ----------------------------------------------------
+def get_referral_info(user_id):
+    return _store.get_referral_info(user_id)
+
+
+def claim_referral(user_id, code):
+    return _store.claim_referral(user_id, code)
 
 
 def set_subscription(user_id, payment_provider, subscription_customer_id, subscription_id,
