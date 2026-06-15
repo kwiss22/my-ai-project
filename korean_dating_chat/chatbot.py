@@ -1891,6 +1891,9 @@ from users import (
     get_progress,
     get_referral_info,
     claim_referral,
+    add_correction,
+    list_corrections,
+    correction_count,
     DAILY_FREE_QUOTA,
     QUOTA_TIMEZONE,
 )
@@ -2749,10 +2752,16 @@ def chat():
 
     effective_message = user_message
     if grammar_mode:
-        effective_message = (
-            user_message
-            + "\n\n(시스템 메모: 위 메시지에 한국어 문법 오류가 있으면 자연스럽게 답변한 뒤 "
-            "마지막에 반드시 '💡 ' 로 시작하는 한 줄로만 부드럽게 교정해줘. 문법이 맞으면 교정 줄 생략.)"
+        # 교정 지시는 유저 메시지에 묻으면 페르소나 롤플레이에 밀려 무시된다.
+        # 세션 컨텍스트(모델이 '응 알았어!'로 수긍하는 leading 턴)로 올려야 잘 따른다.
+        dynamic_addition += (
+            "\n\n[GRAMMAR COACH MODE — 매우 중요, 매 턴 적용]\n"
+            "너는 이 세션에서 다정한 한국어 회화 선생님이기도 해. 사용자가 한국어로 말할 때마다 "
+            "문법·조사·어미·시제·맞춤법 오류가 하나라도 있으면, 캐릭터 톤으로 자연스럽게 답한 뒤 "
+            "답변 맨 끝에 줄을 바꿔 반드시 '💡 ' 한 줄로 교정해. "
+            "형식: 💡 \"틀린 표현\" → \"고친 표현\" (짧은 이유). "
+            "예: 💡 \"어제 가요\" → \"어제 갔어요\" (어제는 과거라 과거형!). "
+            "오류가 전혀 없을 때만 교정 줄을 생략해. 교정 줄을 빠뜨리지 마."
         )
 
     # 최근 30개만 (토큰/레이턴시 제한)
@@ -2888,6 +2897,15 @@ def chat():
                 except Exception as _ve:
                     print(f"[Vocab] save error (non-fatal): {_ve}")
 
+        # 문법 교정(💡) 저장 → 나중에 "교정 노트"로 복습
+        if user and grammar_mode:
+            _m = re.search(r'^\s*💡\s*(.+?)\s*$', full_response, re.M)
+            if _m:
+                try:
+                    add_correction(user['user_id'], user_message, _m.group(1), character=character)
+                except Exception as _ce:
+                    print(f"[Correction] save error (non-fatal): {_ce}")
+
         yield f"data: {json.dumps({'done': True, 'session_id': session_id_passthru, 'vocab': vocab, 'scenario_done': scenario_done})}\n\n"
         print(f"[CHAT] OK - 스트림 완료 ({len(full_response)} chars)")
 
@@ -2911,6 +2929,15 @@ def vocab_list_route():
         'words': list_vocab(user['user_id']),
         'stats': vocab_stats(user['user_id']),
     })
+
+
+@app.route('/corrections/list', methods=['GET'])
+def corrections_list_route():
+    """내 문법 교정 노트 (grammar_mode 에서 받은 💡 교정 모음)."""
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    return jsonify({'items': list_corrections(user['user_id'])})
 
 
 @app.route('/vocab/review', methods=['GET'])

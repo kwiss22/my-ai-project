@@ -226,6 +226,17 @@ CREATE TABLE IF NOT EXISTS vocab (
   UNIQUE(user_id, word)
 );
 CREATE INDEX IF NOT EXISTS vocab_user_due ON vocab(user_id, next_review_at);
+
+-- 문법 교정 노트. grammar_mode 에서 AI 가 준 '💡' 교정을 저장해 나중에 복습.
+CREATE TABLE IF NOT EXISTS corrections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  original TEXT NOT NULL,                   -- 사용자가 쓴 원문
+  correction TEXT NOT NULL,                 -- 💡 교정 내용
+  character TEXT,                           -- 누가 교정했나
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS corrections_user_time ON corrections(user_id, created_at);
 """
 
 _MIGRATIONS = [
@@ -681,6 +692,49 @@ class SQLiteUserStore(UserStore):
         finally:
             conn.close()
 
+    # ---- 문법 교정 노트 -------------------------------------------------------
+    def add_correction(self, user_id, original, correction, character=None, now_ts=None):
+        import time as _t
+        original = (original or '').strip()[:500]
+        correction = (correction or '').strip()[:500]
+        if not original or not correction:
+            return
+        now = int(now_ts if now_ts is not None else _t.time())
+        conn = self._connect()
+        try:
+            # 직전과 동일한 교정이면 중복 저장 안 함
+            last = conn.execute(
+                "SELECT correction FROM corrections WHERE user_id=? ORDER BY id DESC LIMIT 1",
+                (user_id,)).fetchone()
+            if last and last['correction'] == correction:
+                return
+            conn.execute(
+                "INSERT INTO corrections(user_id, original, correction, character, created_at) "
+                "VALUES(?,?,?,?,?)",
+                (user_id, original, correction, character, now))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def list_corrections(self, user_id, limit=100):
+        conn = self._connect()
+        try:
+            rows = conn.execute(
+                "SELECT original, correction, character, created_at FROM corrections "
+                "WHERE user_id=? ORDER BY id DESC LIMIT ?",
+                (user_id, int(limit))).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def correction_count(self, user_id):
+        conn = self._connect()
+        try:
+            return conn.execute(
+                "SELECT COUNT(*) c FROM corrections WHERE user_id=?", (user_id,)).fetchone()['c']
+        finally:
+            conn.close()
+
     # ---- 학습 진척 (스트릭 / XP / 레벨) ---------------------------------------
     @staticmethod
     def _yesterday(today_str):
@@ -893,6 +947,19 @@ def review_vocab(user_id, vocab_id, correct):
 
 def vocab_stats(user_id):
     return _store.vocab_stats(user_id)
+
+
+# ---- 문법 교정 노트 ----------------------------------------------------------
+def add_correction(user_id, original, correction, character=None):
+    return _store.add_correction(user_id, original, correction, character)
+
+
+def list_corrections(user_id, limit=100):
+    return _store.list_corrections(user_id, limit)
+
+
+def correction_count(user_id):
+    return _store.correction_count(user_id)
 
 
 # ---- 학습 진척 (스트릭 / XP / 레벨) ------------------------------------------

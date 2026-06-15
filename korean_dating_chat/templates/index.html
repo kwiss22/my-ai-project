@@ -2545,6 +2545,17 @@
         </div>
     </div>
 
+    <!-- 교정 노트 모달 -->
+    <div class="modal-overlay" id="corr-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" onclick="closeCorrectionsModal(event)">
+        <div class="modal-sheet" style="max-width:440px;">
+            <div class="modal-header">
+                <h3>✏️ 교정 노트</h3>
+                <button class="modal-close" aria-label="닫기" onclick="closeCorrectionsModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="corr-body" style="padding:16px 18px 24px;"></div>
+        </div>
+    </div>
+
     <!-- =====================
          설정 모달
     ===================== -->
@@ -2616,6 +2627,14 @@
                 <div>
                     <div class="nav-label">단어장 / 퀴즈</div>
                     <div class="nav-desc">저장된 단어 복습하기</div>
+                </div>
+            </button>
+
+            <button class="nav-sheet-item" onclick="closeNavSheet(); openCorrectionsModal()">
+                <div class="nav-icon" style="background:#e8f4ff;">✏️</div>
+                <div>
+                    <div class="nav-label">교정 노트</div>
+                    <div class="nav-desc">내가 틀린 문장 다시 보기</div>
                 </div>
             </button>
 
@@ -5959,6 +5978,41 @@
         function renderPronFail(d){
             const reason=(d&&d.reason==='no_speech')?'음성이 잘 안 들렸어요.':'발음 평가에 실패했어요.';
             document.getElementById('pron-body').innerHTML='<div class="vocab-empty">'+reason+'<br><br><button class="vocab-tab active" onclick="startPronounce(_lastPronRef)">🎤 다시</button></div>';
+        }
+
+        // ============================================================
+        // ✏️ 교정 노트 — grammar_mode 에서 받은 💡 교정 모아보기
+        // ============================================================
+        function openCorrectionsModal(){
+            const o=document.getElementById('corr-modal-overlay');
+            o.classList.add('show'); o.setAttribute('aria-hidden','false');
+            const body=document.getElementById('corr-body');
+            body.innerHTML='<div class="vocab-empty" style="padding:30px 0;">불러오는 중...</div>';
+            fetch('/corrections/list').then(r=>{
+                if (r.status===401) { body.innerHTML='<div class="vocab-empty">로그인하면 교정 노트가 생겨요.<br>설정에서 <b>💡 문법 힌트 모드</b>를 켜면, 내가 틀린 문장을 AI가 고쳐주고 여기에 쌓여요.</div>'; return null; }
+                return r.json();
+            }).then(d=>{ if(d) renderCorrections(d.items||[]); }).catch(()=>{
+                body.innerHTML='<div class="vocab-empty">교정 노트를 불러오지 못했어요.</div>';
+            });
+        }
+        function closeCorrectionsModal(e){
+            const o=document.getElementById('corr-modal-overlay');
+            if (!e || e.target===o){ o.classList.remove('show'); o.setAttribute('aria-hidden','true'); }
+        }
+        function renderCorrections(items){
+            const body=document.getElementById('corr-body');
+            if (!items.length){
+                body.innerHTML='<div class="vocab-empty">아직 교정 기록이 없어요.<br><br>설정에서 <b>💡 문법 힌트 모드</b>를 켜고 한국어로 말해보세요. 틀린 부분을 AI가 부드럽게 고쳐주고, 여기에 모아 복습할 수 있어요.</div>';
+                return;
+            }
+            const rows=items.map(function(c){
+                const corr=String(c.correction||'').replace(/^💡\s*/,'');
+                return '<div style="border:1px solid #eee;border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff;">'
+                    + '<div style="font-size:13px;color:#999;text-decoration:line-through;">'+escHtml(c.original||'')+'</div>'
+                    + '<div style="margin-top:6px;font-size:14px;color:#3a5ea8;line-height:1.5;">💡 '+escHtml(corr)+'</div>'
+                    + '</div>';
+            }).join('');
+            body.innerHTML='<div style="font-size:12px;color:#999;margin-bottom:12px;">최근 교정 '+items.length+'개 · 같은 실수를 반복하지 않게 다시 읽어보세요 📖</div>'+rows;
         }
 
         // ============================================================
