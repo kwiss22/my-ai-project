@@ -2243,6 +2243,28 @@ LEVEL_MAP = {
     'advanced': '중급 이상 (기본 대화 가능)'
 }
 
+# 레벨 적응형 난이도 — 응답 길이/어휘/새 단어 빈도를 레벨에 맞게 구체적으로 조절 (Tier 2.3)
+LEVEL_GUIDE = {
+    'beginner': (
+        "[난이도: 완전 초보]\n"
+        "- 한 번에 1~2문장으로 아주 짧고 천천히. 기초 단어와 기본 문형(이에요/예요, ~아요/어요)만 사용.\n"
+        "- 어려운 한자어·관용구·신조어 금지. 꼭 필요한 새 단어는 1개까지만, 바로 뒤에 괄호로 쉬운 뜻을 덧붙여 (예: 산책(walk)).\n"
+        "- 질문은 yes/no 나 단답으로 답할 수 있게 쉽게."
+    ),
+    'intermediate': (
+        "[난이도: 초중급]\n"
+        "- 2~3문장의 일상 대화체. 흔한 일상 표현 위주, 너무 어려운 한자어·속담은 피하기.\n"
+        "- 새로운 단어나 표현은 한 답변에 1~2개까지 자연스럽게 섞어 노출(과하지 않게).\n"
+        "- 가끔 가벼운 후속 질문으로 유저가 더 말하게 유도."
+    ),
+    'advanced': (
+        "[난이도: 중급 이상]\n"
+        "- 자연스럽고 풍부한 일상 한국어. 관용구·신조어·줄임말도 실제 한국인처럼 사용.\n"
+        "- 새 어휘·고급 표현을 적극적으로 노출해 학습 자극(단, 흐름을 해치지 않게).\n"
+        "- 더 길고 깊은 대화, 의견을 묻는 열린 질문도 OK."
+    ),
+}
+
 INTEREST_MAP = {
     'kdrama': 'K-드라마',
     'kpop': 'K-pop',
@@ -2284,10 +2306,15 @@ def _build_dynamic_addition(profile=None, scenario_id=None, intimacy_level=None)
 
         if profile_lines:
             user_context = "\n\n[유저 정보 - 대화에 자연스럽게 반영하세요]\n" + "\n".join(profile_lines)
-            user_context += "\n- 유저의 한국어 레벨에 맞게 어휘 난이도를 조절하세요."
             user_context += "\n- 관심사 주제가 나오면 더 적극적으로 반응하세요."
             if profile.get('nickname'):
                 user_context += f"\n- 가끔 '{profile['nickname']}'라고 이름을 불러주세요."
+            # 레벨 적응형 난이도: 레벨별 구체 가이드 주입 (없으면 초중급 기본)
+            level_guide = LEVEL_GUIDE.get(profile.get('level'))
+            if not level_guide and profile.get('level'):
+                level_guide = LEVEL_GUIDE['intermediate']
+            if level_guide:
+                user_context += "\n\n" + level_guide
             addition += user_context
 
     if intimacy_level:
