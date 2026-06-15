@@ -37,9 +37,10 @@
 
 ## 🟠 Tier 2 — 학습 가치 (돈 낼 이유)
 
-### 2.1 발음 피드백 (STT 입력은 이미 구현됨) 🟡 ⭐⭐
-- **이미 있음(정정)**: 음성 입력 = 프론트 Web Speech API(voice-btn `toggleVoiceInput`) + 백엔드 Azure STT(`/transcribe`). 말→텍스트→전송 동작함.
-- **남은 가치**: **발음 평가/점수** (Azure Pronunciation Assessment) — "발음 정확도 N점, 받침 연습" 같은 피드백. 이게 진짜 "말하기 연습" 차별화. (선택·고급, 오디오 업로드+평가 API 필요)
+### 2.1 발음 피드백 ✅ ⭐⭐ (2026-06-15 완료)
+- **STT 입력**: 프론트 Web Speech API(voice-btn `toggleVoiceInput`) + 백엔드 Azure STT(`/transcribe`).
+- **발음 평가 (신규)**: `POST /pronounce` = Azure Pronunciation Assessment. AI 메시지마다 **🎤 발음** 버튼 → 16kHz 녹음 → 정확도/유창성/완성도/종합 점수 + 단어별 채점 모달. (검증: 일치 92점 / 불일치 20점으로 변별)
+- **남은 고도화(선택)**: 받침/음소(Phoneme) 단위 피드백, 발음 점수 누적·약점 단어 추천, 발음 점수도 XP/스트릭에 연동.
 
 ### 2.2 문법 교정 노출 강화 🟡
 - `grammar_mode` 있음. 교정을 자연스럽게 + 나중에 복습 가능하게 surface.
@@ -89,4 +90,4 @@
 - 작업 방식: 각 항목 → 로컬(`localhost:8080`) 프리뷰 → 커밋·푸시 → 배포. 큰 방향은 `/office-hours`·`/plan-ceo-review`로 압박.
 
 ---
-_마지막 갱신: 2026-06-10 (PayPal Live 전환 직후). 다음 작업: Tier 1.1 단어 복습 루프._
+_마지막 갱신: 2026-06-15. Tier 1 전체(1.1 SRS·1.2 스트릭/레벨·1.3 일일목표) + Tier 3.2 추천초대 + Tier 2.1 발음평가 완료. 다음: Tier 2.2 문법교정 노출 강화 또는 Tier 3.1 Trial 종료 알림._
