@@ -3205,6 +3205,86 @@ def transcribe():
     return jsonify({'error': '음성이 인식되지 않았어요.'}), 422
 
 
+@app.route('/pronounce', methods=['POST'])
+@_rl_transcribe
+def pronounce():
+    """발음 평가 (Azure Pronunciation Assessment). multipart: audio(WAV PCM16 16k mono) + reference_text."""
+    import base64 as _b64
+    import requests as _requests
+    if not AZURE_SPEECH_KEY:
+        return jsonify({'error': '발음 평가가 비활성화돼 있어요.'}), 503
+    f = request.files.get('audio')
+    ref = (request.form.get('reference_text') or '').strip()
+    if not f or not ref:
+        return jsonify({'error': '오디오 또는 기준 문장이 없어요.'}), 400
+    data = f.read(_STT_MAX_BYTES + 1)
+    if not data:
+        return jsonify({'error': '오디오가 비어 있어요.'}), 400
+    if len(data) > _STT_MAX_BYTES:
+        return jsonify({'error': '오디오가 너무 길어요 (최대 ~30초).'}), 413
+    language = request.form.get('language', 'ko-KR')
+    if language not in ('ko-KR', 'en-US'):
+        language = 'ko-KR'
+    pa_config = {
+        'ReferenceText': ref[:300],
+        'GradingSystem': 'HundredMark',
+        'Granularity': 'Word',
+        'Dimension': 'Comprehensive',
+    }
+    pa_header = _b64.b64encode(json.dumps(pa_config).encode('utf-8')).decode('ascii')
+    url = (
+        f"https://{AZURE_SPEECH_REGION}.stt.speech.microsoft.com"
+        "/speech/recognition/conversation/cognitiveservices/v1"
+    )
+    try:
+        resp = _requests.post(
+            url,
+            params={'language': language, 'format': 'detailed'},
+            headers={
+                'Ocp-Apim-Subscription-Key': AZURE_SPEECH_KEY,
+                'Content-Type': 'audio/wav; codecs=audio/pcm; samplerate=16000',
+                'Accept': 'application/json',
+                'Pronunciation-Assessment': pa_header,
+            },
+            data=data,
+            timeout=15,
+        )
+    except _requests.RequestException as e:
+        print(f"[Pron] network error: {str(e)[:160]}")
+        return jsonify({'error': '발음 평가 서비스에 연결할 수 없어요.'}), 502
+    if resp.status_code != 200:
+        print(f"[Pron] Azure {resp.status_code}: {resp.text[:200]}")
+        return jsonify({'error': '발음 평가에 실패했어요.'}), 502
+    try:
+        body = resp.json()
+    except ValueError:
+        return jsonify({'error': '발음 평가 결과를 해석할 수 없어요.'}), 502
+    nbest = body.get('NBest') or []
+    if not nbest or body.get('RecognitionStatus') != 'Success':
+        return jsonify({'ok': False, 'reason': 'no_speech',
+                        'recognized': body.get('DisplayText', '')})
+    # Azure 는 점수를 NBest[0] 와 각 Word 에 직접 넣어준다 (PronunciationAssessment 객체 X).
+    top = nbest[0]
+    words = []
+    for w in (top.get('Words') or []):
+        words.append({
+            'word': w.get('Word', ''),
+            'accuracy': round(w.get('AccuracyScore', 0)),
+            'error': w.get('ErrorType', 'None'),
+        })
+    return jsonify({
+        'ok': True,
+        'recognized': top.get('Display') or body.get('DisplayText', ''),
+        'scores': {
+            'accuracy': round(top.get('AccuracyScore', 0)),
+            'fluency': round(top.get('FluencyScore', 0)),
+            'completeness': round(top.get('CompletenessScore', 0)),
+            'overall': round(top.get('PronScore', 0)),
+        },
+        'words': words,
+    })
+
+
 @app.route('/translate', methods=['POST'])
 def translate_text():
     """한국어 → 영어 번역.
