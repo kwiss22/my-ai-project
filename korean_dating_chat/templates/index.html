@@ -2327,6 +2327,18 @@
             </div>
         </div>
 
+        <!-- 무료 체험 만료 임박 알림 (Tier 3.1 — 과금 투명성·이탈 방지) -->
+        <div class="auth-prompt-banner" id="trial-banner" style="display:none; background:linear-gradient(135deg,#fff4e6,#ffe9d6);" role="region" aria-label="체험 안내">
+            <div class="auth-prompt-banner__content">
+                <span class="auth-prompt-banner__emoji" aria-hidden="true">⏳</span>
+                <span class="auth-prompt-banner__text" id="trial-banner-text"></span>
+            </div>
+            <div class="auth-prompt-banner__actions">
+                <button type="button" class="auth-prompt-banner__btn" id="trial-banner-btn"></button>
+                <button type="button" class="auth-prompt-banner__close" aria-label="배너 닫기" onclick="dismissTrialBanner()">&times;</button>
+            </div>
+        </div>
+
         <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions" aria-label="대화 기록"></div>
 
         <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -5635,6 +5647,7 @@
                 renderAuthHeader();
                 renderLoginMethodsUI();
                 renderAuthBanner();
+                renderTrialBanner();
                 renderStreakChip();
                 maybeClaimReferral();
                 if (opts.warnLowQuota) maybeWarnLowQuota();
@@ -5663,6 +5676,48 @@
         function dismissAuthBanner() {
             sessionStorage.setItem(AUTH_BANNER_DISMISS_KEY, '1');
             renderAuthBanner();
+        }
+
+        // 무료 체험 D-3 이내 알림 (Tier 3.1). 자동전환은 과금 투명성, 해지예정은 win-back.
+        // dismiss 키에 날짜(D-day)를 포함 → 날이 바뀌면 다시 보여 잊지 않게.
+        function dismissTrialBanner() {
+            const days = window._trialDaysLeft;
+            if (days != null) sessionStorage.setItem('kdate-trial-banner-dismissed', String(days));
+            const b = document.getElementById('trial-banner');
+            if (b) b.style.display = 'none';
+        }
+        function renderTrialBanner() {
+            const banner = document.getElementById('trial-banner');
+            if (!banner) return;
+            const sub = authState.subscription || {};
+            const chatActive = document.getElementById('chat-container')?.classList.contains('active');
+            const pe = sub.period_end;
+            // 표시 조건: 체험 중이거나(자동전환 안내) 해지 예정(win-back)이고, 종료가 3일 이내.
+            const relevant = chatActive && pe && (sub.status === 'trialing' || sub.cancel_at_period_end);
+            if (!relevant) { banner.style.display = 'none'; return; }
+            const days = Math.max(0, Math.ceil((pe - Date.now() / 1000) / 86400));
+            window._trialDaysLeft = days;
+            if (days > 3) { banner.style.display = 'none'; return; }
+            // D-day 가 바뀌면 dismiss 무효화(다시 보여줌)
+            if (sessionStorage.getItem('kdate-trial-banner-dismissed') === String(days)) {
+                banner.style.display = 'none'; return;
+            }
+            const dateStr = _fmtDate(pe);
+            const dLabel = days <= 0 ? '오늘' : `D-${days}`;
+            const txt = document.getElementById('trial-banner-text');
+            const btn = document.getElementById('trial-banner-btn');
+            if (sub.cancel_at_period_end) {
+                // 해지 예정 — 다시 구독 유도
+                txt.innerHTML = `<strong>${dLabel} · 구독이 ${dateStr}에 종료돼요.</strong> 계속 무제한으로 이용하려면 다시 구독하세요.`;
+                btn.textContent = '다시 구독';
+                btn.onclick = () => { if (typeof startSubscription === 'function') startSubscription(); };
+            } else {
+                // 체험 자동전환 안내 — 투명성(과금 불만 방지) + 관리 동선
+                txt.innerHTML = `<strong>무료 체험 ${dLabel}</strong> · ${dateStr}에 월 $4.99로 자동 전환돼요. 원치 않으면 설정에서 해지할 수 있어요.`;
+                btn.textContent = '구독 관리';
+                btn.onclick = () => openSettingsModal();
+            }
+            banner.style.display = 'flex';
         }
 
         // 헤더에 quota chip 또는 구독 배지 + 로그인 버튼 표시.
