@@ -38,7 +38,7 @@ check('  배너에 "Google로 1초 가입" 카피', /Google로 1초 가입/.test
 check('  배너에 quota 한도 표시', /\d+개 메시지 무료/.test(bannerText));
 
 console.log('\n=== 2. 배너 → 로그인 모달 ===');
-await page.locator('.auth-prompt-banner__btn').click();
+await page.locator('#auth-prompt-banner .auth-prompt-banner__btn').click();
 await page.waitForTimeout(300);
 const modalVisible = await page.$eval('#login-modal-overlay',
     el => el.classList.contains('show'));
@@ -51,7 +51,7 @@ await page.evaluate(() => closeLoginModal({ target: document.getElementById('log
 await page.waitForTimeout(200);
 
 console.log('\n=== 3. dismiss → 배너 사라짐 + sessionStorage 저장 ===');
-await page.locator('.auth-prompt-banner__close').click();
+await page.locator('#auth-prompt-banner .auth-prompt-banner__close').click();
 await page.waitForTimeout(200);
 bannerVisible = await page.$eval('#auth-prompt-banner',
     el => getComputedStyle(el).display !== 'none').catch(() => false);

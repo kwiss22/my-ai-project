@@ -16,7 +16,10 @@
 import http from 'node:http';
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
+import * as nodePath from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+const __dirname = nodePath.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const failures = [];
 let totalChecks = 0;
@@ -52,7 +55,8 @@ function req(method, path, body, cookie = '') {
     });
 }
 
-const SIMULATE = '/home/user/my-ai-project/korean_dating_chat/tools/billing_simulate.py';
+// 스크립트 위치(tests/) 기준으로 시뮬레이터 해석 → cwd·머신 무관. 셸 명령용 forward-slash 정규화.
+const SIMULATE = nodePath.join(__dirname, '..', 'tools', 'billing_simulate.py').replace(/\\/g, '/');
 function sim(args) {
     const cmd = `WEBHOOK_URL=http://127.0.0.1:${PORT}/billing/webhook python3 ${SIMULATE} ${args}`;
     try {
