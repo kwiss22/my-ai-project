@@ -5518,6 +5518,32 @@
         let _ttsConsecutiveFailures = 0;
         let _ttsDisabledUntil = 0;
         let _ttsCurrentAudio = null;
+
+        // 자동재생이 차단된 오디오(주로 첫인사 — 재방문 자동진입 시 제스처 0번)를
+        // 첫 사용자 제스처 때 재생한다. 차단되면 무음이던 문제 해결.
+        let _ttsPendingGesture = null;
+        function _queueAudioForGesture(audio, audioUrl) {
+            const alreadyQueued = !!_ttsPendingGesture;
+            if (alreadyQueued) {
+                try { URL.revokeObjectURL(_ttsPendingGesture.url); } catch (e) {}
+            }
+            _ttsPendingGesture = { audio, url: audioUrl };
+            if (alreadyQueued) return;  // 리스너는 이미 등록됨 — 오디오만 최신으로 교체
+            const playPending = () => {
+                window.removeEventListener('pointerdown', playPending, true);
+                window.removeEventListener('keydown', playPending, true);
+                window.removeEventListener('touchstart', playPending, true);
+                const p = _ttsPendingGesture;
+                _ttsPendingGesture = null;
+                if (!p) return;
+                _ttsCurrentAudio = p.audio;
+                p.audio.play().catch(() => { try { URL.revokeObjectURL(p.url); } catch (e) {} });
+            };
+            window.addEventListener('pointerdown', playPending, true);
+            window.addEventListener('keydown', playPending, true);
+            window.addEventListener('touchstart', playPending, true);
+        }
+
         async function speakKorean(text) {
             const now = Date.now();
             if (now < _ttsDisabledUntil) {
@@ -5581,12 +5607,13 @@
                 // audio.play() 는 Promise — 브라우저 자동재생 정책으로 reject 가능 (사용자 제스처 전).  catch 필수.
                 audio.play().catch((err) => {
                     if (err && err.name === 'NotAllowedError') {
-                        // 자동재생 차단 — 카운터에는 영향 없음 (이건 환경 문제, 서버 문제 아님)
-                        console.warn('[TTS] autoplay blocked:', err.message);
+                        // 자동재생 차단(주로 첫인사) — 카운터엔 영향 없음(환경 문제). 첫 제스처 때 재생되게 큐잉.
+                        console.warn('[TTS] autoplay blocked — 첫 제스처 때 재생 예약');
+                        _queueAudioForGesture(audio, audioUrl);
                     } else {
                         console.warn('[TTS] play() failed:', err);
+                        URL.revokeObjectURL(audioUrl);
                     }
-                    URL.revokeObjectURL(audioUrl);
                 });
 
                 audio.onended = () => {
