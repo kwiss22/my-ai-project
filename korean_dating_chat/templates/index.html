@@ -2355,6 +2355,7 @@
                 type="text"
                 id="user-input"
                 placeholder="메시지를 입력하세요..."
+                data-i18n-ph="chat.inputPlaceholder"
                 onkeydown="handleKeyPress(event)"
                 oninput="updateInputButtonState()"
                 aria-label="메시지 입력"
@@ -3321,6 +3322,29 @@
                 'settings.logout': '로그아웃',
                 'settings.delete': '계정 삭제',
                 'settings.gdpr': '데이터 다운로드는 GDPR · 개인정보보호법상 본인이 가진 권리입니다. 계정 삭제 시 모든 정보가 영구 삭제되며, 활성 구독이 있으면 다음 결제일 전에 자동 해지됩니다.',
+                // 토스트 / 에러
+                'toast.linkCopied': '링크 복사됐어요! 📋',
+                'toast.micUnsupported': '이 브라우저는 마이크를 지원하지 않아요.',
+                'toast.network': '네트워크 오류',
+                'toast.cancelScheduled': '해지 예약 완료 ✅',
+                'toast.tooManyReq': '요청이 너무 잦아요. 잠시 후 다시 시도해주세요.',
+                'toast.downloadFail': '다운로드에 실패했어요.',
+                'toast.downloaded': '데이터를 다운로드했어요 ✅',
+                'toast.deleteFail': '삭제 실패',
+                'toast.accountDeleted': '계정이 삭제됐어요.',
+                'toast.signedIn': '로그인 완료 ✅',
+                'toast.loggedOut': '로그아웃 완료',
+                'toast.subStarted': '구독이 시작됐어요 ✨',
+                'toast.payCanceled': '결제가 취소됐어요',
+                'toast.micAccessUnsupported': '이 브라우저는 마이크 접근을 지원하지 않아요.',
+                'toast.voiceTooShort': '음성이 너무 짧아요. 다시 시도해주세요.',
+                'toast.voiceNotRecognized': '음성이 인식되지 않았어요. 다시 시도해주세요.',
+                'toast.serverUnreachable': '서버에 연결할 수 없어요.',
+                'toast.referralDone': '🎁 초대 완료! {days}일 무제한 받았어요',
+                // 채팅 입력 / 인라인 에러
+                'chat.inputPlaceholder': '메시지를 입력하세요...',
+                'chat.err.delay': '응답이 지연되고 있어요. 잠시 후 다시 시도해주세요.',
+                'chat.err.generic': '죄송해요, 오류가 발생했어요. 다시 시도해주세요.',
             },
             en: {
                 'nav.share': 'Make a share card', 'nav.share.d': 'Save & share your chat as a card',
@@ -3386,6 +3410,29 @@
                 'settings.logout': 'Log out',
                 'settings.delete': 'Delete account',
                 'settings.gdpr': 'Data download is your right under GDPR and privacy law. Deleting your account permanently erases all your data; any active subscription is auto-canceled before the next billing date.',
+                // Toasts / errors
+                'toast.linkCopied': 'Link copied! 📋',
+                'toast.micUnsupported': "This browser doesn't support the microphone.",
+                'toast.network': 'Network error',
+                'toast.cancelScheduled': 'Cancellation scheduled ✅',
+                'toast.tooManyReq': 'Too many requests. Please try again shortly.',
+                'toast.downloadFail': 'Download failed.',
+                'toast.downloaded': 'Your data has been downloaded ✅',
+                'toast.deleteFail': 'Delete failed',
+                'toast.accountDeleted': 'Your account has been deleted.',
+                'toast.signedIn': 'Signed in ✅',
+                'toast.loggedOut': 'Logged out',
+                'toast.subStarted': 'Subscription started ✨',
+                'toast.payCanceled': 'Payment canceled',
+                'toast.micAccessUnsupported': "This browser doesn't support microphone access.",
+                'toast.voiceTooShort': 'Recording too short. Please try again.',
+                'toast.voiceNotRecognized': "Couldn't recognize your voice. Please try again.",
+                'toast.serverUnreachable': "Couldn't connect to the server.",
+                'toast.referralDone': '🎁 Invite complete! You got {days} days unlimited',
+                // Chat input / inline errors
+                'chat.inputPlaceholder': 'Type a message...',
+                'chat.err.delay': 'The response is taking a while. Please try again shortly.',
+                'chat.err.generic': 'Sorry, something went wrong. Please try again.',
             },
         };
         function tc(key, vars) {
@@ -3788,9 +3835,9 @@
                 if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span>온라인';
                 console.error('Send sticker error:', error);
                 if (error.name === 'AbortError') {
-                    addMessage('응답이 지연되고 있어요. 잠시 후 다시 시도해주세요.', false);
+                    addMessage(tc('chat.err.delay'), false);
                 } else {
-                    addMessage('죄송해요, 오류가 발생했어요. 다시 시도해주세요.', false);
+                    addMessage(tc('chat.err.generic'), false);
                 }
             } finally {
                 requestController = null;
@@ -5102,9 +5149,9 @@
                 document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
                 console.error('Send message error:', error);
                 if (error.name === 'AbortError') {
-                    addMessage('응답이 지연되고 있어요. 잠시 후 다시 시도해주세요.', false);
+                    addMessage(tc('chat.err.delay'), false);
                 } else {
-                    addMessage('죄송해요, 오류가 발생했어요. 다시 시도해주세요.', false);
+                    addMessage(tc('chat.err.generic'), false);
                 }
             } finally {
                 requestController = null;
@@ -6047,7 +6094,7 @@
                 const d = await r.json().catch(() => ({}));
                 try { localStorage.removeItem('kdate_ref'); } catch (e) {}
                 if (d && d.ok) {
-                    if (typeof showToast === 'function') showToast(`🎁 초대 완료! ${d.bonus_days || 7}일 무제한 받았어요`);
+                    if (typeof showToast === 'function') showToast(tc('toast.referralDone', { days: d.bonus_days || 7 }));
                     refreshAuthState();
                 }
             } catch (e) { /* non-fatal */ }
@@ -6101,7 +6148,7 @@
             if (!inp) return;
             inp.select();
             try { navigator.clipboard.writeText(inp.value); } catch (e) { try { document.execCommand('copy'); } catch (e2) {} }
-            if (typeof showToast === 'function') showToast('링크 복사됐어요! 📋');
+            if (typeof showToast === 'function') showToast(tc('toast.linkCopied'));
         }
         function shareReferral() {
             const inp = document.getElementById('ref-link-input');
@@ -6151,7 +6198,7 @@
         async function startPronounce(refText) {
             if (_pron.active) return;
             _lastPronRef = refText;
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast('이 브라우저는 마이크를 지원하지 않아요.'); return; }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast(tc('toast.micUnsupported')); return; }
             let stream;
             try { stream = await navigator.mediaDevices.getUserMedia({ audio:{channelCount:1,sampleRate:16000,echoCancellation:true,noiseSuppression:true} }); }
             catch(e){ showToast(e && e.name==='NotAllowedError' ? '마이크 권한을 허용해주세요.' : '마이크를 시작할 수 없어요.'); return; }
@@ -6378,7 +6425,7 @@
                 }
                 if (typeof showToast === 'function') showToast(data.error || '관리 페이지를 열 수 없어요.');
             } catch (e) {
-                if (typeof showToast === 'function') showToast('네트워크 오류');
+                if (typeof showToast === 'function') showToast(tc('toast.network'));
             }
         }
 
@@ -6391,11 +6438,11 @@
                     if (typeof showToast === 'function') showToast(data.error || '해지 실패');
                     return;
                 }
-                if (typeof showToast === 'function') showToast('해지 예약 완료 ✅');
+                if (typeof showToast === 'function') showToast(tc('toast.cancelScheduled'));
                 await refreshAuthState();
                 renderSettingsModal();
             } catch (e) {
-                if (typeof showToast === 'function') showToast('네트워크 오류');
+                if (typeof showToast === 'function') showToast(tc('toast.network'));
             }
         }
 
@@ -6406,11 +6453,11 @@
                     credentials: 'same-origin',
                 });
                 if (r.status === 429) {
-                    if (typeof showToast === 'function') showToast('요청이 너무 잦아요. 잠시 후 다시 시도해주세요.');
+                    if (typeof showToast === 'function') showToast(tc('toast.tooManyReq'));
                     return;
                 }
                 if (!r.ok) {
-                    if (typeof showToast === 'function') showToast('다운로드에 실패했어요.');
+                    if (typeof showToast === 'function') showToast(tc('toast.downloadFail'));
                     return;
                 }
                 const blob = await r.blob();
@@ -6423,9 +6470,9 @@
                 a.href = url; a.download = filename;
                 document.body.appendChild(a); a.click(); a.remove();
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
-                if (typeof showToast === 'function') showToast('데이터를 다운로드했어요 ✅');
+                if (typeof showToast === 'function') showToast(tc('toast.downloaded'));
             } catch (e) {
-                if (typeof showToast === 'function') showToast('네트워크 오류');
+                if (typeof showToast === 'function') showToast(tc('toast.network'));
             }
         }
 
@@ -6439,14 +6486,14 @@
             try {
                 const r = await fetch('/auth/delete-account', { method: 'POST', credentials: 'same-origin' });
                 if (!r.ok) {
-                    if (typeof showToast === 'function') showToast('삭제 실패');
+                    if (typeof showToast === 'function') showToast(tc('toast.deleteFail'));
                     return;
                 }
-                if (typeof showToast === 'function') showToast('계정이 삭제됐어요.');
+                if (typeof showToast === 'function') showToast(tc('toast.accountDeleted'));
                 closeSettingsModal({ target: document.getElementById('settings-modal-overlay') });
                 await refreshAuthState();
             } catch (e) {
-                if (typeof showToast === 'function') showToast('네트워크 오류');
+                if (typeof showToast === 'function') showToast(tc('toast.network'));
             }
         }
 
@@ -6520,7 +6567,7 @@
                 }
                 await refreshAuthState();
                 closeLoginModal({ target: document.getElementById('login-modal-overlay') });
-                if (typeof showToast === 'function') showToast('로그인 완료 ✅');
+                if (typeof showToast === 'function') showToast(tc('toast.signedIn'));
             } catch (e) {
                 if (statusEl) statusEl.textContent = '네트워크 오류';
             }
@@ -6530,7 +6577,7 @@
                 await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });
             } catch (e) {}
             await refreshAuthState();
-            if (typeof showToast === 'function') showToast('로그아웃 완료');
+            if (typeof showToast === 'function') showToast(tc('toast.loggedOut'));
         }
 
         // ---- 페이월 모달 (구독) ----
@@ -6608,12 +6655,12 @@
             const params = new URLSearchParams(window.location.search);
             if (params.get('billing') === 'success') {
                 // PayPal 성공 콜백 후 페이지 진입 — webhook 처리 지연 대비 1초 후 다시 fetch
-                if (typeof showToast === 'function') showToast('구독이 시작됐어요 ✨');
+                if (typeof showToast === 'function') showToast(tc('toast.subStarted'));
                 setTimeout(refreshAuthState, 1500);
                 // URL 정리
                 try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
             } else if (params.get('billing') === 'canceled') {
-                if (typeof showToast === 'function') showToast('결제가 취소됐어요');
+                if (typeof showToast === 'function') showToast(tc('toast.payCanceled'));
                 try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
             }
             // 미인증이면 로그인 모달 자동 표시 (단, 온보딩이 끝난 뒤 noop — 다음 채팅 시 자연스럽게)
@@ -6756,7 +6803,7 @@
 
         async function _fallbackStart() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showToast('이 브라우저는 마이크 접근을 지원하지 않아요.');
+                showToast(tc('toast.micAccessUnsupported'));
                 return false;
             }
             let stream;
@@ -6858,7 +6905,7 @@
             await _fallbackTeardown();
             const wav = _fallbackBuildWav();
             if (!wav || wav.size < 4400) {  // ~0.1s
-                showToast('음성이 너무 짧아요. 다시 시도해주세요.');
+                showToast(tc('toast.voiceTooShort'));
                 return;
             }
             if (input) input.placeholder = '인식 중...';
@@ -6874,12 +6921,12 @@
                     return;
                 }
                 if (data.no_match || !data.text) {
-                    showToast('음성이 인식되지 않았어요. 다시 시도해주세요.');
+                    showToast(tc('toast.voiceNotRecognized'));
                     return;
                 }
                 if (input) { input.value = data.text; updateInputButtonState(); }
             } catch (e) {
-                showToast('서버에 연결할 수 없어요.');
+                showToast(tc('toast.serverUnreachable'));
             } finally {
                 if (input) input.placeholder = '메시지를 입력하세요...';
             }
