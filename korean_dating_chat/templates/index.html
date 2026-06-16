@@ -2380,25 +2380,25 @@
     <div class="modal-overlay" id="login-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="login-modal-title" aria-hidden="true" onclick="closeLoginModal(event)">
         <div class="modal-sheet" style="max-width: 420px;">
             <div class="modal-header">
-                <h3 id="login-modal-title">로그인</h3>
+                <h3 id="login-modal-title" data-i18n="login.title">로그인</h3>
                 <button class="modal-close" aria-label="닫기" onclick="closeLoginModal()" id="login-modal-close-btn">&times;</button>
             </div>
             <div style="padding: 8px 24px 28px;">
-                <p style="color:#666; font-size:14px; line-height:1.6; margin: 0 0 20px;">
+                <p id="login-modal-desc" style="color:#666; font-size:14px; line-height:1.6; margin: 0 0 20px;">
                     💾 <strong>Google로 1초 가입</strong> — 진행도와 캐릭터 호감도가 저장돼요.<br>
                     무료로 일 <strong id="login-modal-quota">25</strong>개 메시지, 무제한 월 구독 옵션도 있어요.
                 </p>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <button id="login-btn-google" type="button" onclick="loginWithGoogle()" style="display:none; width:100%; padding:12px 16px; border:1px solid #dadce0; background:#fff; color:#3c4043; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;">
                         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-                        Google로 계속
+                        <span data-i18n="login.google">Google로 계속</span>
                     </button>
                     <button id="login-btn-dev" type="button" onclick="loginWithDev()" style="display:none; width:100%; padding:12px 16px; border:1px dashed #999; background:transparent; color:#666; border-radius:8px; font-size:13px; cursor:pointer;">
                         Dev login (테스트용)
                     </button>
                 </div>
                 <p id="login-modal-status" style="margin: 16px 0 0; font-size:12px; color:#888; min-height:18px;"></p>
-                <p style="margin-top:18px; font-size:11px; color:#aaa; line-height:1.6;">
+                <p style="margin-top:18px; font-size:11px; color:#aaa; line-height:1.6;" data-i18n-html="login.terms">
                     로그인하면 <a href="/terms" target="_blank" style="color:#888;">이용약관</a> 과
                     <a href="/privacy" target="_blank" style="color:#888;">개인정보처리방침</a>에 동의하는 것으로 간주됩니다.
                 </p>
@@ -2412,7 +2412,7 @@
     <div class="modal-overlay" id="paywall-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="paywall-modal-title" aria-hidden="true" onclick="closePaywallModal(event)">
         <div class="modal-sheet" style="max-width: 440px;">
             <div class="modal-header">
-                <h3 id="paywall-modal-title">✨ 무제한으로 더 대화하기</h3>
+                <h3 id="paywall-modal-title" data-i18n="pay.title">✨ 무제한으로 더 대화하기</h3>
                 <button class="modal-close" aria-label="닫기" onclick="closePaywallModal()">&times;</button>
             </div>
             <div style="padding: 8px 24px 28px;">
@@ -2424,9 +2424,9 @@
                     <div style="font-size:13px; opacity:0.9; margin-bottom:4px;" id="paywall-card-label">월 구독</div>
                     <div style="font-size:28px; font-weight:700; line-height:1.1;" id="paywall-card-headline">무제한 메시지</div>
                     <ul style="font-size:13px; margin:14px 0 0; padding-left:18px; opacity:0.95; line-height:1.7;" id="paywall-card-list">
-                        <li>모든 캐릭터(11명) 무제한 대화</li>
-                        <li>시나리오·미션 무제한</li>
-                        <li>언제든 해지 가능</li>
+                        <li data-i18n="pay.li1">모든 캐릭터(11명) 무제한 대화</li>
+                        <li data-i18n="pay.li2">시나리오·미션 무제한</li>
+                        <li data-i18n="pay.li3">언제든 해지 가능</li>
                     </ul>
                 </div>
                 <button id="paywall-subscribe-btn" type="button" onclick="startSubscription()" style="width:100%; padding:14px 16px; border:none; background:#3c1e1e; color:white; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer;">
@@ -2448,21 +2448,30 @@
     <div class="modal-overlay" id="settings-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" aria-hidden="true" onclick="closeSettingsModal(event)">
         <div class="modal-sheet" style="max-width: 480px;">
             <div class="modal-header">
-                <h3 id="settings-modal-title">⚙️ 설정</h3>
+                <h3 id="settings-modal-title" data-i18n="settings.title">⚙️ 설정</h3>
                 <button class="modal-close" aria-label="닫기" onclick="closeSettingsModal()">&times;</button>
             </div>
             <div style="padding: 0 24px 28px;">
                 <!-- 프로필 카드 -->
                 <div style="background:#f8f8fa; border-radius:10px; padding:14px 16px; margin-bottom:16px;">
-                    <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">계정</div>
+                    <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;" data-i18n="settings.account">계정</div>
                     <div id="settings-display-name" style="font-size:15px; font-weight:600; color:#222;">—</div>
                     <div id="settings-email" style="font-size:12px; color:#666; margin-top:2px;">—</div>
                     <div id="settings-provider" style="font-size:11px; color:#999; margin-top:6px;">—</div>
                 </div>
 
+                <!-- 언어 / Language -->
+                <div style="display:flex; align-items:center; justify-content:space-between; background:#f8f8fa; border-radius:10px; padding:12px 16px; margin-bottom:16px;">
+                    <span style="font-size:14px; color:#333;" data-i18n="settings.language">언어 / Language</span>
+                    <div class="lang-toggle" style="position:static; display:inline-flex; margin:0;">
+                        <button class="lang-btn" id="set-lang-ko" type="button" onclick="setLang('ko')">KO</button>
+                        <button class="lang-btn" id="set-lang-en" type="button" onclick="setLang('en')">EN</button>
+                    </div>
+                </div>
+
                 <!-- 구독 카드 — 상태에 따라 본문 자동 변경 -->
                 <div id="settings-sub-card" style="border-radius:12px; padding:16px 18px; margin-bottom:16px; background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:white;">
-                    <div style="font-size:11px; opacity:0.9; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;" id="settings-sub-label">구독 상태</div>
+                    <div style="font-size:11px; opacity:0.9; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;" id="settings-sub-label" data-i18n="settings.subStatus">구독 상태</div>
                     <div id="settings-sub-headline" style="font-size:17px; font-weight:700; line-height:1.3;">로딩 중...</div>
                     <div id="settings-sub-detail" style="font-size:12px; opacity:0.92; margin-top:6px; line-height:1.5;"></div>
                     <div id="settings-sub-actions" style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;"></div>
@@ -2470,22 +2479,22 @@
 
                 <!-- Quota 표시 (비구독자에게만) -->
                 <div id="settings-quota-card" style="display:none; background:#f8f8fa; border-radius:10px; padding:12px 16px; margin-bottom:16px;">
-                    <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">오늘 사용량</div>
+                    <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;" data-i18n="settings.usageToday">오늘 사용량</div>
                     <div id="settings-quota-text" style="font-size:14px; color:#222;">—</div>
                 </div>
 
                 <!-- 위험 영역 -->
                 <div style="border-top:1px solid #eee; padding-top:16px; display:flex; flex-direction:column; gap:8px;">
-                    <button type="button" onclick="downloadMyData()" style="width:100%; padding:11px; border:1px solid #ccc; background:white; color:#444; border-radius:8px; font-size:14px; cursor:pointer;">
+                    <button type="button" onclick="downloadMyData()" style="width:100%; padding:11px; border:1px solid #ccc; background:white; color:#444; border-radius:8px; font-size:14px; cursor:pointer;" data-i18n="settings.download">
                         📥 내 데이터 다운로드 (JSON)
                     </button>
-                    <button type="button" onclick="logoutCurrent()" style="width:100%; padding:11px; border:1px solid #ccc; background:white; color:#444; border-radius:8px; font-size:14px; cursor:pointer;">
+                    <button type="button" onclick="logoutCurrent()" style="width:100%; padding:11px; border:1px solid #ccc; background:white; color:#444; border-radius:8px; font-size:14px; cursor:pointer;" data-i18n="settings.logout">
                         로그아웃
                     </button>
-                    <button type="button" onclick="confirmDeleteAccount()" style="width:100%; padding:11px; border:1px solid #ffaaaa; background:white; color:#cc3030; border-radius:8px; font-size:14px; cursor:pointer;">
+                    <button type="button" onclick="confirmDeleteAccount()" style="width:100%; padding:11px; border:1px solid #ffaaaa; background:white; color:#cc3030; border-radius:8px; font-size:14px; cursor:pointer;" data-i18n="settings.delete">
                         계정 삭제
                     </button>
-                    <p style="font-size:11px; color:#999; margin:8px 2px 0; line-height:1.5;">
+                    <p style="font-size:11px; color:#999; margin:8px 2px 0; line-height:1.5;" data-i18n="settings.gdpr">
                         데이터 다운로드는 GDPR · 개인정보보호법상 본인이 가진 권리입니다.
                         계정 삭제 시 모든 정보가 영구 삭제되며, 활성 구독이 있으면 다음 결제일 전에 자동 해지됩니다.
                     </p>
@@ -2613,68 +2622,68 @@
             <button class="nav-sheet-item" onclick="closeNavSheet(); openShareCard()">
                 <div class="nav-icon" style="background:#e8f5e9;">📸</div>
                 <div>
-                    <div class="nav-label">공유 카드 만들기</div>
-                    <div class="nav-desc">대화를 예쁜 카드로 저장·공유</div>
+                    <div class="nav-label" data-i18n="nav.share">공유 카드 만들기</div>
+                    <div class="nav-desc" data-i18n="nav.share.d">대화를 예쁜 카드로 저장·공유</div>
                 </div>
             </button>
 
             <button class="nav-sheet-item" onclick="closeNavSheet(); openScenarioSheet()">
                 <div class="nav-icon" style="background:#fce4ec;">🎭</div>
                 <div>
-                    <div class="nav-label">시나리오 모드</div>
-                    <div class="nav-desc">고백·화해·소개팅 롤플레이</div>
+                    <div class="nav-label" data-i18n="nav.scenario">시나리오 모드</div>
+                    <div class="nav-desc" data-i18n="nav.scenario.d">고백·화해·소개팅 롤플레이</div>
                 </div>
             </button>
 
             <button class="nav-sheet-item" onclick="closeNavSheet(); requestFortune()">
                 <div class="nav-icon" style="background:#fff3cd;">☀️</div>
                 <div>
-                    <div class="nav-label">오늘의 운세</div>
-                    <div class="nav-desc">별자리·띠·MBTI 기반 운세</div>
+                    <div class="nav-label" data-i18n="nav.fortune">오늘의 운세</div>
+                    <div class="nav-desc" data-i18n="nav.fortune.d">별자리·띠·MBTI 기반 운세</div>
                 </div>
             </button>
 
             <button class="nav-sheet-item" onclick="closeNavSheet(); openVocabModal()">
                 <div class="nav-icon" style="background:#e8f5e9;">📚</div>
                 <div>
-                    <div class="nav-label">단어장 / 퀴즈</div>
-                    <div class="nav-desc">저장된 단어 복습하기</div>
+                    <div class="nav-label" data-i18n="nav.vocab">단어장 / 퀴즈</div>
+                    <div class="nav-desc" data-i18n="nav.vocab.d">저장된 단어 복습하기</div>
                 </div>
             </button>
 
             <button class="nav-sheet-item" onclick="closeNavSheet(); openCorrectionsModal()">
                 <div class="nav-icon" style="background:#e8f4ff;">✏️</div>
                 <div>
-                    <div class="nav-label">교정 노트</div>
-                    <div class="nav-desc">내가 틀린 문장 다시 보기</div>
+                    <div class="nav-label" data-i18n="nav.corrections">교정 노트</div>
+                    <div class="nav-desc" data-i18n="nav.corrections.d">내가 틀린 문장 다시 보기</div>
                 </div>
             </button>
 
             <button class="nav-sheet-item" onclick="closeNavSheet(); openReferralModal()">
                 <div class="nav-icon" style="background:#fff0f6;">🎁</div>
                 <div>
-                    <div class="nav-label">친구 초대</div>
-                    <div class="nav-desc">초대하면 둘 다 7일 무제한</div>
+                    <div class="nav-label" data-i18n="nav.referral">친구 초대</div>
+                    <div class="nav-desc" data-i18n="nav.referral.d">초대하면 둘 다 7일 무제한</div>
                 </div>
             </button>
 
             <button class="nav-sheet-item" onclick="closeNavSheet(); openSettingsModal()">
                 <div class="nav-icon" style="background:#e3f2fd;">⚙️</div>
                 <div>
-                    <div class="nav-label">설정</div>
-                    <div class="nav-desc">알림·TTS·언어 설정</div>
+                    <div class="nav-label" data-i18n="nav.settings">설정</div>
+                    <div class="nav-desc" data-i18n="nav.settings.d">알림·TTS·언어 설정</div>
                 </div>
             </button>
 
             <button class="nav-sheet-item" onclick="closeNavSheet(); changeCharacter()">
                 <div class="nav-icon" style="background:#f3e5f5;">👤</div>
                 <div>
-                    <div class="nav-label">캐릭터 변경</div>
-                    <div class="nav-desc">지우 · 화랑 5인 (태오·레오·현우·지훈·주노)</div>
+                    <div class="nav-label" data-i18n="nav.character">캐릭터 변경</div>
+                    <div class="nav-desc" data-i18n="nav.character.d">지우 · 화랑 5인 (태오·레오·현우·지훈·주노)</div>
                 </div>
             </button>
 
-            <div class="nav-sheet-cancel" onclick="closeNavSheet()">취소</div>
+            <div class="nav-sheet-cancel" data-i18n="nav.cancel" onclick="closeNavSheet()">취소</div>
         </div>
     </div>
 
@@ -3189,8 +3198,11 @@
             vocabCache = Array.isArray(list) ? list.slice() : [];
         }
 
-        // 언어 설정
-        let currentLang = 'ko';
+        // 언어 설정 (localStorage 에 지속 — 채팅 chrome 까지 적용)
+        let currentLang = (function () {
+            try { const v = localStorage.getItem('kdate_lang'); if (v === 'ko' || v === 'en') return v; } catch (e) {}
+            return 'ko';
+        })();
         const i18n = {
             ko: {
                 's1-subtitle': '한국인 AI 파트너와 매일 카톡하며<br>자연스럽게 한국어를 배워보세요!',
@@ -3242,11 +3254,164 @@
             }
         };
 
+        // ── 채팅 chrome i18n (nav·결제·로그인·에러·설정) ───────────────────
+        // 정적 HTML 은 data-i18n="key", 동적 JS 는 tc('key') 로 번역.
+        const CHROME = {
+            ko: {
+                'nav.share': '공유 카드 만들기', 'nav.share.d': '대화를 예쁜 카드로 저장·공유',
+                'nav.scenario': '시나리오 모드', 'nav.scenario.d': '고백·화해·소개팅 롤플레이',
+                'nav.fortune': '오늘의 운세', 'nav.fortune.d': '별자리·띠·MBTI 기반 운세',
+                'nav.vocab': '단어장 / 퀴즈', 'nav.vocab.d': '저장된 단어 복습하기',
+                'nav.corrections': '교정 노트', 'nav.corrections.d': '내가 틀린 문장 다시 보기',
+                'nav.referral': '친구 초대', 'nav.referral.d': '초대하면 둘 다 7일 무제한',
+                'nav.settings': '설정', 'nav.settings.d': '알림·TTS·언어 설정',
+                'nav.character': '캐릭터 변경', 'nav.character.d': '다른 AI 파트너와 대화하기',
+                'nav.cancel': '취소',
+                // 로그인
+                'login.title': '로그인',
+                'login.body': '💾 <strong>Google로 1초 가입</strong> — 진행도와 캐릭터 호감도가 저장돼요.<br>무료로 일 <strong>{cap}개</strong> 메시지, 무제한 월 구독 옵션도 있어요.',
+                'login.google': 'Google로 계속',
+                'login.terms': '로그인하면 <a href="/terms" target="_blank" style="color:#888;">이용약관</a> 과 <a href="/privacy" target="_blank" style="color:#888;">개인정보처리방침</a>에 동의하는 것으로 간주됩니다.',
+                'login.signingIn': '로그인 중...',
+                // 페이월 (결제)
+                'pay.title': '✨ 무제한으로 더 대화하기',
+                'pay.body': '오늘 무료 메시지(<strong>{cap}개</strong>)를 모두 사용했어요.<br>내일 자정에 다시 리셋되고, 지금 바로 더 대화하고 싶다면 구독해주세요.',
+                'pay.card.month': '월 구독',
+                'pay.card.trial': '{n}일 무료 체험',
+                'pay.head.unlimited': '무제한 메시지',
+                'pay.head.trialUnlimited': '오늘부터 무제한 메시지',
+                'pay.li1': '모든 캐릭터(11명) 무제한 대화',
+                'pay.li2': '시나리오·미션 무제한',
+                'pay.li3': '언제든 해지 가능',
+                'pay.trialNote': '카드 등록 후 {n}일간 무료. 체험 기간 안에 해지하면 청구되지 않아요.',
+                'pay.btn.subscribe': '구독 시작',
+                'pay.btn.trialStart': '{n}일 무료 체험 시작',
+                'pay.btn.preparing': '결제 준비 중',
+                'pay.btn.opening': '결제 페이지 여는 중...',
+                'pay.err.checkout': '결제 페이지를 열 수 없어요.',
+                'pay.err.network': '네트워크 오류',
+                'settings.language': '언어 / Language',
+                // 설정 — 계정·구독 카드
+                'settings.title': '⚙️ 설정',
+                'settings.account': '계정',
+                'settings.noName': '(이름 없음)',
+                'settings.noEmail': '(이메일 없음)',
+                'settings.loginWord': '로그인',
+                'settings.subStatus': '구독 상태',
+                'settings.head.active': '월 구독 활성',
+                'settings.head.trial': '무료 체험 중 — {n}일 남음',
+                'settings.head.pastDue': '결제 재시도 중',
+                'settings.head.cancelEnd': '해지 예정',
+                'settings.head.unlimited': '월 구독 무제한',
+                'settings.head.free': '무료 사용 중',
+                'settings.det.nextBill': '다음 결제일: {date}',
+                'settings.det.trial': '{date}부터 자동 청구가 시작됩니다. 언제든 해지하면 청구되지 않아요.',
+                'settings.det.pastDue': '결제 정보를 업데이트해주세요. 다음 결제일: {date}',
+                'settings.det.cancelEnd': '{date}까지 무제한으로 이용 가능합니다. 그 후 자동 만료.',
+                'settings.det.activeNoDate': '구독 활성',
+                'settings.det.free': '오늘 무료 메시지: {used}/{cap} 사용. 무제한 이용하려면 구독해주세요.',
+                'settings.act.manage': '구독 관리',
+                'settings.act.cancelTrial': '체험 해지',
+                'settings.act.managePay': '결제 정보 관리',
+                'settings.act.scheduleCancel': '해지 예약',
+                'settings.act.subscribe': '구독 시작',
+                'settings.quota': '{used} / {cap} 메시지 ({tz} 자정에 리셋)',
+                'settings.usageToday': '오늘 사용량',
+                'settings.download': '📥 내 데이터 다운로드 (JSON)',
+                'settings.logout': '로그아웃',
+                'settings.delete': '계정 삭제',
+                'settings.gdpr': '데이터 다운로드는 GDPR · 개인정보보호법상 본인이 가진 권리입니다. 계정 삭제 시 모든 정보가 영구 삭제되며, 활성 구독이 있으면 다음 결제일 전에 자동 해지됩니다.',
+            },
+            en: {
+                'nav.share': 'Make a share card', 'nav.share.d': 'Save & share your chat as a card',
+                'nav.scenario': 'Scenario mode', 'nav.scenario.d': 'Confession, makeup, blind-date roleplay',
+                'nav.fortune': "Today's fortune", 'nav.fortune.d': 'Based on zodiac, sign & MBTI',
+                'nav.vocab': 'Vocab / Quiz', 'nav.vocab.d': 'Review your saved words',
+                'nav.corrections': 'Correction notes', 'nav.corrections.d': 'Revisit your mistakes',
+                'nav.referral': 'Invite friends', 'nav.referral.d': 'Both get 7 days unlimited',
+                'nav.settings': 'Settings', 'nav.settings.d': 'Notifications, TTS, language',
+                'nav.character': 'Change character', 'nav.character.d': 'Chat with another AI partner',
+                'nav.cancel': 'Cancel',
+                // Login
+                'login.title': 'Sign in',
+                'login.body': '💾 <strong>Sign up with Google in 1 sec</strong> — your progress and affinity are saved.<br>Free <strong>{cap} messages</strong>/day, plus an unlimited monthly plan.',
+                'login.google': 'Continue with Google',
+                'login.terms': 'By signing in you agree to our <a href="/terms" target="_blank" style="color:#888;">Terms</a> and <a href="/privacy" target="_blank" style="color:#888;">Privacy Policy</a>.',
+                'login.signingIn': 'Signing in...',
+                // Paywall (billing)
+                'pay.title': '✨ Chat more, unlimited',
+                'pay.body': "You've used all your free messages (<strong>{cap}</strong>) for today.<br>They reset at midnight — subscribe to keep chatting right now.",
+                'pay.card.month': 'Monthly plan',
+                'pay.card.trial': '{n}-day free trial',
+                'pay.head.unlimited': 'Unlimited messages',
+                'pay.head.trialUnlimited': 'Unlimited from today',
+                'pay.li1': 'Unlimited chat with all 11 characters',
+                'pay.li2': 'Unlimited scenarios & missions',
+                'pay.li3': 'Cancel anytime',
+                'pay.trialNote': "Free for {n} days after adding a card. Cancel within the trial and you won't be charged.",
+                'pay.btn.subscribe': 'Subscribe',
+                'pay.btn.trialStart': 'Start {n}-day free trial',
+                'pay.btn.preparing': 'Payment setup in progress',
+                'pay.btn.opening': 'Opening checkout...',
+                'pay.err.checkout': "Couldn't open the checkout page.",
+                'pay.err.network': 'Network error',
+                'settings.language': 'Language',
+                // Settings — account & subscription card
+                'settings.title': '⚙️ Settings',
+                'settings.account': 'Account',
+                'settings.noName': '(no name)',
+                'settings.noEmail': '(no email)',
+                'settings.loginWord': 'login',
+                'settings.subStatus': 'Subscription',
+                'settings.head.active': 'Monthly subscription active',
+                'settings.head.trial': 'Free trial — {n} days left',
+                'settings.head.pastDue': 'Retrying payment',
+                'settings.head.cancelEnd': 'Cancellation scheduled',
+                'settings.head.unlimited': 'Monthly unlimited',
+                'settings.head.free': 'Free plan',
+                'settings.det.nextBill': 'Next billing: {date}',
+                'settings.det.trial': 'Auto-billing starts on {date}. Cancel anytime within the trial and you won’t be charged.',
+                'settings.det.pastDue': 'Please update your payment info. Next billing: {date}',
+                'settings.det.cancelEnd': 'Unlimited until {date}, then auto-expires.',
+                'settings.det.activeNoDate': 'Subscription active',
+                'settings.det.free': "Today's free messages: {used}/{cap} used. Subscribe for unlimited.",
+                'settings.act.manage': 'Manage subscription',
+                'settings.act.cancelTrial': 'Cancel trial',
+                'settings.act.managePay': 'Manage payment',
+                'settings.act.scheduleCancel': 'Schedule cancellation',
+                'settings.act.subscribe': 'Subscribe',
+                'settings.quota': '{used} / {cap} messages (resets at {tz} midnight)',
+                'settings.usageToday': "Today's usage",
+                'settings.download': '📥 Download my data (JSON)',
+                'settings.logout': 'Log out',
+                'settings.delete': 'Delete account',
+                'settings.gdpr': 'Data download is your right under GDPR and privacy law. Deleting your account permanently erases all your data; any active subscription is auto-canceled before the next billing date.',
+            },
+        };
+        function tc(key, vars) {
+            const d = CHROME[currentLang] || CHROME.ko;
+            let s = (d && d[key] != null) ? d[key] : (CHROME.ko[key] != null ? CHROME.ko[key] : key);
+            if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+            return s;
+        }
+        // 정적 HTML 의 [data-i18n](textContent) / [data-i18n-ph](placeholder) 를 현재 언어로 갱신
+        function applyChromeI18n(root) {
+            const scope = root || document;
+            scope.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tc(el.getAttribute('data-i18n')); });
+            scope.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = tc(el.getAttribute('data-i18n-html')); });
+            scope.querySelectorAll('[data-i18n-ph]').forEach(el => { el.setAttribute('placeholder', tc(el.getAttribute('data-i18n-ph'))); });
+        }
+
         function setLang(lang) {
             currentLang = lang;
+            try { localStorage.setItem('kdate_lang', lang); } catch (e) {}
             document.documentElement.lang = lang;
-            document.getElementById('lang-ko').classList.toggle('active', lang === 'ko');
-            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            ['lang-ko', 'set-lang-ko'].forEach(id => { const b = document.getElementById(id); if (b) b.classList.toggle('active', lang === 'ko'); });
+            ['lang-en', 'set-lang-en'].forEach(id => { const b = document.getElementById(id); if (b) b.classList.toggle('active', lang === 'en'); });
+
+            // 채팅 chrome(nav·설정 등 정적 HTML) 갱신 + 열려있는 동적 모달 재렌더
+            applyChromeI18n();
+            try { if (typeof renderSettingsModal === 'function' && document.getElementById('settings-modal-overlay')?.classList.contains('show')) renderSettingsModal(); } catch (e) {}
 
             const t = i18n[lang];
             // innerHTML targets
@@ -6119,9 +6284,9 @@
             const dn = document.getElementById('settings-display-name');
             const em = document.getElementById('settings-email');
             const pr = document.getElementById('settings-provider');
-            if (dn) dn.textContent = u.display_name || '(이름 없음)';
-            if (em) em.textContent = u.email || '(이메일 없음)';
-            if (pr) pr.textContent = (u.provider || 'dev').toUpperCase() + ' 로그인';
+            if (dn) dn.textContent = u.display_name || tc('settings.noName');
+            if (em) em.textContent = u.email || tc('settings.noEmail');
+            if (pr) pr.textContent = (u.provider || 'dev').toUpperCase() + ' ' + tc('settings.loginWord');
 
             const card = document.getElementById('settings-sub-card');
             const headline = document.getElementById('settings-sub-headline');
@@ -6136,41 +6301,41 @@
 
             // 상태별 카드 본문 + 액션 분기
             let bg = 'linear-gradient(135deg,#f093fb 0%,#f5576c 100%)';   // 기본 (active)
-            let head = '월 구독 활성';
-            let det = periodLabel ? `다음 결제일: ${periodLabel}` : '';
+            let head = tc('settings.head.active');
+            let det = periodLabel ? tc('settings.det.nextBill', { date: periodLabel }) : '';
             let acts = [];
 
             if (sub.active && status === 'trialing') {
                 bg = 'linear-gradient(135deg,#7e57c2 0%,#5e35b1 100%)';
                 const daysLeft = sub.period_end ? Math.max(0, Math.ceil((sub.period_end - Date.now()/1000) / 86400)) : 0;
-                head = `무료 체험 중 — ${daysLeft}일 남음`;
-                det = `${periodLabel}부터 자동 청구가 시작됩니다. 언제든 해지하면 청구되지 않아요.`;
-                acts.push({label: '구독 관리', primary: true, onclick: 'openBillingPortal()'});
-                acts.push({label: '체험 해지', primary: false, onclick: 'confirmCancelSubscription()'});
+                head = tc('settings.head.trial', { n: daysLeft });
+                det = tc('settings.det.trial', { date: periodLabel });
+                acts.push({label: tc('settings.act.manage'), primary: true, onclick: 'openBillingPortal()'});
+                acts.push({label: tc('settings.act.cancelTrial'), primary: false, onclick: 'confirmCancelSubscription()'});
             } else if (sub.active && status === 'past_due') {
                 bg = 'linear-gradient(135deg,#ffa502 0%,#ff6348 100%)';
-                head = '결제 재시도 중';
-                det = `결제 정보를 업데이트해주세요. 다음 결제일: ${periodLabel}`;
-                acts.push({label: '결제 정보 관리', primary: true, onclick: 'openBillingPortal()'});
+                head = tc('settings.head.pastDue');
+                det = tc('settings.det.pastDue', { date: periodLabel });
+                acts.push({label: tc('settings.act.managePay'), primary: true, onclick: 'openBillingPortal()'});
             } else if (sub.active && cap_end) {
                 bg = 'linear-gradient(135deg,#888 0%,#444 100%)';
-                head = '해지 예정';
-                det = `${periodLabel}까지 무제한으로 이용 가능합니다. 그 후 자동 만료.`;
-                acts.push({label: '구독 관리', primary: true, onclick: 'openBillingPortal()'});
+                head = tc('settings.head.cancelEnd');
+                det = tc('settings.det.cancelEnd', { date: periodLabel });
+                acts.push({label: tc('settings.act.manage'), primary: true, onclick: 'openBillingPortal()'});
             } else if (sub.active) {
-                head = '월 구독 무제한';
-                det = periodLabel ? `다음 결제일: ${periodLabel}` : '구독 활성';
-                acts.push({label: '구독 관리', primary: true, onclick: 'openBillingPortal()'});
-                acts.push({label: '해지 예약', primary: false, onclick: 'confirmCancelSubscription()'});
+                head = tc('settings.head.unlimited');
+                det = periodLabel ? tc('settings.det.nextBill', { date: periodLabel }) : tc('settings.det.activeNoDate');
+                acts.push({label: tc('settings.act.manage'), primary: true, onclick: 'openBillingPortal()'});
+                acts.push({label: tc('settings.act.scheduleCancel'), primary: false, onclick: 'confirmCancelSubscription()'});
             } else {
                 bg = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
-                head = '무료 사용 중';
-                det = `오늘 무료 메시지: ${q.used || 0}/${q.cap || 0} 사용. 무제한 이용하려면 구독해주세요.`;
-                acts.push({label: '구독 시작', primary: true, onclick: 'startSubscription()'});
+                head = tc('settings.head.free');
+                det = tc('settings.det.free', { used: q.used || 0, cap: q.cap || 0 });
+                acts.push({label: tc('settings.act.subscribe'), primary: true, onclick: 'startSubscription()'});
                 if (quotaCard) quotaCard.style.display = 'block';
                 if (quotaText) {
                     const tz = q.timezone === 'Asia/Seoul' ? 'KST' : 'UTC';
-                    quotaText.textContent = `${q.used || 0} / ${q.cap || 0} 메시지 (${tz} 자정에 리셋)`;
+                    quotaText.textContent = tc('settings.quota', { used: q.used || 0, cap: q.cap || 0, tz: tz });
                 }
             }
             if (card) card.style.background = bg;
@@ -6314,10 +6479,11 @@
             };
             showIf('login-btn-google', !!m.google);
             showIf('login-btn-dev',    !!m.dev, 'block');
-            const quotaEl = document.getElementById('login-modal-quota');
-            if (quotaEl && authState.quota) quotaEl.textContent = authState.quota.cap || 25;
+            const cap = (authState.quota && authState.quota.cap) || 25;
+            const desc = document.getElementById('login-modal-desc');
+            if (desc) desc.innerHTML = tc('login.body', { cap: cap });
             const capEl = document.getElementById('paywall-cap');
-            if (capEl && authState.quota) capEl.textContent = authState.quota.cap || 25;
+            if (capEl) capEl.textContent = cap;
         }
 
         // ---- 로그인 모달 ----
@@ -6371,11 +6537,10 @@
         function openPaywallModal(serverErr) {
             const overlay = document.getElementById('paywall-modal-overlay');
             if (!overlay) return;
-            // 서버가 알려준 cap 으로 본문 동기화
-            if (serverErr && serverErr.free_quota) {
-                const capEl = document.getElementById('paywall-cap');
-                if (capEl) capEl.textContent = serverErr.free_quota;
-            }
+            // 본문(쿼터 cap 보간) — 현재 언어로
+            const cap = (serverErr && serverErr.free_quota) || (authState.quota && authState.quota.cap) || 25;
+            const bodyEl = document.getElementById('paywall-modal-body');
+            if (bodyEl) bodyEl.innerHTML = tc('pay.body', { cap: cap });
             // Trial 활성 여부에 따라 카드·버튼 카피 분기
             const trialDays = (authState && authState.trial_days) || 0;
             const cardLabel = document.getElementById('paywall-card-label');
@@ -6383,25 +6548,25 @@
             const trialNote = document.getElementById('paywall-trial-note');
             const subBtn = document.getElementById('paywall-subscribe-btn');
             if (trialDays > 0) {
-                if (cardLabel) cardLabel.textContent = `${trialDays}일 무료 체험`;
-                if (cardHead) cardHead.textContent = '오늘부터 무제한 메시지';
+                if (cardLabel) cardLabel.textContent = tc('pay.card.trial', { n: trialDays });
+                if (cardHead) cardHead.textContent = tc('pay.head.trialUnlimited');
                 if (trialNote) {
                     trialNote.style.display = 'block';
-                    trialNote.textContent = `카드 등록 후 ${trialDays}일간 무료. 체험 기간 안에 해지하면 청구되지 않아요.`;
+                    trialNote.textContent = tc('pay.trialNote', { n: trialDays });
                 }
-                if (subBtn && authState.billing_enabled) subBtn.textContent = `${trialDays}일 무료 체험 시작`;
+                if (subBtn && authState.billing_enabled) subBtn.textContent = tc('pay.btn.trialStart', { n: trialDays });
             } else {
-                if (cardLabel) cardLabel.textContent = '월 구독';
-                if (cardHead) cardHead.textContent = '무제한 메시지';
+                if (cardLabel) cardLabel.textContent = tc('pay.card.month');
+                if (cardHead) cardHead.textContent = tc('pay.head.unlimited');
                 if (trialNote) trialNote.style.display = 'none';
-                if (subBtn && authState.billing_enabled) subBtn.textContent = '구독 시작';
+                if (subBtn && authState.billing_enabled) subBtn.textContent = tc('pay.btn.subscribe');
             }
             if (subBtn) {
                 if (authState.billing_enabled) {
                     subBtn.disabled = false;
                 } else {
                     subBtn.disabled = true;
-                    subBtn.textContent = '결제 준비 중';
+                    subBtn.textContent = tc('pay.btn.preparing');
                 }
             }
             overlay.classList.add('show');
@@ -6417,7 +6582,7 @@
         async function startSubscription() {
             const statusEl = document.getElementById('paywall-status');
             const btn = document.getElementById('paywall-subscribe-btn');
-            if (btn) { btn.disabled = true; btn.textContent = '결제 페이지 여는 중...'; }
+            if (btn) { btn.disabled = true; btn.textContent = tc('pay.btn.opening'); }
             if (statusEl) statusEl.textContent = '';
             try {
                 const r = await fetch('/billing/checkout', {
@@ -6426,14 +6591,14 @@
                 });
                 const data = await r.json().catch(() => ({}));
                 if (!r.ok || !data.url) {
-                    if (statusEl) statusEl.textContent = data.error || '결제 페이지를 열 수 없어요.';
-                    if (btn) { btn.disabled = false; btn.textContent = '구독 시작'; }
+                    if (statusEl) statusEl.textContent = data.error || tc('pay.err.checkout');
+                    if (btn) { btn.disabled = false; btn.textContent = tc('pay.btn.subscribe'); }
                     return;
                 }
                 window.location.href = data.url;
             } catch (e) {
-                if (statusEl) statusEl.textContent = '네트워크 오류';
-                if (btn) { btn.disabled = false; btn.textContent = '구독 시작'; }
+                if (statusEl) statusEl.textContent = tc('pay.err.network');
+                if (btn) { btn.disabled = false; btn.textContent = tc('pay.btn.subscribe'); }
             }
         }
 
@@ -7025,6 +7190,9 @@
         if ('serviceWorker' in navigator) {
             checkNotificationStatus();
         }
+
+        // 저장된 언어를 온보딩+chrome 전체에 적용 (기본 ko)
+        try { setLang(currentLang); } catch (e) { console.warn('[i18n] init setLang failed', e); }
 
         // IndexedDB 초기화 + 마이그레이션 + 캐시 로드
         (async function initStorage() {
