@@ -2166,8 +2166,8 @@
         <p class="subtitle" id="s2-subtitle">선택한 주제로 대화를 시작해드려요 😊<br>(복수 선택 가능)</p>
 
         <div class="interest-options">
-            <button class="interest-btn" data-interest="kdrama" onclick="toggleInterest(this)">📺 K-드라마</button>
-            <button class="interest-btn" data-interest="kpop" onclick="toggleInterest(this)">🎵 K-pop</button>
+            <button class="interest-btn" data-interest="kdrama" onclick="toggleInterest(this)">📺 <span class="t-kdrama">K-드라마</span></button>
+            <button class="interest-btn" data-interest="kpop" onclick="toggleInterest(this)">🎵 <span class="t-kpop">K-pop</span></button>
             <button class="interest-btn" data-interest="travel" onclick="toggleInterest(this)">✈️ <span class="t-travel">한국 여행</span></button>
             <button class="interest-btn" data-interest="food" onclick="toggleInterest(this)">🍜 <span class="t-food">한국 음식</span></button>
             <button class="interest-btn" data-interest="culture" onclick="toggleInterest(this)">🇰🇷 <span class="t-culture">한국 문화</span></button>
@@ -3206,6 +3206,8 @@
                 't-next': '다음',
                 's2-title': '관심사를 골라줘요!',
                 's2-subtitle': '선택한 주제로 대화를 시작해드려요 😊<br>(복수 선택 가능)',
+                't-kdrama': 'K-드라마',
+                't-kpop': 'K-pop',
                 't-travel': '한국 여행',
                 't-food': '한국 음식',
                 't-culture': '한국 문화',
@@ -3228,6 +3230,8 @@
                 't-next': 'Next',
                 's2-title': 'Pick your interests!',
                 's2-subtitle': "We'll start the chat based on your picks 😊<br>(multiple choices OK)",
+                't-kdrama': 'K-Drama',
+                't-kpop': 'K-pop',
                 't-travel': 'Korean Travel',
                 't-food': 'Korean Food',
                 't-culture': 'Korean Culture',
@@ -3262,7 +3266,7 @@
             // span class targets
             [
                 't-beginner-title','t-beginner-sub','t-inter-title','t-inter-sub',
-                't-adv-title','t-adv-sub','t-travel','t-food','t-culture','t-romance'
+                't-adv-title','t-adv-sub','t-kdrama','t-kpop','t-travel','t-food','t-culture','t-romance'
             ].forEach(cls => {
                 document.querySelectorAll('.' + cls).forEach(el => el.textContent = t[cls]);
             });
