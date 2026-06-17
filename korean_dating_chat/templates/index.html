@@ -2210,7 +2210,7 @@
                 <div class="header-avatar" id="header-avatar">👨</div>
                 <div class="header-info">
                     <h2 id="character-name">민준</h2>
-                    <p id="header-status"><span class="online-dot"></span>온라인</p>
+                    <p id="header-status"><span class="online-dot"></span><span data-i18n="chat.online">온라인</span></p>
                 </div>
             </div>
             <div class="header-buttons">
@@ -2257,7 +2257,7 @@
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:6px; flex-shrink:0; margin-left:8px;">
-                    <button onclick="startMission()"
+                    <button onclick="startMission()" data-i18n="mission.start"
                         style="background:#667eea; border:none; color:white; padding:5px 12px; border-radius:12px; font-size:11px; font-weight:700; cursor:pointer;">
                         시작 →
                     </button>
@@ -2317,12 +2317,12 @@
         <div class="auth-prompt-banner" id="auth-prompt-banner" style="display:none;" role="region" aria-label="로그인 안내">
             <div class="auth-prompt-banner__content">
                 <span class="auth-prompt-banner__emoji" aria-hidden="true">💾</span>
-                <span class="auth-prompt-banner__text">
+                <span class="auth-prompt-banner__text" id="auth-prompt-text">
                     <strong>Google로 1초 가입 →</strong> 진행도와 캐릭터 호감도가 저장돼요. 일 <strong id="auth-prompt-quota">25</strong>개 메시지 무료.
                 </span>
             </div>
             <div class="auth-prompt-banner__actions">
-                <button type="button" class="auth-prompt-banner__btn" onclick="openLoginModal()">로그인</button>
+                <button type="button" class="auth-prompt-banner__btn" onclick="openLoginModal()" data-i18n="chip.signIn">로그인</button>
                 <button type="button" class="auth-prompt-banner__close" aria-label="배너 닫기" onclick="dismissAuthBanner()">&times;</button>
             </div>
         </div>
@@ -3345,6 +3345,20 @@
                 'chat.inputPlaceholder': '메시지를 입력하세요...',
                 'chat.err.delay': '응답이 지연되고 있어요. 잠시 후 다시 시도해주세요.',
                 'chat.err.generic': '죄송해요, 오류가 발생했어요. 다시 시도해주세요.',
+                // 채팅 헤더 / 배너 / 메시지 버튼
+                'chat.online': '온라인',
+                'chip.signIn': '로그인',
+                'chip.unlimited': '✨ 무제한',
+                'chip.trial': '✨ 체험 중',
+                'chip.cancelEnd': '✨ 해지 예정',
+                'authBanner.text': '<strong>Google로 1초 가입 →</strong> 진행도와 캐릭터 호감도가 저장돼요. 일 <strong>{cap}개</strong> 메시지 무료.',
+                'chat.pronounce': '🎤 발음',
+                'mission.start': '시작 →',
+                'trial.today': '오늘',
+                'trial.cancelEnd': '<strong>{d} · 구독이 {date}에 종료돼요.</strong> 계속 무제한으로 이용하려면 다시 구독하세요.',
+                'trial.auto': '<strong>무료 체험 {d}</strong> · {date}에 월 $4.99로 자동 전환돼요. 원치 않으면 설정에서 해지할 수 있어요.',
+                'trial.btn.resub': '다시 구독',
+                'trial.btn.manage': '구독 관리',
             },
             en: {
                 'nav.share': 'Make a share card', 'nav.share.d': 'Save & share your chat as a card',
@@ -3433,6 +3447,20 @@
                 'chat.inputPlaceholder': 'Type a message...',
                 'chat.err.delay': 'The response is taking a while. Please try again shortly.',
                 'chat.err.generic': 'Sorry, something went wrong. Please try again.',
+                // Chat header / banner / message buttons
+                'chat.online': 'Online',
+                'chip.signIn': 'Sign in',
+                'chip.unlimited': '✨ Unlimited',
+                'chip.trial': '✨ Trial',
+                'chip.cancelEnd': '✨ Ending',
+                'authBanner.text': '<strong>Sign up with Google in 1 sec →</strong> your progress and affinity are saved. <strong>{cap} free messages</strong>/day.',
+                'chat.pronounce': '🎤 Pronounce',
+                'mission.start': 'Start →',
+                'trial.today': 'Today',
+                'trial.cancelEnd': '<strong>{d} · Your subscription ends on {date}.</strong> Resubscribe to keep unlimited access.',
+                'trial.auto': '<strong>Free trial {d}</strong> · Auto-converts to $4.99/mo on {date}. Cancel anytime in Settings.',
+                'trial.btn.resub': 'Resubscribe',
+                'trial.btn.manage': 'Manage subscription',
             },
         };
         function tc(key, vars) {
@@ -3456,9 +3484,14 @@
             ['lang-ko', 'set-lang-ko'].forEach(id => { const b = document.getElementById(id); if (b) b.classList.toggle('active', lang === 'ko'); });
             ['lang-en', 'set-lang-en'].forEach(id => { const b = document.getElementById(id); if (b) b.classList.toggle('active', lang === 'en'); });
 
-            // 채팅 chrome(nav·설정 등 정적 HTML) 갱신 + 열려있는 동적 모달 재렌더
+            // 채팅 chrome(nav·설정 등 정적 HTML) 갱신 + 동적 렌더 함수 재실행
             applyChromeI18n();
-            try { if (typeof renderSettingsModal === 'function' && document.getElementById('settings-modal-overlay')?.classList.contains('show')) renderSettingsModal(); } catch (e) {}
+            try {
+                if (typeof renderAuthHeader === 'function') renderAuthHeader();
+                if (typeof renderAuthBanner === 'function') renderAuthBanner();
+                if (typeof renderTrialBanner === 'function') renderTrialBanner();
+                if (typeof renderSettingsModal === 'function' && document.getElementById('settings-modal-overlay')?.classList.contains('show')) renderSettingsModal();
+            } catch (e) {}
 
             const t = i18n[lang];
             // innerHTML targets
@@ -3779,7 +3812,7 @@
 
                 if (tokenAtSend !== sessionToken) {
                     typingIndicator.remove();
-                    if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span>온라인';
+                    if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
                     return;
                 }
 
@@ -3789,7 +3822,7 @@
                 }
 
                 typingIndicator.remove();
-                if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span>온라인';
+                if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
 
                 // SSE 스트림 파싱 (sendMessage와 동일 패턴)
                 const { contentDiv: streamContent } = createStreamBubble();
@@ -3832,7 +3865,7 @@
                 }
             } catch (error) {
                 typingIndicator.remove();
-                if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span>온라인';
+                if (headerStatus) headerStatus.innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
                 console.error('Send sticker error:', error);
                 if (error.name === 'AbortError') {
                     addMessage(tc('chat.err.delay'), false);
@@ -5036,19 +5069,19 @@
                     // 401 = 로그인 필요, 402 = quota 초과 (paywall), 429 = 유료자 fair-use 한도
                     if (response.status === 401 && errData.paywall === 'login') {
                         typingIndicator.remove();
-                        document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                        document.getElementById('header-status').innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
                         openLoginModal();
                         return;
                     }
                     if (response.status === 402 && errData.paywall === 'quota') {
                         typingIndicator.remove();
-                        document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                        document.getElementById('header-status').innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
                         openPaywallModal(errData);
                         return;
                     }
                     if (response.status === 429 && errData.paywall === 'fair_use') {
                         typingIndicator.remove();
-                        document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                        document.getElementById('header-status').innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
                         if (typeof showToast === 'function') showToast(errData.error || '오늘 한도에 도달했어요. 자정에 리셋됩니다.');
                         return;
                     }
@@ -5057,13 +5090,13 @@
 
                 if (tokenAtSend !== sessionToken) {
                     typingIndicator.remove();
-                    document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                    document.getElementById('header-status').innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
                     return;
                 }
 
                 // Typing indicator 제거 + 빈 AI 버블 생성
                 typingIndicator.remove();
-                document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                document.getElementById('header-status').innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
                 document.querySelectorAll('.read-status').forEach(el => {
                     el.textContent = '읽음'; el.classList.add('read');
                 });
@@ -5146,7 +5179,7 @@
                 }
             } catch (error) {
                 typingIndicator.remove();
-                document.getElementById('header-status').innerHTML = '<span class="online-dot"></span>온라인';
+                document.getElementById('header-status').innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
                 console.error('Send message error:', error);
                 if (error.name === 'AbortError') {
                     addMessage(tc('chat.err.delay'), false);
@@ -5627,7 +5660,7 @@
                         const pronBtn = document.createElement('button');
                         pronBtn.className = 'translate-btn';
                         pronBtn.style.marginLeft = '6px';
-                        pronBtn.textContent = '🎤 발음';
+                        pronBtn.textContent = tc('chat.pronounce');
                         pronBtn.onclick = () => startPronounce(pronRef);
                         contentDiv.appendChild(pronBtn);
                     }
@@ -5912,8 +5945,9 @@
             const show = !authState.authenticated && chatActive && !dismissed;
             banner.style.display = show ? 'flex' : 'none';
             if (show) {
-                const q = document.getElementById('auth-prompt-quota');
-                if (q && authState.quota) q.textContent = authState.quota.cap || 25;
+                const cap = (authState.quota && authState.quota.cap) || 25;
+                const textEl = document.getElementById('auth-prompt-text');
+                if (textEl) textEl.innerHTML = tc('authBanner.text', { cap: cap });
             }
         }
         function dismissAuthBanner() {
@@ -5946,18 +5980,18 @@
                 banner.style.display = 'none'; return;
             }
             const dateStr = _fmtDate(pe);
-            const dLabel = days <= 0 ? '오늘' : `D-${days}`;
+            const dLabel = days <= 0 ? tc('trial.today') : `D-${days}`;
             const txt = document.getElementById('trial-banner-text');
             const btn = document.getElementById('trial-banner-btn');
             if (sub.cancel_at_period_end) {
                 // 해지 예정 — 다시 구독 유도
-                txt.innerHTML = `<strong>${dLabel} · 구독이 ${dateStr}에 종료돼요.</strong> 계속 무제한으로 이용하려면 다시 구독하세요.`;
-                btn.textContent = '다시 구독';
+                txt.innerHTML = tc('trial.cancelEnd', { d: dLabel, date: dateStr });
+                btn.textContent = tc('trial.btn.resub');
                 btn.onclick = () => { if (typeof startSubscription === 'function') startSubscription(); };
             } else {
                 // 체험 자동전환 안내 — 투명성(과금 불만 방지) + 관리 동선
-                txt.innerHTML = `<strong>무료 체험 ${dLabel}</strong> · ${dateStr}에 월 $4.99로 자동 전환돼요. 원치 않으면 설정에서 해지할 수 있어요.`;
-                btn.textContent = '구독 관리';
+                txt.innerHTML = tc('trial.auto', { d: dLabel, date: dateStr });
+                btn.textContent = tc('trial.btn.manage');
                 btn.onclick = () => openSettingsModal();
             }
             banner.style.display = 'flex';
@@ -5969,17 +6003,17 @@
             const slot = document.getElementById('auth-header-slot');
             if (!slot) return;
             if (!authState.authenticated) {
-                slot.innerHTML = `<button class="auth-chip auth-chip--login" type="button" onclick="openLoginModal()" aria-label="로그인">로그인</button>`;
+                slot.innerHTML = `<button class="auth-chip auth-chip--login" type="button" onclick="openLoginModal()" aria-label="${tc('chip.signIn')}">${tc('chip.signIn')}</button>`;
                 return;
             }
             const q = authState.quota || {};
             const sub = authState.subscription || {};
             const name = (authState.user && authState.user.display_name) || '나';
             if (q.unlimited || sub.active) {
-                let label = '✨ 무제한';
-                if (sub.status === 'trialing') label = '✨ 체험 중';
-                else if (sub.cancel_at_period_end) label = '✨ 해지 예정';
-                slot.innerHTML = `<button class="auth-chip auth-chip--vip" type="button" onclick="openSettingsModal()" title="구독 설정">${label}</button>`;
+                let label = tc('chip.unlimited');
+                if (sub.status === 'trialing') label = tc('chip.trial');
+                else if (sub.cancel_at_period_end) label = tc('chip.cancelEnd');
+                slot.innerHTML = `<button class="auth-chip auth-chip--vip" type="button" onclick="openSettingsModal()" title="${tc('chip.signIn')}">${label}</button>`;
                 return;
             }
             const remaining = (typeof q.remaining === 'number') ? q.remaining : q.cap;
