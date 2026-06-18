@@ -126,28 +126,33 @@
         }
 
         .character-cards {
-            display: flex;
-            gap: 16px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
             justify-content: center;
-            flex-wrap: wrap;
             max-width: 920px;
             margin: 0 auto;
         }
 
         .character-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            padding: 24px 18px;
+            border-radius: 14px;
+            padding: 14px 10px;
             cursor: pointer;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             color: white;
-            width: 180px;
+            width: auto;
             position: relative;
         }
 
         .character-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        /* 아주 좁은 폰만 2열, 일반 폰(360px+)은 3열로 스크롤 최소화 */
+        @media (max-width: 360px) {
+            .character-cards { grid-template-columns: repeat(2, 1fr); }
         }
 
         .character-card.jiwoo {
@@ -221,26 +226,28 @@
         }
 
         .character-avatar {
-            font-size: 80px;
-            margin-bottom: 15px;
+            font-size: 52px;
+            margin-bottom: 8px;
         }
 
         .character-avatar img {
-            width: 80px;
-            height: 80px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             object-fit: cover;
         }
 
         .character-name {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
+            line-height: 1.25;
         }
 
         .character-info {
-            font-size: 14px;
+            font-size: 11px;
             opacity: 0.9;
+            line-height: 1.3;
         }
 
         /* 채팅 화면 */
