@@ -3414,6 +3414,33 @@
                 'corr.empty': '아직 교정 기록이 없어요.<br><br>설정에서 <b>💡 문법 힌트 모드</b>를 켜고 한국어로 말해보세요. 틀린 부분을 AI가 부드럽게 고쳐주고, 여기에 모아 복습할 수 있어요.',
                 'corr.loadFail': '교정 노트를 불러오지 못했어요.',
                 'corr.recent': '최근 교정 {n}개 · 같은 실수를 반복하지 않게 다시 읽어보세요 📖',
+                'prog.loginPrompt': '로그인하면 학습 스트릭과 레벨이 기록돼요. 🔥',
+                'prog.goalMet': '✅ 오늘 목표 달성!',
+                'prog.goalMetSub': '오늘 학습 완료 · 스트릭 안전 🔥',
+                'prog.goalTitle': '🎯 오늘의 목표',
+                'prog.goalRemain': '{x} XP 더 채우면 달성! (대화 {n}번 정도)',
+                'prog.streak': '{n}일 연속 학습',
+                'prog.best': '최고 기록 {n}일',
+                'prog.wordsCollected': '📚 모은 단어',
+                'prog.wordsLearned': '✅ 외운 단어',
+                'prog.goReview': '🔁 단어 복습하러 가기',
+                'voc.reviewCount': '🔁 복습 ({n})',
+                'voc.srsLoginPrompt': '로그인하면 대화에서 나온 단어가 자동으로 저장되고,<br>기기가 바뀌어도 복습할 수 있어요. 📚',
+                'voc.noneNow': '🎉 지금 복습할 단어가 없어요!<br>전체 {n}개 저장됨 · 곧 복습 시간이 와요.',
+                'voc.srsEmpty': '아직 저장된 단어가 없어요.<br>캐릭터와 대화하면 어려운 단어가 자동으로 쌓여요! 💬',
+                'voc.listEmpty': '아직 저장된 단어가 없어요.<br>AI 응답 아래 단어 칩을 탭해서 저장해보세요! 📖',
+                'voc.cardProgress': '복습 {i} / {n}',
+                'voc.showMeaning': '뜻 보기',
+                'voc.again': '다시 🔁',
+                'voc.know': '알아요 ✓',
+                'voc.reviewDone': '복습 완료!',
+                'voc.knowCount': '{n}개 중 <b style="color:#4caf50;">{c}</b>개 알아요',
+                'voc.reviewMore': '더 복습하기',
+                'voc.delete': '삭제',
+                'voc.quizNeed2': '단어가 최소 2개 필요해요!<br>먼저 단어를 저장해보세요 📚',
+                'voc.quizDone': '퀴즈 완료!',
+                'voc.quizRetry': '다시 도전 🔄',
+                'voc.next': '다음 →',
             },
             en: {
                 'nav.share': 'Make a share card', 'nav.share.d': 'Save & share your chat as a card',
@@ -3563,6 +3590,33 @@
                 'corr.empty': 'No corrections yet.<br><br>Turn on <b>💡 Grammar hint mode</b> in Settings and chat in Korean. The AI gently fixes your mistakes and collects them here for review.',
                 'corr.loadFail': "Couldn't load your correction notes.",
                 'corr.recent': 'Recent {n} corrections · re-read them so you don’t repeat the same mistake 📖',
+                'prog.loginPrompt': 'Sign in to track your learning streak and level. 🔥',
+                'prog.goalMet': '✅ Daily goal complete!',
+                'prog.goalMetSub': 'Done for today · streak safe 🔥',
+                'prog.goalTitle': '🎯 Daily goal',
+                'prog.goalRemain': '{x} more XP to go! (~{n} chats)',
+                'prog.streak': '{n}-day streak',
+                'prog.best': 'Best: {n} days',
+                'prog.wordsCollected': '📚 Words saved',
+                'prog.wordsLearned': '✅ Words learned',
+                'prog.goReview': '🔁 Go review words',
+                'voc.reviewCount': '🔁 Review ({n})',
+                'voc.srsLoginPrompt': 'Sign in and words from your chats are saved automatically,<br>reviewable even on a new device. 📚',
+                'voc.noneNow': '🎉 No words to review right now!<br>{n} saved total · review time is coming soon.',
+                'voc.srsEmpty': 'No saved words yet.<br>Chat with a character and tricky words pile up automatically! 💬',
+                'voc.listEmpty': 'No saved words yet.<br>Tap the word chips under an AI reply to save them! 📖',
+                'voc.cardProgress': 'Review {i} / {n}',
+                'voc.showMeaning': 'Show meaning',
+                'voc.again': 'Again 🔁',
+                'voc.know': 'I know it ✓',
+                'voc.reviewDone': 'Review complete!',
+                'voc.knowCount': 'You know <b style="color:#4caf50;">{c}</b> of {n}',
+                'voc.reviewMore': 'Review more',
+                'voc.delete': 'Delete',
+                'voc.quizNeed2': 'You need at least 2 words!<br>Save some words first 📚',
+                'voc.quizDone': 'Quiz complete!',
+                'voc.quizRetry': 'Try again 🔄',
+                'voc.next': 'Next →',
             },
         };
         function tc(key, vars) {
@@ -4703,7 +4757,7 @@
                 const d = await r.json();
                 const due = (d.stats && d.stats.due) || 0;
                 const t = document.getElementById('tab-srs');
-                if (t) t.textContent = due > 0 ? `🔁 복습 (${due})` : '🔁 복습';
+                if (t) t.textContent = due > 0 ? tc('voc.reviewCount', { n: due }) : tc('m.vocab.tabSrs');
             } catch (e) { /* non-fatal */ }
         }
 
@@ -4714,21 +4768,21 @@
             try {
                 const r = await fetch('/vocab/review', { credentials: 'same-origin' });
                 if (r.status === 401) {
-                    el.innerHTML = '<div class="vocab-empty">로그인하면 대화에서 나온 단어가 자동으로 저장되고,<br>기기가 바뀌어도 복습할 수 있어요. 📚<br><br>'
-                        + '<button class="vocab-tab active" onclick="closeVocabModal(); (window.openLoginModal&&openLoginModal())">로그인</button></div>';
+                    el.innerHTML = '<div class="vocab-empty">' + tc('voc.srsLoginPrompt') + '<br><br>'
+                        + '<button class="vocab-tab active" onclick="closeVocabModal(); (window.openLoginModal&&openLoginModal())">' + tc('common.signIn') + '</button></div>';
                     return;
                 }
                 data = await r.json();
             } catch (e) {
-                el.innerHTML = '<div class="vocab-empty">불러오기 실패. 잠시 후 다시 시도해주세요.</div>';
+                el.innerHTML = '<div class="vocab-empty">' + tc('common.loadFail') + '</div>';
                 return;
             }
             srsState = { cards: data.cards || [], idx: 0, correct: 0 };
             if (srsState.cards.length === 0) {
                 const total = (data.stats && data.stats.total) || 0;
                 el.innerHTML = total > 0
-                    ? `<div class="vocab-empty">🎉 지금 복습할 단어가 없어요!<br>전체 ${total}개 저장됨 · 곧 복습 시간이 와요.</div>`
-                    : '<div class="vocab-empty">아직 저장된 단어가 없어요.<br>캐릭터와 대화하면 어려운 단어가 자동으로 쌓여요! 💬</div>';
+                    ? '<div class="vocab-empty">' + tc('voc.noneNow', { n: total }) + '</div>'
+                    : '<div class="vocab-empty">' + tc('voc.srsEmpty') + '</div>';
                 return;
             }
             renderSrsCard();
@@ -4739,7 +4793,7 @@
             const c = srsState.cards[srsState.idx];
             if (!c) { renderSrsDone(); return; }
             el.innerHTML = `
-                <div style="text-align:center;color:#bbb;font-size:12px;margin-bottom:10px;">복습 ${srsState.idx + 1} / ${srsState.cards.length}</div>
+                <div style="text-align:center;color:#bbb;font-size:12px;margin-bottom:10px;">${tc('voc.cardProgress', { i: srsState.idx + 1, n: srsState.cards.length })}</div>
                 <div style="background:#fff;border:1px solid #f0e0ef;border-radius:16px;padding:30px 18px;text-align:center;box-shadow:0 6px 20px rgba(240,147,251,0.12);">
                     <div style="font-size:30px;font-weight:800;color:#333;">${escHtml(c.word)}</div>
                     ${c.romanization ? `<div style="color:#f093fb;font-size:14px;margin-top:6px;">${escHtml(c.romanization)}</div>` : ''}
@@ -4749,7 +4803,7 @@
                     </div>
                 </div>
                 <div id="srs-actions" style="margin-top:16px;">
-                    <button onclick="revealSrs()" style="width:100%;padding:14px;border:none;border-radius:12px;background:#f093fb;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">뜻 보기</button>
+                    <button onclick="revealSrs()" style="width:100%;padding:14px;border:none;border-radius:12px;background:#f093fb;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">${tc('voc.showMeaning')}</button>
                 </div>`;
         }
 
@@ -4758,8 +4812,8 @@
             if (ans) ans.style.display = 'block';
             document.getElementById('srs-actions').innerHTML = `
                 <div style="display:flex;gap:10px;">
-                    <button onclick="answerSrs(false)" style="flex:1;padding:14px;border:1px solid #ffccd5;border-radius:12px;background:#fff5f7;color:#ff4d6d;font-size:15px;font-weight:700;cursor:pointer;">다시 🔁</button>
-                    <button onclick="answerSrs(true)" style="flex:1;padding:14px;border:none;border-radius:12px;background:#4caf50;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">알아요 ✓</button>
+                    <button onclick="answerSrs(false)" style="flex:1;padding:14px;border:1px solid #ffccd5;border-radius:12px;background:#fff5f7;color:#ff4d6d;font-size:15px;font-weight:700;cursor:pointer;">${tc('voc.again')}</button>
+                    <button onclick="answerSrs(true)" style="flex:1;padding:14px;border:none;border-radius:12px;background:#4caf50;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">${tc('voc.know')}</button>
                 </div>`;
         }
 
@@ -4784,9 +4838,9 @@
             el.innerHTML = `
                 <div class="vocab-empty" style="padding:28px 16px;">
                     <div style="font-size:40px;">🎉</div>
-                    <div style="font-size:18px;font-weight:800;color:#333;margin-top:8px;">복습 완료!</div>
-                    <div style="margin-top:8px;color:#888;">${n}개 중 <b style="color:#4caf50;">${srsState.correct}</b>개 알아요</div>
-                    <button class="vocab-tab active" style="margin-top:18px;" onclick="renderSrsReview()">더 복습하기</button>
+                    <div style="font-size:18px;font-weight:800;color:#333;margin-top:8px;">${tc('voc.reviewDone')}</div>
+                    <div style="margin-top:8px;color:#888;">${tc('voc.knowCount', { n: n, c: srsState.correct })}</div>
+                    <button class="vocab-tab active" style="margin-top:18px;" onclick="renderSrsReview()">${tc('voc.reviewMore')}</button>
                 </div>`;
             updateVocabDueBadge();
         }
@@ -4797,7 +4851,7 @@
             badge.textContent = list.length > 0 ? `(${list.length})` : '';
             const el = document.getElementById('vocab-list-content');
             if (list.length === 0) {
-                el.innerHTML = '<div class="vocab-empty">아직 저장된 단어가 없어요.<br>AI 응답 아래 단어 칩을 탭해서 저장해보세요! 📖</div>';
+                el.innerHTML = '<div class="vocab-empty">' + tc('voc.listEmpty') + '</div>';
                 return;
             }
             el.innerHTML = '';
@@ -4810,7 +4864,7 @@
                         ${v.romanization ? `<div class="vocab-romanization">${escHtml(v.romanization)}</div>` : ''}
                         <div class="vocab-meaning-text">${escHtml(v.meaning)}</div>
                     </div>
-                    <button class="vocab-delete-btn" onclick="deleteWord('${escHtml(v.word)}')" title="삭제">🗑</button>
+                    <button class="vocab-delete-btn" onclick="deleteWord('${escHtml(v.word)}')" title="${escHtml(tc('voc.delete'))}">🗑</button>
                 `;
                 el.appendChild(row);
             });
@@ -4833,7 +4887,7 @@
             const list = getVocabList();
             if (list.length < 2) {
                 document.getElementById('quiz-content').innerHTML =
-                    '<div class="vocab-empty">단어가 최소 2개 필요해요!<br>먼저 단어를 저장해보세요 📚</div>';
+                    '<div class="vocab-empty">' + tc('voc.quizNeed2') + '</div>';
                 return;
             }
             quizState = { items: shuffle([...list]), idx: 0, score: 0, answered: false };
@@ -4847,8 +4901,8 @@
                     <div class="quiz-finish">
                         <div style="font-size:40px;margin-bottom:12px;">🎉</div>
                         <div class="quiz-finish-score">${score} / ${items.length}</div>
-                        <div style="font-size:15px;color:#666;margin:8px 0 24px;">퀴즈 완료!</div>
-                        <button class="quiz-next-btn" style="display:block;" onclick="initQuiz()">다시 도전 🔄</button>
+                        <div style="font-size:15px;color:#666;margin:8px 0 24px;">${tc('voc.quizDone')}</div>
+                        <button class="quiz-next-btn" style="display:block;" onclick="initQuiz()">${tc('voc.quizRetry')}</button>
                     </div>`;
                 return;
             }
@@ -4867,7 +4921,7 @@
                     ${choices.map(c => `<button class="quiz-choice" onclick="answerQuiz(this,'${escHtml(c)}','${escHtml(current.meaning)}')">${escHtml(c)}</button>`).join('')}
                 </div>
                 <div class="quiz-score">${idx + 1} / ${items.length} &nbsp;|&nbsp; ✅ ${score}</div>
-                <button class="quiz-next-btn" id="quiz-next-btn" onclick="nextQuizCard()">다음 →</button>
+                <button class="quiz-next-btn" id="quiz-next-btn" onclick="nextQuizCard()">${tc('voc.next')}</button>
             `;
             quizState.answered = false;
         }
@@ -6149,8 +6203,8 @@
         async function renderProgressModal() {
             const el = document.getElementById('progress-body');
             if (!authState || !authState.authenticated) {
-                el.innerHTML = '<div class="vocab-empty">로그인하면 학습 스트릭과 레벨이 기록돼요. 🔥<br><br>'
-                    + '<button class="vocab-tab active" onclick="closeProgressModal(); (window.openLoginModal&&openLoginModal())">로그인</button></div>';
+                el.innerHTML = '<div class="vocab-empty">' + tc('prog.loginPrompt') + '<br><br>'
+                    + '<button class="vocab-tab active" onclick="closeProgressModal(); (window.openLoginModal&&openLoginModal())">' + tc('common.signIn') + '</button></div>';
                 return;
             }
             const p = authState.progress || { streak:0, best_streak:0, level:1, level_xp:0, level_need:50, xp:0 };
@@ -6161,25 +6215,25 @@
             const gpct = Math.min(100, Math.round((dxp / Math.max(1, goal)) * 100));
             const goalCard = p.goal_met
                 ? `<div style="background:linear-gradient(135deg,#e9fbef,#d8f5e1);border:1px solid #b8e6c6;border-radius:14px;padding:16px;text-align:center;">
-                       <div style="font-size:16px;font-weight:800;color:#2e9e54;">✅ 오늘 목표 달성!</div>
-                       <div style="font-size:12px;color:#5aa873;margin-top:3px;">오늘 학습 완료 · 스트릭 안전 🔥</div>
+                       <div style="font-size:16px;font-weight:800;color:#2e9e54;">${tc('prog.goalMet')}</div>
+                       <div style="font-size:12px;color:#5aa873;margin-top:3px;">${tc('prog.goalMetSub')}</div>
                    </div>`
                 : `<div style="background:#fff;border:1px solid #f0e0ef;border-radius:14px;padding:16px;">
                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                           <span style="font-weight:800;color:#333;font-size:15px;">🎯 오늘의 목표</span>
+                           <span style="font-weight:800;color:#333;font-size:15px;">${tc('prog.goalTitle')}</span>
                            <span style="color:#aaa;font-size:12px;">${dxp} / ${goal} XP</span>
                        </div>
                        <div style="margin-top:8px;height:9px;background:#eee;border-radius:6px;overflow:hidden;">
                            <div style="height:100%;width:${Math.max(4, gpct)}%;background:linear-gradient(90deg,#f093fb,#f5576c);border-radius:6px;"></div>
                        </div>
-                       <div style="margin-top:8px;font-size:12px;color:#999;">${goal - dxp} XP 더 채우면 달성! (대화 ${Math.ceil((goal - dxp) / 2)}번 정도)</div>
+                       <div style="margin-top:8px;font-size:12px;color:#999;">${tc('prog.goalRemain', { x: goal - dxp, n: Math.ceil((goal - dxp) / 2) })}</div>
                    </div>`;
             el.innerHTML = `
                 ${goalCard}
                 <div style="text-align:center;margin-top:18px;">
                     <div style="font-size:40px;line-height:1;">🔥</div>
-                    <div style="font-size:24px;font-weight:800;color:#333;margin-top:4px;">${p.streak}일 연속 학습</div>
-                    <div style="color:#999;font-size:13px;margin-top:2px;">최고 기록 ${p.best_streak}일</div>
+                    <div style="font-size:24px;font-weight:800;color:#333;margin-top:4px;">${tc('prog.streak', { n: p.streak })}</div>
+                    <div style="color:#999;font-size:13px;margin-top:2px;">${tc('prog.best', { n: p.best_streak })}</div>
                 </div>
                 <div style="margin-top:22px;background:#faf4fb;border-radius:14px;padding:16px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -6193,15 +6247,15 @@
                 <div style="margin-top:14px;display:flex;gap:10px;">
                     <div style="flex:1;text-align:center;background:#fff;border:1px solid #f0e6f2;border-radius:12px;padding:14px 6px;">
                         <div style="font-size:22px;font-weight:800;color:#333;">${words.total}</div>
-                        <div style="font-size:12px;color:#999;margin-top:2px;">📚 모은 단어</div>
+                        <div style="font-size:12px;color:#999;margin-top:2px;">${tc('prog.wordsCollected')}</div>
                     </div>
                     <div style="flex:1;text-align:center;background:#fff;border:1px solid #f0e6f2;border-radius:12px;padding:14px 6px;">
                         <div style="font-size:22px;font-weight:800;color:#4caf50;">${words.learned}</div>
-                        <div style="font-size:12px;color:#999;margin-top:2px;">✅ 외운 단어</div>
+                        <div style="font-size:12px;color:#999;margin-top:2px;">${tc('prog.wordsLearned')}</div>
                     </div>
                 </div>
                 <div style="margin-top:18px;text-align:center;">
-                    <button class="vocab-tab active" onclick="closeProgressModal(); (window.openVocabModal&&openVocabModal()); (window.switchVocabTab&&switchVocabTab('srs'))">🔁 단어 복습하러 가기</button>
+                    <button class="vocab-tab active" onclick="closeProgressModal(); (window.openVocabModal&&openVocabModal()); (window.switchVocabTab&&switchVocabTab('srs'))">${tc('prog.goReview')}</button>
                 </div>`;
         }
 
