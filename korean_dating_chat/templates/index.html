@@ -2225,22 +2225,22 @@
                 <!-- 인증/Quota 칩 (renderAuthHeader 가 채움) -->
                 <div id="auth-header-slot" class="auth-header-slot"></div>
                 <!-- 호감도 카운터 (클릭 → 진행도 모달) -->
-                <div id="heart-counter" title="호감도" role="button" tabindex="0" aria-label="호감도 진행 상황 보기" onclick="openIntimacyModal()">
+                <div id="heart-counter" title="호감도" role="button" tabindex="0" aria-label="호감도 진행 상황 보기" data-i18n-aria="aria.affinity" onclick="openIntimacyModal()">
                     <span id="heart-level-badge">Lv1</span>
                     <span aria-hidden="true">❤️</span> <span id="heart-count">0</span>
                 </div>
                 <!-- 학습 스트릭 (클릭 → 진척 모달) -->
-                <div id="streak-chip" role="button" tabindex="0" title="학습 진척" aria-label="학습 진척 보기" onclick="openProgressModal()" style="display:none;align-items:center;gap:3px;background:rgba(255,255,255,0.18);border-radius:14px;padding:3px 9px;cursor:pointer;font-size:13px;font-weight:700;color:#fff;">
+                <div id="streak-chip" role="button" tabindex="0" title="학습 진척" aria-label="학습 진척 보기" data-i18n-aria="aria.progress" onclick="openProgressModal()" style="display:none;align-items:center;gap:3px;background:rgba(255,255,255,0.18);border-radius:14px;padding:3px 9px;cursor:pointer;font-size:13px;font-weight:700;color:#fff;">
                     <span aria-hidden="true">🔥</span><span id="streak-count">0</span>
                 </div>
                 <!-- 대화기록 -->
-                <button class="header-btn icon-btn" onclick="openHistoryModal()" title="대화 기록" aria-label="대화 기록 열기">
+                <button class="header-btn icon-btn" onclick="openHistoryModal()" title="대화 기록" aria-label="대화 기록 열기" data-i18n-aria="aria.history">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                 </button>
                 <!-- 더보기 (⋮) -->
-                <button class="header-btn icon-btn" onclick="openNavSheet()" title="더보기" aria-label="더보기 메뉴 열기">
+                <button class="header-btn icon-btn" onclick="openNavSheet()" title="더보기" aria-label="더보기 메뉴 열기" data-i18n-aria="aria.more">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
                         <circle cx="12" cy="5" r="1.2" fill="currentColor"/>
                         <circle cx="12" cy="12" r="1.2" fill="currentColor"/>
@@ -2322,7 +2322,7 @@
         </div>
 
         <!-- 미인증 사용자용 안내 배너 — 첫 메시지에서 모달 ambush 방지. dismissible. -->
-        <div class="auth-prompt-banner" id="auth-prompt-banner" style="display:none;" role="region" aria-label="로그인 안내">
+        <div class="auth-prompt-banner" id="auth-prompt-banner" style="display:none;" role="region" aria-label="로그인 안내" data-i18n-aria="aria.loginRegion">
             <div class="auth-prompt-banner__content">
                 <span class="auth-prompt-banner__emoji" aria-hidden="true">💾</span>
                 <span class="auth-prompt-banner__text" id="auth-prompt-text">
@@ -2331,30 +2331,30 @@
             </div>
             <div class="auth-prompt-banner__actions">
                 <button type="button" class="auth-prompt-banner__btn" onclick="openLoginModal()" data-i18n="chip.signIn">로그인</button>
-                <button type="button" class="auth-prompt-banner__close" aria-label="배너 닫기" onclick="dismissAuthBanner()">&times;</button>
+                <button type="button" class="auth-prompt-banner__close" aria-label="배너 닫기" data-i18n-aria="aria.closeBanner" onclick="dismissAuthBanner()">&times;</button>
             </div>
         </div>
 
         <!-- 무료 체험 만료 임박 알림 (Tier 3.1 — 과금 투명성·이탈 방지) -->
-        <div class="auth-prompt-banner" id="trial-banner" style="display:none; background:linear-gradient(135deg,#fff4e6,#ffe9d6);" role="region" aria-label="체험 안내">
+        <div class="auth-prompt-banner" id="trial-banner" style="display:none; background:linear-gradient(135deg,#fff4e6,#ffe9d6);" role="region" aria-label="체험 안내" data-i18n-aria="aria.trialRegion">
             <div class="auth-prompt-banner__content">
                 <span class="auth-prompt-banner__emoji" aria-hidden="true">⏳</span>
                 <span class="auth-prompt-banner__text" id="trial-banner-text"></span>
             </div>
             <div class="auth-prompt-banner__actions">
                 <button type="button" class="auth-prompt-banner__btn" id="trial-banner-btn"></button>
-                <button type="button" class="auth-prompt-banner__close" aria-label="배너 닫기" onclick="dismissTrialBanner()">&times;</button>
+                <button type="button" class="auth-prompt-banner__close" aria-label="배너 닫기" data-i18n-aria="aria.closeBanner" onclick="dismissTrialBanner()">&times;</button>
             </div>
         </div>
 
-        <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions" aria-label="대화 기록"></div>
+        <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions" aria-label="대화 기록" data-i18n-aria="aria.historyRegion"></div>
 
         <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
         <div class="input-area">
             <div class="sticker-picker-wrapper">
-                <button class="sticker-picker-btn" id="sticker-picker-btn" onclick="toggleStickerPicker()" title="스티커" aria-label="스티커 선택" aria-haspopup="true" aria-expanded="false">😊</button>
-                <div class="sticker-picker-panel" id="sticker-picker-panel" role="dialog" aria-label="스티커 선택">
+                <button class="sticker-picker-btn" id="sticker-picker-btn" onclick="toggleStickerPicker()" title="스티커" aria-label="스티커 선택" data-i18n-aria="aria.sticker" aria-haspopup="true" aria-expanded="false">😊</button>
+                <div class="sticker-picker-panel" id="sticker-picker-panel" role="dialog" aria-label="스티커 선택" data-i18n-aria="aria.sticker">
                     <div class="sticker-picker-grid" id="sticker-picker-grid"></div>
                 </div>
             </div>
@@ -2366,11 +2366,11 @@
                 data-i18n-ph="chat.inputPlaceholder"
                 onkeydown="handleKeyPress(event)"
                 oninput="updateInputButtonState()"
-                aria-label="메시지 입력"
+                aria-label="메시지 입력" data-i18n-aria="aria.msgInput"
                 autocomplete="off"
             >
             <!-- 입력창 비어 있을 때만 보이는 음성 입력 버튼 -->
-            <button class="voice-btn" id="voice-btn" type="button" onclick="toggleVoiceInput()" aria-label="음성 입력 시작" aria-pressed="false" title="음성으로 입력">
+            <button class="voice-btn" id="voice-btn" type="button" onclick="toggleVoiceInput()" aria-label="음성 입력 시작" data-i18n-aria="aria.voiceStart" aria-pressed="false" title="음성으로 입력">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="9" y="3" width="6" height="11" rx="3"/>
                     <path d="M5 11a7 7 0 0 0 14 0"/>
@@ -2379,7 +2379,7 @@
                 </svg>
             </button>
             <!-- 입력창에 텍스트가 있을 때만 보이는 전송 버튼 -->
-            <button class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="메시지 전송" style="display:none;">전송</button>
+            <button class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="메시지 전송" data-i18n-aria="aria.send" style="display:none;">전송</button>
         </div>
     </div>
 
@@ -2390,7 +2390,7 @@
         <div class="modal-sheet" style="max-width: 420px;">
             <div class="modal-header">
                 <h3 id="login-modal-title" data-i18n="login.title">로그인</h3>
-                <button class="modal-close" aria-label="닫기" onclick="closeLoginModal()" id="login-modal-close-btn">&times;</button>
+                <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close" onclick="closeLoginModal()" id="login-modal-close-btn">&times;</button>
             </div>
             <div style="padding: 8px 24px 28px;">
                 <p id="login-modal-desc" style="color:#666; font-size:14px; line-height:1.6; margin: 0 0 20px;">
@@ -2422,7 +2422,7 @@
         <div class="modal-sheet" style="max-width: 440px;">
             <div class="modal-header">
                 <h3 id="paywall-modal-title" data-i18n="pay.title">✨ 무제한으로 더 대화하기</h3>
-                <button class="modal-close" aria-label="닫기" onclick="closePaywallModal()">&times;</button>
+                <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close" onclick="closePaywallModal()">&times;</button>
             </div>
             <div style="padding: 8px 24px 28px;">
                 <p style="color:#444; font-size:14px; line-height:1.7; margin: 0 0 18px;" id="paywall-modal-body">
@@ -2458,7 +2458,7 @@
         <div class="modal-sheet" style="max-width: 480px;">
             <div class="modal-header">
                 <h3 id="settings-modal-title" data-i18n="settings.title">⚙️ 설정</h3>
-                <button class="modal-close" aria-label="닫기" onclick="closeSettingsModal()">&times;</button>
+                <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close" onclick="closeSettingsModal()">&times;</button>
             </div>
             <div style="padding: 0 24px 28px;">
                 <!-- 프로필 카드 -->
@@ -2516,7 +2516,7 @@
         <div class="modal-sheet">
             <div class="modal-header">
                 <h3 id="vocab-modal-title"><span data-i18n="m.vocab.title">📚 내 단어장</span> <span id="vocab-count-badge" style="font-size:13px;color:#f093fb;font-weight:700;"></span></h3>
-                <button class="modal-close" aria-label="단어장 닫기" onclick="closeVocabModal()">&times;</button>
+                <button class="modal-close" aria-label="단어장 닫기" data-i18n-aria="aria.close" onclick="closeVocabModal()">&times;</button>
             </div>
             <div style="padding: 0 20px;">
                 <div class="vocab-tabs">
@@ -2547,7 +2547,7 @@
         <div class="modal-sheet" style="max-width:400px;">
             <div class="modal-header">
                 <h3 data-i18n="m.progress.title">🔥 학습 진척</h3>
-                <button class="modal-close" aria-label="닫기" onclick="closeProgressModal()">&times;</button>
+                <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close" onclick="closeProgressModal()">&times;</button>
             </div>
             <div class="modal-body" id="progress-body" style="padding:18px 20px 24px;"></div>
         </div>
@@ -2558,7 +2558,7 @@
         <div class="modal-sheet" style="max-width:400px;">
             <div class="modal-header">
                 <h3 data-i18n="m.referral.title">🎁 친구 초대</h3>
-                <button class="modal-close" aria-label="닫기" onclick="closeReferralModal()">&times;</button>
+                <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close" onclick="closeReferralModal()">&times;</button>
             </div>
             <div class="modal-body" id="referral-body" style="padding:18px 20px 24px;"></div>
         </div>
@@ -2569,7 +2569,7 @@
         <div class="modal-sheet" style="max-width:400px;">
             <div class="modal-header">
                 <h3 data-i18n="m.pron.title">🎤 발음 연습</h3>
-                <button class="modal-close" aria-label="닫기" onclick="closePronounceModal()">&times;</button>
+                <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close" onclick="closePronounceModal()">&times;</button>
             </div>
             <div class="modal-body" id="pron-body" style="padding:18px 20px 24px;"></div>
         </div>
@@ -2580,7 +2580,7 @@
         <div class="modal-sheet" style="max-width:440px;">
             <div class="modal-header">
                 <h3 data-i18n="m.corr.title">✏️ 교정 노트</h3>
-                <button class="modal-close" aria-label="닫기" onclick="closeCorrectionsModal()">&times;</button>
+                <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close" onclick="closeCorrectionsModal()">&times;</button>
             </div>
             <div class="modal-body" id="corr-body" style="padding:16px 18px 24px;"></div>
         </div>
@@ -2593,7 +2593,7 @@
         <div class="modal-sheet">
             <div class="modal-header">
                 <h3 id="settings-modal-title">⚙️ 설정</h3>
-                <button class="modal-close" aria-label="설정 닫기" onclick="closeSettingsModal()">&times;</button>
+                <button class="modal-close" aria-label="설정 닫기" data-i18n-aria="aria.close" onclick="closeSettingsModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="settings-row">
@@ -2624,7 +2624,7 @@
          대화 기록 모달
     ===================== -->
     <!-- 네비게이션 바텀시트 -->
-    <div class="nav-sheet-overlay" id="nav-sheet-overlay" role="dialog" aria-modal="true" aria-label="메뉴" aria-hidden="true" onclick="closeNavSheet(event)">
+    <div class="nav-sheet-overlay" id="nav-sheet-overlay" role="dialog" aria-modal="true" aria-label="메뉴" data-i18n-aria="aria.menu" aria-hidden="true" onclick="closeNavSheet(event)">
         <div class="nav-sheet" id="nav-sheet">
             <div class="nav-sheet-handle" aria-hidden="true"></div>
 
@@ -2728,7 +2728,7 @@
         <div class="share-modal" id="share-modal">
             <div class="share-modal-header">
                 <h3 id="share-modal-title">📸 공유 카드</h3>
-                <button class="share-modal-close" aria-label="공유 카드 닫기" onclick="closeShareCard()">×</button>
+                <button class="share-modal-close" aria-label="공유 카드 닫기" data-i18n-aria="aria.close" onclick="closeShareCard()">×</button>
             </div>
             <!-- 메시지 수 선택 -->
             <div class="share-msg-count">
@@ -2772,7 +2772,7 @@
                             style="background:#FEE500; border:none; padding:6px 14px; border-radius:16px; font-size:12px; font-weight:700; cursor:pointer; color:#333;">
                             + 새 대화
                         </button>
-                        <button class="modal-close" aria-label="대화 기록 닫기" onclick="closeHistoryModal()">&times;</button>
+                        <button class="modal-close" aria-label="대화 기록 닫기" data-i18n-aria="aria.close" onclick="closeHistoryModal()">&times;</button>
                     </div>
                 </div>
                 <div class="modal-body" id="history-list-content" style="overflow-y: auto;">
@@ -2799,7 +2799,7 @@
         <div class="modal-sheet modal-box" style="max-height: 80vh; overflow-y: auto;">
             <div class="modal-header">
                 <h3 id="intimacy-modal-title">❤️ 호감도</h3>
-                <button class="modal-close" aria-label="호감도 닫기" onclick="closeIntimacyModal()">&times;</button>
+                <button class="modal-close" aria-label="호감도 닫기" data-i18n-aria="aria.close" onclick="closeIntimacyModal()">&times;</button>
             </div>
             <div class="modal-body" style="padding: 14px 22px 22px;">
                 <div class="intimacy-current">
@@ -3441,6 +3441,21 @@
                 'voc.quizDone': '퀴즈 완료!',
                 'voc.quizRetry': '다시 도전 🔄',
                 'voc.next': '다음 →',
+                'aria.close': '닫기',
+                'aria.closeBanner': '배너 닫기',
+                'aria.affinity': '호감도 진행 상황 보기',
+                'aria.progress': '학습 진척 보기',
+                'aria.history': '대화 기록 열기',
+                'aria.historyRegion': '대화 기록',
+                'aria.more': '더보기 메뉴 열기',
+                'aria.msgInput': '메시지 입력',
+                'aria.send': '메시지 전송',
+                'aria.voiceStart': '음성 입력 시작',
+                'aria.voiceStop': '음성 입력 중지',
+                'aria.sticker': '스티커 선택',
+                'aria.menu': '메뉴',
+                'aria.loginRegion': '로그인 안내',
+                'aria.trialRegion': '체험 안내',
             },
             en: {
                 'nav.share': 'Make a share card', 'nav.share.d': 'Save & share your chat as a card',
@@ -3617,6 +3632,21 @@
                 'voc.quizDone': 'Quiz complete!',
                 'voc.quizRetry': 'Try again 🔄',
                 'voc.next': 'Next →',
+                'aria.close': 'Close',
+                'aria.closeBanner': 'Close banner',
+                'aria.affinity': 'View affinity progress',
+                'aria.progress': 'View learning progress',
+                'aria.history': 'Open chat history',
+                'aria.historyRegion': 'Chat history',
+                'aria.more': 'Open more menu',
+                'aria.msgInput': 'Message input',
+                'aria.send': 'Send message',
+                'aria.voiceStart': 'Start voice input',
+                'aria.voiceStop': 'Stop voice input',
+                'aria.sticker': 'Choose sticker',
+                'aria.menu': 'Menu',
+                'aria.loginRegion': 'Sign-in notice',
+                'aria.trialRegion': 'Trial notice',
             },
         };
         function tc(key, vars) {
@@ -3631,6 +3661,7 @@
             scope.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tc(el.getAttribute('data-i18n')); });
             scope.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = tc(el.getAttribute('data-i18n-html')); });
             scope.querySelectorAll('[data-i18n-ph]').forEach(el => { el.setAttribute('placeholder', tc(el.getAttribute('data-i18n-ph'))); });
+            scope.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', tc(el.getAttribute('data-i18n-aria'))); });
         }
 
         function setLang(lang) {
@@ -6938,7 +6969,7 @@
             if (btn) {
                 btn.classList.toggle('recording', on);
                 btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-                btn.setAttribute('aria-label', on ? '음성 입력 중지' : '음성 입력 시작');
+                btn.setAttribute('aria-label', on ? tc('aria.voiceStop') : tc('aria.voiceStart'));
             }
             if (input) {
                 input.classList.toggle('recording-glow', on);
