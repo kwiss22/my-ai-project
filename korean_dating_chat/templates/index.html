@@ -1461,13 +1461,14 @@
             padding: 60px 0;
         }
 
-        /* Buy Me a Coffee floating button */
+        /* Buy Me a Coffee floating button — 구독 결제 도입으로 숨김(2026-06). 되돌리려면 아래 display:none 한 줄만 제거. */
         .bmc-floating {
+            display: none !important;   /* 숨김 (구독으로 대체). 되돌리려면 이 줄만 삭제 */
+            display: flex;
             position: fixed;
             right: 16px;
             bottom: 24px;
             z-index: 9999;
-            display: flex;
             flex-direction: column;
             align-items: flex-end;
             gap: 6px;
