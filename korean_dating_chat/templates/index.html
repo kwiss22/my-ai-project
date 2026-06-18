@@ -2515,14 +2515,14 @@
     <div class="modal-overlay" id="vocab-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="vocab-modal-title" aria-hidden="true" onclick="closeVocabModal(event)">
         <div class="modal-sheet">
             <div class="modal-header">
-                <h3 id="vocab-modal-title">📚 내 단어장 <span id="vocab-count-badge" style="font-size:13px;color:#f093fb;font-weight:700;"></span></h3>
+                <h3 id="vocab-modal-title"><span data-i18n="m.vocab.title">📚 내 단어장</span> <span id="vocab-count-badge" style="font-size:13px;color:#f093fb;font-weight:700;"></span></h3>
                 <button class="modal-close" aria-label="단어장 닫기" onclick="closeVocabModal()">&times;</button>
             </div>
             <div style="padding: 0 20px;">
                 <div class="vocab-tabs">
-                    <button class="vocab-tab active" id="tab-list" onclick="switchVocabTab('list')">저장된 단어</button>
-                    <button class="vocab-tab" id="tab-srs" onclick="switchVocabTab('srs')">🔁 복습</button>
-                    <button class="vocab-tab" id="tab-quiz" onclick="switchVocabTab('quiz')">🎯 퀴즈</button>
+                    <button class="vocab-tab active" id="tab-list" onclick="switchVocabTab('list')" data-i18n="m.vocab.tabList">저장된 단어</button>
+                    <button class="vocab-tab" id="tab-srs" onclick="switchVocabTab('srs')" data-i18n="m.vocab.tabSrs">🔁 복습</button>
+                    <button class="vocab-tab" id="tab-quiz" onclick="switchVocabTab('quiz')" data-i18n="m.vocab.tabQuiz">🎯 퀴즈</button>
                 </div>
             </div>
             <div class="modal-body">
@@ -2546,7 +2546,7 @@
     <div class="modal-overlay" id="progress-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" onclick="closeProgressModal(event)">
         <div class="modal-sheet" style="max-width:400px;">
             <div class="modal-header">
-                <h3>🔥 학습 진척</h3>
+                <h3 data-i18n="m.progress.title">🔥 학습 진척</h3>
                 <button class="modal-close" aria-label="닫기" onclick="closeProgressModal()">&times;</button>
             </div>
             <div class="modal-body" id="progress-body" style="padding:18px 20px 24px;"></div>
@@ -2557,7 +2557,7 @@
     <div class="modal-overlay" id="referral-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" onclick="closeReferralModal(event)">
         <div class="modal-sheet" style="max-width:400px;">
             <div class="modal-header">
-                <h3>🎁 친구 초대</h3>
+                <h3 data-i18n="m.referral.title">🎁 친구 초대</h3>
                 <button class="modal-close" aria-label="닫기" onclick="closeReferralModal()">&times;</button>
             </div>
             <div class="modal-body" id="referral-body" style="padding:18px 20px 24px;"></div>
@@ -2568,7 +2568,7 @@
     <div class="modal-overlay" id="pron-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" onclick="closePronounceModal(event)">
         <div class="modal-sheet" style="max-width:400px;">
             <div class="modal-header">
-                <h3>🎤 발음 연습</h3>
+                <h3 data-i18n="m.pron.title">🎤 발음 연습</h3>
                 <button class="modal-close" aria-label="닫기" onclick="closePronounceModal()">&times;</button>
             </div>
             <div class="modal-body" id="pron-body" style="padding:18px 20px 24px;"></div>
@@ -2579,7 +2579,7 @@
     <div class="modal-overlay" id="corr-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" onclick="closeCorrectionsModal(event)">
         <div class="modal-sheet" style="max-width:440px;">
             <div class="modal-header">
-                <h3>✏️ 교정 노트</h3>
+                <h3 data-i18n="m.corr.title">✏️ 교정 노트</h3>
                 <button class="modal-close" aria-label="닫기" onclick="closeCorrectionsModal()">&times;</button>
             </div>
             <div class="modal-body" id="corr-body" style="padding:16px 18px 24px;"></div>
@@ -3367,6 +3367,53 @@
                 'trial.auto': '<strong>무료 체험 {d}</strong> · {date}에 월 $4.99로 자동 전환돼요. 원치 않으면 설정에서 해지할 수 있어요.',
                 'trial.btn.resub': '다시 구독',
                 'trial.btn.manage': '구독 관리',
+                // 공통
+                'common.loading': '불러오는 중...',
+                'common.loadFail': '불러오기 실패. 잠시 후 다시 시도해주세요.',
+                'common.signIn': '로그인',
+                // 모달 헤더/탭
+                'm.vocab.title': '📚 내 단어장',
+                'm.vocab.tabList': '저장된 단어',
+                'm.vocab.tabSrs': '🔁 복습',
+                'm.vocab.tabQuiz': '🎯 퀴즈',
+                'm.progress.title': '🔥 학습 진척',
+                'm.referral.title': '🎁 친구 초대',
+                'm.pron.title': '🎤 발음 연습',
+                'm.corr.title': '✏️ 교정 노트',
+                // 친구 초대 모달
+                'ref.loginPrompt': '로그인하면 초대 링크가 생겨요. 친구를 초대하면 둘 다 7일 무제한! 🎁',
+                'ref.headline': '친구를 초대하면 둘 다 7일 무제한!',
+                'ref.sub': '친구가 가입하면 나도, 친구도 7일 무료 ✨',
+                'ref.myLink': '내 초대 링크',
+                'ref.copy': '복사',
+                'ref.code': '코드',
+                'ref.count': '지금까지 <b style="color:#f093fb;font-size:18px;">{n}</b>명 초대했어요',
+                'ref.share': '📤 공유하기',
+                'ref.shareText': 'K-Dating Chat에서 한국인 AI랑 카톡하며 한국어 배워요! 같이 하면 둘 다 7일 무제한 🎁',
+                // 발음 연습 모달
+                'pron.instruction': '이 문장을 또박또박 말해보세요',
+                'pron.recording': '녹음 중...',
+                'pron.stopScore': '■ 멈추고 채점',
+                'pron.scoring': '채점 중... 🎯',
+                'pron.tooShort': '너무 짧아요. 다시 시도해주세요.',
+                'pron.retry': '🎤 다시',
+                'pron.retryFull': '🎤 다시 해보기',
+                'pron.point': '점',
+                'pron.great': '훌륭해요! 🎉',
+                'pron.good': '좋아요! 조금만 더 🙂',
+                'pron.again': '다시 연습해볼까요? 💪',
+                'pron.accuracy': '정확도',
+                'pron.fluency': '유창성',
+                'pron.completeness': '완성도',
+                'pron.noSpeech': '음성이 잘 안 들렸어요.',
+                'pron.fail': '발음 평가에 실패했어요.',
+                'pron.micPerm': '마이크 권한을 허용해주세요.',
+                'pron.micStart': '마이크를 시작할 수 없어요.',
+                // 교정 노트 모달
+                'corr.loginPrompt': '로그인하면 교정 노트가 생겨요. 설정에서 <b>💡 문법 힌트 모드</b>를 켜면, 내가 틀린 문장을 AI가 고쳐주고 여기에 쌓여요.',
+                'corr.empty': '아직 교정 기록이 없어요.<br><br>설정에서 <b>💡 문법 힌트 모드</b>를 켜고 한국어로 말해보세요. 틀린 부분을 AI가 부드럽게 고쳐주고, 여기에 모아 복습할 수 있어요.',
+                'corr.loadFail': '교정 노트를 불러오지 못했어요.',
+                'corr.recent': '최근 교정 {n}개 · 같은 실수를 반복하지 않게 다시 읽어보세요 📖',
             },
             en: {
                 'nav.share': 'Make a share card', 'nav.share.d': 'Save & share your chat as a card',
@@ -3469,6 +3516,53 @@
                 'trial.auto': '<strong>Free trial {d}</strong> · Auto-converts to $4.99/mo on {date}. Cancel anytime in Settings.',
                 'trial.btn.resub': 'Resubscribe',
                 'trial.btn.manage': 'Manage subscription',
+                // Common
+                'common.loading': 'Loading...',
+                'common.loadFail': 'Failed to load. Please try again shortly.',
+                'common.signIn': 'Sign in',
+                // Modal headers/tabs
+                'm.vocab.title': '📚 My Vocabulary',
+                'm.vocab.tabList': 'Saved words',
+                'm.vocab.tabSrs': '🔁 Review',
+                'm.vocab.tabQuiz': '🎯 Quiz',
+                'm.progress.title': '🔥 Progress',
+                'm.referral.title': '🎁 Invite friends',
+                'm.pron.title': '🎤 Pronunciation',
+                'm.corr.title': '✏️ Correction notes',
+                // Referral modal
+                'ref.loginPrompt': 'Sign in to get your invite link. Invite a friend and you both get 7 days unlimited! 🎁',
+                'ref.headline': 'Invite a friend — both get 7 days unlimited!',
+                'ref.sub': 'When your friend signs up, you both get 7 days free ✨',
+                'ref.myLink': 'My invite link',
+                'ref.copy': 'Copy',
+                'ref.code': 'Code',
+                'ref.count': "You've invited <b style=\"color:#f093fb;font-size:18px;\">{n}</b> so far",
+                'ref.share': '📤 Share',
+                'ref.shareText': 'Learn Korean on K-Dating Chat by texting with Korean AI partners! Join with me and we both get 7 days unlimited 🎁',
+                // Pronunciation modal
+                'pron.instruction': 'Read this sentence clearly out loud',
+                'pron.recording': 'Recording...',
+                'pron.stopScore': '■ Stop & score',
+                'pron.scoring': 'Scoring... 🎯',
+                'pron.tooShort': 'Too short. Please try again.',
+                'pron.retry': '🎤 Retry',
+                'pron.retryFull': '🎤 Try again',
+                'pron.point': 'pts',
+                'pron.great': 'Excellent! 🎉',
+                'pron.good': 'Nice! A little more 🙂',
+                'pron.again': "Let's practice again 💪",
+                'pron.accuracy': 'Accuracy',
+                'pron.fluency': 'Fluency',
+                'pron.completeness': 'Completeness',
+                'pron.noSpeech': "Couldn't hear your voice clearly.",
+                'pron.fail': 'Pronunciation scoring failed.',
+                'pron.micPerm': 'Please allow microphone access.',
+                'pron.micStart': "Couldn't start the microphone.",
+                // Correction notes modal
+                'corr.loginPrompt': 'Sign in to start your correction notes. Turn on <b>💡 Grammar hint mode</b> in Settings, and the AI will fix your mistakes and collect them here.',
+                'corr.empty': 'No corrections yet.<br><br>Turn on <b>💡 Grammar hint mode</b> in Settings and chat in Korean. The AI gently fixes your mistakes and collects them here for review.',
+                'corr.loadFail': "Couldn't load your correction notes.",
+                'corr.recent': 'Recent {n} corrections · re-read them so you don’t repeat the same mistake 📖',
             },
         };
         function tc(key, vars) {
@@ -4615,7 +4709,7 @@
 
         async function renderSrsReview() {
             const el = document.getElementById('srs-content');
-            el.innerHTML = '<div class="vocab-empty">불러오는 중...</div>';
+            el.innerHTML = '<div class="vocab-empty">' + tc('common.loading') + '</div>';
             let data;
             try {
                 const r = await fetch('/vocab/review', { credentials: 'same-origin' });
@@ -6155,34 +6249,34 @@
         async function renderReferralModal() {
             const el = document.getElementById('referral-body');
             if (!authState || !authState.authenticated) {
-                el.innerHTML = '<div class="vocab-empty">로그인하면 초대 링크가 생겨요. 친구를 초대하면 둘 다 7일 무제한! 🎁<br><br>'
-                    + '<button class="vocab-tab active" onclick="closeReferralModal(); (window.openLoginModal&&openLoginModal())">로그인</button></div>';
+                el.innerHTML = '<div class="vocab-empty">' + tc('ref.loginPrompt') + '<br><br>'
+                    + '<button class="vocab-tab active" onclick="closeReferralModal(); (window.openLoginModal&&openLoginModal())">' + tc('common.signIn') + '</button></div>';
                 return;
             }
-            el.innerHTML = '<div class="vocab-empty">불러오는 중...</div>';
+            el.innerHTML = '<div class="vocab-empty">' + tc('common.loading') + '</div>';
             let d;
             try { const r = await fetch('/referral', { credentials: 'same-origin' }); d = await r.json(); }
-            catch (e) { el.innerHTML = '<div class="vocab-empty">불러오기 실패. 잠시 후 다시.</div>'; return; }
+            catch (e) { el.innerHTML = '<div class="vocab-empty">' + tc('common.loadFail') + '</div>'; return; }
             const link = (d.link || '').replace(/"/g, '&quot;');
             el.innerHTML = `
                 <div style="text-align:center;">
                     <div style="font-size:40px;">🎁</div>
-                    <div style="font-size:17px;font-weight:800;color:#333;margin-top:6px;">친구를 초대하면 둘 다 7일 무제한!</div>
-                    <div style="color:#999;font-size:13px;margin-top:4px;">친구가 가입하면 나도, 친구도 7일 무료 ✨</div>
+                    <div style="font-size:17px;font-weight:800;color:#333;margin-top:6px;">${tc('ref.headline')}</div>
+                    <div style="color:#999;font-size:13px;margin-top:4px;">${tc('ref.sub')}</div>
                 </div>
                 <div style="margin-top:20px;background:#faf4fb;border-radius:12px;padding:14px;">
-                    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">내 초대 링크</div>
+                    <div style="font-size:12px;color:#aaa;margin-bottom:6px;">${tc('ref.myLink')}</div>
                     <div style="display:flex;gap:8px;">
                         <input id="ref-link-input" readonly value="${link}" style="flex:1;min-width:0;border:1px solid #eaddee;border-radius:8px;padding:9px 10px;font-size:12px;color:#555;background:#fff;">
-                        <button onclick="copyReferralLink()" style="border:none;border-radius:8px;background:#f093fb;color:#fff;font-weight:700;padding:0 14px;cursor:pointer;white-space:nowrap;">복사</button>
+                        <button onclick="copyReferralLink()" style="border:none;border-radius:8px;background:#f093fb;color:#fff;font-weight:700;padding:0 14px;cursor:pointer;white-space:nowrap;">${tc('ref.copy')}</button>
                     </div>
-                    <div style="margin-top:8px;font-size:12px;color:#888;">코드: <b style="color:#f093fb;letter-spacing:1px;">${d.code || '-'}</b></div>
+                    <div style="margin-top:8px;font-size:12px;color:#888;">${tc('ref.code')}: <b style="color:#f093fb;letter-spacing:1px;">${d.code || '-'}</b></div>
                 </div>
                 <div style="margin-top:14px;text-align:center;color:#666;font-size:14px;">
-                    지금까지 <b style="color:#f093fb;font-size:18px;">${d.count || 0}</b>명 초대했어요
+                    ${tc('ref.count', { n: d.count || 0 })}
                 </div>
                 <div style="margin-top:16px;text-align:center;">
-                    <button class="vocab-tab active" onclick="shareReferral()">📤 공유하기</button>
+                    <button class="vocab-tab active" onclick="shareReferral()">${tc('ref.share')}</button>
                 </div>`;
         }
         function copyReferralLink() {
@@ -6195,7 +6289,7 @@
         function shareReferral() {
             const inp = document.getElementById('ref-link-input');
             const url = inp ? inp.value : '';
-            const text = 'K-Dating Chat에서 한국인 AI랑 카톡하며 한국어 배워요! 같이 하면 둘 다 7일 무제한 🎁';
+            const text = tc('ref.shareText');
             if (navigator.share) { navigator.share({ title: 'K-Dating Chat', text, url }).catch(() => {}); }
             else { copyReferralLink(); }
         }
@@ -6243,7 +6337,7 @@
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast(tc('toast.micUnsupported')); return; }
             let stream;
             try { stream = await navigator.mediaDevices.getUserMedia({ audio:{channelCount:1,sampleRate:16000,echoCancellation:true,noiseSuppression:true} }); }
-            catch(e){ showToast(e && e.name==='NotAllowedError' ? '마이크 권한을 허용해주세요.' : '마이크를 시작할 수 없어요.'); return; }
+            catch(e){ showToast(e && e.name==='NotAllowedError' ? tc('pron.micPerm') : tc('pron.micStart')); return; }
             const AC=window.AudioContext||window.webkitAudioContext; const ctx=new AC();
             const src=ctx.createMediaStreamSource(stream); const proc=ctx.createScriptProcessor(4096,1,1);
             _pron={ active:true, stream, ctx, src, proc, chunks:[], inRate:ctx.sampleRate, ref:refText, timer:null };
@@ -6262,8 +6356,8 @@
             _pronCleanup();
             const wav=_pronWav(chunks, inRate);
             const body=document.getElementById('pron-body');
-            if (!wav || wav.size < 4400){ body.innerHTML='<div class="vocab-empty">너무 짧아요. 다시 시도해주세요.<br><br><button class="vocab-tab active" onclick="startPronounce(_lastPronRef)">🎤 다시</button></div>'; return; }
-            body.innerHTML='<div class="vocab-empty" style="padding:30px 0;">채점 중... 🎯</div>';
+            if (!wav || wav.size < 4400){ body.innerHTML='<div class="vocab-empty">'+tc('pron.tooShort')+'<br><br><button class="vocab-tab active" onclick="startPronounce(_lastPronRef)">'+tc('pron.retry')+'</button></div>'; return; }
+            body.innerHTML='<div class="vocab-empty" style="padding:30px 0;">'+tc('pron.scoring')+'</div>';
             try {
                 const fd=new FormData(); fd.append('audio',wav,'p.wav'); fd.append('reference_text',ref); fd.append('language','ko-KR');
                 const r=await fetch('/pronounce',{method:'POST',body:fd});
@@ -6284,11 +6378,11 @@
         function renderPronRecording(){
             document.getElementById('pron-body').innerHTML=
                 '<div style="text-align:center;">'
-                + '<div style="color:#999;font-size:13px;">이 문장을 또박또박 말해보세요</div>'
+                + '<div style="color:#999;font-size:13px;">'+tc('pron.instruction')+'</div>'
                 + '<div style="font-size:19px;font-weight:800;color:#333;margin:10px 0 18px;line-height:1.5;">'+escHtml(_pron.ref)+'</div>'
                 + '<div style="font-size:38px;">🔴</div>'
-                + '<div style="color:#f5576c;font-size:13px;margin-top:4px;">녹음 중...</div>'
-                + '<button onclick="stopPronounce()" style="margin-top:18px;width:100%;padding:14px;border:none;border-radius:12px;background:#f5576c;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">■ 멈추고 채점</button>'
+                + '<div style="color:#f5576c;font-size:13px;margin-top:4px;">'+tc('pron.recording')+'</div>'
+                + '<button onclick="stopPronounce()" style="margin-top:18px;width:100%;padding:14px;border:none;border-radius:12px;background:#f5576c;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">'+tc('pron.stopScore')+'</button>'
                 + '</div>';
         }
         function _pronColor(s){ return s>=80?'#2e9e54':(s>=60?'#e6a000':'#e53935'); }
@@ -6298,26 +6392,26 @@
                 const c=_pronColor(wd.accuracy);
                 return '<span style="display:inline-block;margin:3px;padding:4px 9px;border-radius:9px;background:'+c+'1f;color:'+c+';font-weight:700;font-size:14px;">'+escHtml(wd.word)+' '+wd.accuracy+'</span>';
             }).join('');
-            const msg = overall>=80?'훌륭해요! 🎉' : (overall>=60?'좋아요! 조금만 더 🙂' : '다시 연습해볼까요? 💪');
+            const msg = overall>=80?tc('pron.great') : (overall>=60?tc('pron.good') : tc('pron.again'));
             document.getElementById('pron-body').innerHTML=
                 '<div style="text-align:center;">'
                 + '<div style="color:#999;font-size:13px;line-height:1.5;">'+escHtml(ref)+'</div>'
-                + '<div style="font-size:46px;font-weight:800;color:'+_pronColor(overall)+';margin-top:8px;">'+overall+'<span style="font-size:19px;color:#bbb;"> 점</span></div>'
+                + '<div style="font-size:46px;font-weight:800;color:'+_pronColor(overall)+';margin-top:8px;">'+overall+'<span style="font-size:19px;color:#bbb;"> '+tc('pron.point')+'</span></div>'
                 + '<div style="color:#666;font-size:14px;margin-top:2px;">'+msg+'</div>'
                 + '</div>'
                 + '<div style="margin-top:16px;display:flex;gap:10px;justify-content:center;font-size:12px;color:#888;">'
-                +   '<span>정확도 <b style="color:#555;">'+Math.round(sc.accuracy||0)+'</b></span><span>·</span>'
-                +   '<span>유창성 <b style="color:#555;">'+Math.round(sc.fluency||0)+'</b></span><span>·</span>'
-                +   '<span>완성도 <b style="color:#555;">'+Math.round(sc.completeness||0)+'</b></span>'
+                +   '<span>'+tc('pron.accuracy')+' <b style="color:#555;">'+Math.round(sc.accuracy||0)+'</b></span><span>·</span>'
+                +   '<span>'+tc('pron.fluency')+' <b style="color:#555;">'+Math.round(sc.fluency||0)+'</b></span><span>·</span>'
+                +   '<span>'+tc('pron.completeness')+' <b style="color:#555;">'+Math.round(sc.completeness||0)+'</b></span>'
                 + '</div>'
                 + '<div style="margin-top:14px;text-align:center;line-height:2.1;">'+wordHtml+'</div>'
                 + '<div style="margin-top:18px;text-align:center;">'
-                +   '<button class="vocab-tab active" onclick="startPronounce(_lastPronRef)">🎤 다시 해보기</button>'
+                +   '<button class="vocab-tab active" onclick="startPronounce(_lastPronRef)">'+tc('pron.retryFull')+'</button>'
                 + '</div>';
         }
         function renderPronFail(d){
-            const reason=(d&&d.reason==='no_speech')?'음성이 잘 안 들렸어요.':'발음 평가에 실패했어요.';
-            document.getElementById('pron-body').innerHTML='<div class="vocab-empty">'+reason+'<br><br><button class="vocab-tab active" onclick="startPronounce(_lastPronRef)">🎤 다시</button></div>';
+            const reason=(d&&d.reason==='no_speech')?tc('pron.noSpeech'):tc('pron.fail');
+            document.getElementById('pron-body').innerHTML='<div class="vocab-empty">'+reason+'<br><br><button class="vocab-tab active" onclick="startPronounce(_lastPronRef)">'+tc('pron.retry')+'</button></div>';
         }
 
         // ============================================================
@@ -6327,12 +6421,12 @@
             const o=document.getElementById('corr-modal-overlay');
             o.classList.add('show'); o.setAttribute('aria-hidden','false');
             const body=document.getElementById('corr-body');
-            body.innerHTML='<div class="vocab-empty" style="padding:30px 0;">불러오는 중...</div>';
+            body.innerHTML='<div class="vocab-empty" style="padding:30px 0;">'+tc('common.loading')+'</div>';
             fetch('/corrections/list').then(r=>{
-                if (r.status===401) { body.innerHTML='<div class="vocab-empty">로그인하면 교정 노트가 생겨요.<br>설정에서 <b>💡 문법 힌트 모드</b>를 켜면, 내가 틀린 문장을 AI가 고쳐주고 여기에 쌓여요.</div>'; return null; }
+                if (r.status===401) { body.innerHTML='<div class="vocab-empty">'+tc('corr.loginPrompt')+'</div>'; return null; }
                 return r.json();
             }).then(d=>{ if(d) renderCorrections(d.items||[]); }).catch(()=>{
-                body.innerHTML='<div class="vocab-empty">교정 노트를 불러오지 못했어요.</div>';
+                body.innerHTML='<div class="vocab-empty">'+tc('corr.loadFail')+'</div>';
             });
         }
         function closeCorrectionsModal(e){
@@ -6342,7 +6436,7 @@
         function renderCorrections(items){
             const body=document.getElementById('corr-body');
             if (!items.length){
-                body.innerHTML='<div class="vocab-empty">아직 교정 기록이 없어요.<br><br>설정에서 <b>💡 문법 힌트 모드</b>를 켜고 한국어로 말해보세요. 틀린 부분을 AI가 부드럽게 고쳐주고, 여기에 모아 복습할 수 있어요.</div>';
+                body.innerHTML='<div class="vocab-empty">'+tc('corr.empty')+'</div>';
                 return;
             }
             const rows=items.map(function(c){
@@ -6352,7 +6446,7 @@
                     + '<div style="margin-top:6px;font-size:14px;color:#3a5ea8;line-height:1.5;">💡 '+escHtml(corr)+'</div>'
                     + '</div>';
             }).join('');
-            body.innerHTML='<div style="font-size:12px;color:#999;margin-bottom:12px;">최근 교정 '+items.length+'개 · 같은 실수를 반복하지 않게 다시 읽어보세요 📖</div>'+rows;
+            body.innerHTML='<div style="font-size:12px;color:#999;margin-bottom:12px;">'+tc('corr.recent',{n:items.length})+'</div>'+rows;
         }
 
         // ============================================================
@@ -6361,6 +6455,7 @@
         function _fmtDate(unixSec) {
             if (!unixSec) return '';
             const d = new Date(unixSec * 1000);
+            if (currentLang === 'en') return d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
             return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
         }
 
