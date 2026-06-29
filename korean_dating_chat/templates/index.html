@@ -2425,23 +2425,8 @@
                 <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close" onclick="closePaywallModal()">&times;</button>
             </div>
             <div style="padding: 8px 24px 28px;">
-                <p style="color:#444; font-size:14px; line-height:1.7; margin: 0 0 18px;" id="paywall-modal-body">
-                    오늘 무료 메시지(<strong id="paywall-cap">25</strong>개)를 모두 사용했어요.<br>
-                    내일 자정에 다시 리셋되고, 지금 바로 더 대화하고 싶다면 구독해주세요.
-                </p>
-                <div style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:white; border-radius:12px; padding:20px; margin-bottom:18px;">
-                    <div style="font-size:13px; opacity:0.9; margin-bottom:4px;" id="paywall-card-label">월 구독</div>
-                    <div style="font-size:28px; font-weight:700; line-height:1.1;" id="paywall-card-headline">무제한 메시지</div>
-                    <ul style="font-size:13px; margin:14px 0 0; padding-left:18px; opacity:0.95; line-height:1.7;" id="paywall-card-list">
-                        <li data-i18n="pay.li1">모든 캐릭터(11명) 무제한 대화</li>
-                        <li data-i18n="pay.li2">시나리오·미션 무제한</li>
-                        <li data-i18n="pay.li3">언제든 해지 가능</li>
-                    </ul>
-                </div>
-                <button id="paywall-subscribe-btn" type="button" onclick="startSubscription()" style="width:100%; padding:14px 16px; border:none; background:#3c1e1e; color:white; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer;">
-                    구독 시작
-                </button>
-                <p id="paywall-trial-note" style="margin: 10px 0 0; font-size:11px; color:#888; line-height:1.5; text-align:center; display:none;"></p>
+                <p id="paywall-context" style="color:#444; font-size:14px; line-height:1.6; margin: 0 0 18px; text-align:center;"></p>
+                <div id="paywall-plans"></div>
                 <p id="paywall-status" style="margin: 12px 0 0; font-size:12px; color:#888; min-height:18px; text-align:center;"></p>
             </div>
         </div>
@@ -3299,6 +3284,16 @@
                 'pay.btn.opening': '결제 페이지 여는 중...',
                 'pay.err.checkout': '결제 페이지를 열 수 없어요.',
                 'pay.err.network': '네트워크 오류',
+                'pw.ctx.quota': '오늘 무료 메시지(<b>{cap}개</b>)를 다 썼어요. 구독하면 무제한으로 이어가요.',
+                'pw.ctx.character': '지우 외 다른 캐릭터는 구독하면 만날 수 있어요. ✨',
+                'pw.ctx.pro': '이 기능은 <b>Pro</b> 학습 기능이에요. 업그레이드하면 바로 쓸 수 있어요.',
+                'pw.recommended': '추천',
+                'pw.subscribe': '구독하기',
+                'pw.feat.allChar': '캐릭터 11명 전체',
+                'pw.feat.unlimited': '무제한 채팅',
+                'pw.feat.learning': '🎤 발음평가 · 💡 문법코치 · 🔁 SRS복습 · 🔥 진척',
+                'pw.feat.cancel': '언제든 해지 가능',
+                'pw.basicOnly': '기본 채팅 (학습 기능 없음)',
                 'settings.language': '언어 / Language',
                 // 설정 — 계정·구독 카드
                 'settings.title': '⚙️ 설정',
@@ -3490,6 +3485,16 @@
                 'pay.btn.opening': 'Opening checkout...',
                 'pay.err.checkout': "Couldn't open the checkout page.",
                 'pay.err.network': 'Network error',
+                'pw.ctx.quota': "You've used all your free messages (<b>{cap}</b>) today. Subscribe to keep going, unlimited.",
+                'pw.ctx.character': 'Other characters beyond Jiwoo are available with a subscription. ✨',
+                'pw.ctx.pro': 'This is a <b>Pro</b> learning feature. Upgrade to use it right away.',
+                'pw.recommended': 'Recommended',
+                'pw.subscribe': 'Subscribe',
+                'pw.feat.allChar': 'All 11 characters',
+                'pw.feat.unlimited': 'Unlimited chat',
+                'pw.feat.learning': '🎤 Pronunciation · 💡 Grammar coach · 🔁 SRS · 🔥 Progress',
+                'pw.feat.cancel': 'Cancel anytime',
+                'pw.basicOnly': 'Basic chat (no learning tools)',
                 'settings.language': 'Language',
                 // Settings — account & subscription card
                 'settings.title': '⚙️ Settings',
@@ -4078,7 +4083,13 @@
         });
 
         // 캐릭터 선택
-        async function selectCharacter(character) {
+        async function selectCharacter(character, opts) {
+            // 무료(Basic 미만)는 지우만 — 다른 캐릭터는 구독 유도.
+            // 자동진입(재방문 복원)은 게이트 스킵 — authState 로드 전 race 방지(백엔드가 enforce).
+            if (!(opts && opts.skipGate) && character && character !== 'jiwoo' && !isPaidUser()) {
+                openPaywallModal({ paywall: 'character' });
+                return;
+            }
             currentCharacter = character;
             sessionToken += 1;
             if (requestController) {
@@ -4794,6 +4805,10 @@
 
         async function renderSrsReview() {
             const el = document.getElementById('srs-content');
+            if (!isProUser()) {
+                el.innerHTML = '<div class="vocab-empty">' + tc('pw.ctx.pro') + '<br><br><button class="vocab-tab active" onclick="openProPaywall()">' + tc('pw.subscribe') + '</button></div>';
+                return;
+            }
             el.innerHTML = '<div class="vocab-empty">' + tc('common.loading') + '</div>';
             let data;
             try {
@@ -5260,7 +5275,7 @@
                         openLoginModal();
                         return;
                     }
-                    if (response.status === 402 && errData.paywall === 'quota') {
+                    if (response.status === 402) {
                         typingIndicator.remove();
                         document.getElementById('header-status').innerHTML = '<span class="online-dot"></span><span data-i18n="chat.online">' + tc('chat.online') + '</span>';
                         openPaywallModal(errData);
@@ -6223,6 +6238,7 @@
         }
 
         function openProgressModal() {
+            if (!isProUser()) { openPaywallModal({ paywall: 'pro' }); return; }
             document.getElementById('progress-modal-overlay').classList.add('show');
             renderProgressModal();
         }
@@ -6418,6 +6434,7 @@
 
         async function startPronounce(refText) {
             if (_pron.active) return;
+            if (!isProUser()) { openPaywallModal({ paywall: 'pro' }); return; }
             _lastPronRef = refText;
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast(tc('toast.micUnsupported')); return; }
             let stream;
@@ -6503,6 +6520,7 @@
         // ✏️ 교정 노트 — grammar_mode 에서 받은 💡 교정 모아보기
         // ============================================================
         function openCorrectionsModal(){
+            if (!isProUser()) { openPaywallModal({ paywall: 'pro' }); return; }
             const o=document.getElementById('corr-modal-overlay');
             o.classList.add('show'); o.setAttribute('aria-hidden','false');
             const body=document.getElementById('corr-body');
@@ -6600,7 +6618,7 @@
                 bg = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
                 head = tc('settings.head.free');
                 det = tc('settings.det.free', { used: q.used || 0, cap: q.cap || 0 });
-                acts.push({label: tc('settings.act.subscribe'), primary: true, onclick: 'startSubscription()'});
+                acts.push({label: tc('settings.act.subscribe'), primary: true, onclick: 'openPaywallModal({})'});
                 if (quotaCard) quotaCard.style.display = 'block';
                 if (quotaText) {
                     const tz = q.timezone === 'Asia/Seoul' ? 'KST' : 'UTC';
@@ -6803,41 +6821,49 @@
         }
 
         // ---- 페이월 모달 (구독) ----
+        // 티어 헬퍼 (/me 의 tier 사용)
+        function userTier() { return (authState && authState.tier) || 'free'; }
+        function isProUser() { return userTier() === 'pro'; }
+        function isPaidUser() { const t = userTier(); return t === 'basic' || t === 'pro'; }
+        function openProPaywall() { openPaywallModal({ paywall: 'pro' }); }
+
+        // 한 플랜 카드 HTML
+        function _planCard(tier, price, recommended) {
+            const isPro = tier === 'pro';
+            const name = isPro ? 'kdate Pro' : 'kdate Basic';
+            const grad = isPro ? 'linear-gradient(135deg,#7e57c2,#5e35b1)' : 'linear-gradient(135deg,#f093fb,#f5576c)';
+            const feats = isPro
+                ? [tc('pw.feat.allChar'), tc('pw.feat.unlimited'), tc('pw.feat.learning'), tc('pw.feat.cancel')]
+                : [tc('pw.feat.allChar'), tc('pw.feat.unlimited'), tc('pw.basicOnly'), tc('pw.feat.cancel')];
+            const billingOn = !!(authState && authState.billing_enabled);
+            const btn = billingOn
+                ? `<button onclick="startSubscription('${tier}')" style="width:100%;padding:12px;border:none;border-radius:10px;background:rgba(255,255,255,0.95);color:#3c1e1e;font-size:14px;font-weight:800;cursor:pointer;">${tc('pw.subscribe')} · $${price}</button>`
+                : `<button disabled style="width:100%;padding:12px;border:none;border-radius:10px;background:rgba(255,255,255,0.5);color:#3c1e1e;font-size:14px;font-weight:700;">${tc('pay.btn.preparing')}</button>`;
+            const badge = recommended ? `<div style="position:absolute;top:-9px;right:14px;background:#3c1e1e;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;">${tc('pw.recommended')}</div>` : '';
+            return `<div style="position:relative;border-radius:14px;padding:18px;margin-bottom:12px;background:${grad};color:#fff;${recommended?'box-shadow:0 8px 24px rgba(94,53,177,0.35);':''}">
+                ${badge}
+                <div style="font-size:13px;opacity:0.9;">${name}</div>
+                <div style="font-size:26px;font-weight:800;line-height:1.1;">$${price}<span style="font-size:13px;opacity:0.8;font-weight:600;">/mo</span></div>
+                <ul style="font-size:13px;margin:12px 0 14px;padding-left:18px;line-height:1.7;opacity:0.97;">${feats.map(function(x){return '<li>'+x+'</li>';}).join('')}</ul>
+                ${btn}
+            </div>`;
+        }
         function openPaywallModal(serverErr) {
             const overlay = document.getElementById('paywall-modal-overlay');
             if (!overlay) return;
-            // 본문(쿼터 cap 보간) — 현재 언어로
-            const cap = (serverErr && serverErr.free_quota) || (authState.quota && authState.quota.cap) || 25;
-            const bodyEl = document.getElementById('paywall-modal-body');
-            if (bodyEl) bodyEl.innerHTML = tc('pay.body', { cap: cap });
-            // Trial 활성 여부에 따라 카드·버튼 카피 분기
-            const trialDays = (authState && authState.trial_days) || 0;
-            const cardLabel = document.getElementById('paywall-card-label');
-            const cardHead = document.getElementById('paywall-card-headline');
-            const trialNote = document.getElementById('paywall-trial-note');
-            const subBtn = document.getElementById('paywall-subscribe-btn');
-            if (trialDays > 0) {
-                if (cardLabel) cardLabel.textContent = tc('pay.card.trial', { n: trialDays });
-                if (cardHead) cardHead.textContent = tc('pay.head.trialUnlimited');
-                if (trialNote) {
-                    trialNote.style.display = 'block';
-                    trialNote.textContent = tc('pay.trialNote', { n: trialDays });
-                }
-                if (subBtn && authState.billing_enabled) subBtn.textContent = tc('pay.btn.trialStart', { n: trialDays });
-            } else {
-                if (cardLabel) cardLabel.textContent = tc('pay.card.month');
-                if (cardHead) cardHead.textContent = tc('pay.head.unlimited');
-                if (trialNote) trialNote.style.display = 'none';
-                if (subBtn && authState.billing_enabled) subBtn.textContent = tc('pay.btn.subscribe');
-            }
-            if (subBtn) {
-                if (authState.billing_enabled) {
-                    subBtn.disabled = false;
-                } else {
-                    subBtn.disabled = true;
-                    subBtn.textContent = tc('pay.btn.preparing');
-                }
-            }
+            const trigger = (serverErr && serverErr.paywall) || 'quota';
+            const cap = (serverErr && serverErr.free_quota) || (authState.quota && authState.quota.cap) || 10;
+            const ctx = document.getElementById('paywall-context');
+            let ctxKey = 'pw.ctx.quota';
+            if (trigger === 'character') ctxKey = 'pw.ctx.character';
+            else if (trigger === 'pro') ctxKey = 'pw.ctx.pro';
+            if (ctx) ctx.innerHTML = tc(ctxKey, { cap: cap });
+            // Pro 기능 잠금이면 Pro 추천, 그 외엔 Pro 추천(상위 가치) 기본
+            const recommendPro = true;
+            const plansEl = document.getElementById('paywall-plans');
+            if (plansEl) plansEl.innerHTML = _planCard('basic', '7.99', false) + _planCard('pro', '12.99', recommendPro);
+            const statusEl = document.getElementById('paywall-status');
+            if (statusEl) statusEl.textContent = '';
             overlay.classList.add('show');
             overlay.setAttribute('aria-hidden', 'false');
         }
@@ -6848,26 +6874,25 @@
             overlay.classList.remove('show');
             overlay.setAttribute('aria-hidden', 'true');
         }
-        async function startSubscription() {
+        async function startSubscription(tier) {
+            tier = (tier === 'pro') ? 'pro' : 'basic';
             const statusEl = document.getElementById('paywall-status');
-            const btn = document.getElementById('paywall-subscribe-btn');
-            if (btn) { btn.disabled = true; btn.textContent = tc('pay.btn.opening'); }
-            if (statusEl) statusEl.textContent = '';
+            if (statusEl) statusEl.textContent = tc('pay.btn.opening');
             try {
                 const r = await fetch('/billing/checkout', {
                     method: 'POST',
                     credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tier: tier }),
                 });
                 const data = await r.json().catch(() => ({}));
                 if (!r.ok || !data.url) {
                     if (statusEl) statusEl.textContent = data.error || tc('pay.err.checkout');
-                    if (btn) { btn.disabled = false; btn.textContent = tc('pay.btn.subscribe'); }
                     return;
                 }
                 window.location.href = data.url;
             } catch (e) {
                 if (statusEl) statusEl.textContent = tc('pay.err.network');
-                if (btn) { btn.disabled = false; btn.textContent = tc('pay.btn.subscribe'); }
             }
         }
 
@@ -7502,7 +7527,7 @@
                     if (s1) s1.style.display = 'none';
                     if (s2) s2.style.display = 'none';
                     // 바로 해당 캐릭터 선택 (대화 복원 포함)
-                    selectCharacter(p.currentCharacter);
+                    selectCharacter(p.currentCharacter, { skipGate: true });
                 }
             } catch (e) {
                 console.error('[KDateStorage] init failed — falling back to in-memory only', e);

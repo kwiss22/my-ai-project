@@ -2036,7 +2036,9 @@ def me():
             'status': user.get('subscription_status'),
             'period_end': user.get('subscription_period_end'),
             'cancel_at_period_end': bool(user.get('subscription_cancel_at_period_end')),
+            'tier': get_tier(user),
         },
+        'tier': get_tier(user),
         'quota': {
             'used': used,
             'cap': cap,
