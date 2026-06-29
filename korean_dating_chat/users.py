@@ -1006,9 +1006,10 @@ def claim_referral(user_id, code):
 
 
 def set_subscription(user_id, payment_provider, subscription_customer_id, subscription_id,
-                     status, period_end, cancel_at_period_end=None):
+                     status, period_end, cancel_at_period_end=None, tier=None):
     return _store.set_subscription(user_id, payment_provider, subscription_customer_id,
-                                   subscription_id, status, period_end, cancel_at_period_end)
+                                   subscription_id, status, period_end, cancel_at_period_end,
+                                   tier=tier)
 
 
 def clear_subscription(user_id):
