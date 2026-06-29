@@ -44,7 +44,17 @@ from events import log_event
 
 PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', '')
 PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')
-PAYPAL_PLAN_ID = os.getenv('PAYPAL_PLAN_ID', '')
+PAYPAL_PLAN_ID = os.getenv('PAYPAL_PLAN_ID', '')   # 레거시 단일 플랜
+PAYPAL_BASIC_PLAN_ID = os.getenv('PAYPAL_BASIC_PLAN_ID', '') or PAYPAL_PLAN_ID
+PAYPAL_PRO_PLAN_ID = os.getenv('PAYPAL_PRO_PLAN_ID', '')
+
+
+def _tier_for_plan(plan_id):
+    """PayPal plan_id → 티어. Pro 플랜이면 'pro', 그 외(Basic/레거시/미상)는 'basic'."""
+    if plan_id and PAYPAL_PRO_PLAN_ID and plan_id == PAYPAL_PRO_PLAN_ID:
+        return 'pro'
+    return 'basic'
+
 PAYPAL_WEBHOOK_ID = os.getenv('PAYPAL_WEBHOOK_ID', '')
 PAYPAL_API_BASE = os.getenv('PAYPAL_API_BASE', 'https://api-m.sandbox.paypal.com').rstrip('/')
 
@@ -82,7 +92,7 @@ def _get_access_token():
 
 
 def paypal_enabled():
-    return bool(PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET and PAYPAL_PLAN_ID)
+    return bool(PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET and (PAYPAL_BASIC_PLAN_ID or PAYPAL_PRO_PLAN_ID))
 
 
 def billing_enabled():
@@ -109,10 +119,20 @@ def create_checkout_session():
         return jsonify({'error': '로그인이 필요해요.'}), 401
     if not paypal_enabled():
         return jsonify({'error': '결제가 준비 중이에요. 잠시 후 다시 시도해주세요.'}), 503
+    tier = 'basic'
+    try:
+        _body = request.get_json(silent=True) or {}
+        if (_body.get('tier') or '').lower() == 'pro':
+            tier = 'pro'
+    except Exception:
+        pass
+    plan_id = PAYPAL_PRO_PLAN_ID if tier == 'pro' else PAYPAL_BASIC_PLAN_ID
+    if not plan_id:
+        return jsonify({'error': '해당 플랜이 준비 중이에요.'}), 503
     try:
         token = _get_access_token()
         payload = {
-            'plan_id': PAYPAL_PLAN_ID,
+            'plan_id': plan_id,
             # custom_id 에 우리 user_id 를 실어두면 webhook 에서 매핑 가능 (Stripe 의 client_reference_id 대응)
             'custom_id': user['user_id'],
             'application_context': {
@@ -185,6 +205,7 @@ def billing_success():
                         subscription_id=sub_id,
                         status='active',
                         period_end=period_end,
+                        tier=_tier_for_plan(sub.get('plan_id')),
                     )
                     log_event('info', 'subscription.activated_on_return',
                               message=f'user={user["user_id"]} sub={sub_id}', user_id=user['user_id'])
@@ -309,6 +330,7 @@ def _handle_subscription_activated(resource):
         subscription_id=sub_id,
         status='active',
         period_end=period_end or (int(time.time()) + 30 * 86400),  # period_end 없으면 30일 grace
+        tier=_tier_for_plan(resource.get('plan_id')),
     )
     log_event('info', 'subscription.activated',
               message=f'user={user_id} sub={sub_id}', user_id=user_id)

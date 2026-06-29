@@ -1695,6 +1695,9 @@ from users import (
     consume_quota,
     peek_quota,
     has_active_subscription,
+    get_tier,
+    is_pro,
+    is_paid,
     delete_user as users_delete,
     touch_user as users_touch,
     add_vocab,
@@ -2492,7 +2495,11 @@ def chat():
     user = current_user()
     if not user:
         return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
-    if has_active_subscription(user):
+    # 캐릭터 게이트 — 무료(Basic 미만)는 지우만. 다른 캐릭터는 유료(Basic+).
+    _char_req = request.form.get('character', 'jiwoo')
+    if _char_req and _char_req != 'jiwoo' and _char_req in VALID_CHARACTERS and not is_paid(user):
+        return jsonify({'error': '다른 캐릭터는 구독하면 만날 수 있어요.', 'paywall': 'character'}), 402
+    if is_paid(user):
         # 유료 구독자도 fair-use cap 적용 (와일 사용자에 의한 토큰 비용 폭주 방지).
         # 99% 사용자는 영향 받지 않는 고한도, 자정 리셋.
         allowed, _remaining, reset_date = consume_quota(user['user_id'], cap=SUBSCRIBER_DAILY_CAP)
@@ -2527,7 +2534,8 @@ def chat():
         pass
 
     user_message = request.form.get('message', '').strip()
-    grammar_mode = request.form.get('grammar_mode', 'false') == 'true'
+    # 문법 코치는 Pro 전용 (요청해도 무료/Basic 은 미적용)
+    grammar_mode = (request.form.get('grammar_mode', 'false') == 'true') and is_pro(user)
     extract_vocab_flag = request.form.get('extract_vocab', 'false') == 'true'
     character = request.form.get('character', 'jiwoo')
     if character not in VALID_CHARACTERS:
@@ -2779,6 +2787,8 @@ def corrections_list_route():
     user = current_user()
     if not user:
         return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    if not is_pro(user):
+        return jsonify({'error': '이 기능은 Pro 전용이에요. 업그레이드하면 사용할 수 있어요.', 'paywall': 'pro'}), 402
     return jsonify({'items': list_corrections(user['user_id'])})
 
 
@@ -2788,6 +2798,8 @@ def vocab_review_get():
     user = current_user()
     if not user:
         return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    if not is_pro(user):
+        return jsonify({'error': '이 기능은 Pro 전용이에요. 업그레이드하면 사용할 수 있어요.', 'paywall': 'pro'}), 402
     return jsonify({
         'cards': due_vocab(user['user_id'], limit=20),
         'stats': vocab_stats(user['user_id']),
@@ -2800,6 +2812,8 @@ def vocab_review_post():
     user = current_user()
     if not user:
         return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    if not is_pro(user):
+        return jsonify({'error': '이 기능은 Pro 전용이에요. 업그레이드하면 사용할 수 있어요.', 'paywall': 'pro'}), 402
     data = request.get_json(silent=True) or {}
     vid = data.get('vocab_id')
     if vid is None:
@@ -3080,6 +3094,11 @@ def pronounce():
     """발음 평가 (Azure Pronunciation Assessment). multipart: audio(WAV PCM16 16k mono) + reference_text."""
     import base64 as _b64
     import requests as _requests
+    user = current_user()
+    if not user:
+        return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
+    if not is_pro(user):
+        return jsonify({'error': '이 기능은 Pro 전용이에요. 업그레이드하면 사용할 수 있어요.', 'paywall': 'pro'}), 402
     if not AZURE_SPEECH_KEY:
         return jsonify({'error': '발음 평가가 비활성화돼 있어요.'}), 503
     f = request.files.get('audio')

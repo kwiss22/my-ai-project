@@ -78,6 +78,26 @@ def has_active_subscription(user):
     return end > int(time.time())
 
 
+def get_tier(user):
+    """현재 유효 티어: 'free' | 'basic' | 'pro'. 순수 함수.
+    - 활성 구독자: subscription_tier 컬럼('basic'/'pro') 반영.
+    - 활성이지만 tier 미상(친구초대 보너스 등): 'pro' 로 후하게 부여."""
+    if not has_active_subscription(user):
+        return 'free'
+    t = (user.get('subscription_tier') or '').lower()
+    return t if t in ('basic', 'pro') else 'pro'
+
+
+def is_pro(user):
+    """Pro 전용 기능(발음/문법/SRS/진척) 접근 가능?"""
+    return get_tier(user) == 'pro'
+
+
+def is_paid(user):
+    """유료(Basic+) — 무제한 채팅 + 전체 캐릭터 접근 가능?"""
+    return get_tier(user) in ('basic', 'pro')
+
+
 # =============================================================================
 # UserStore — 백엔드 추상 인터페이스
 # =============================================================================
@@ -189,6 +209,7 @@ CREATE TABLE IF NOT EXISTS users (
   subscription_status TEXT,                -- 'active' | 'trialing' | 'past_due' | 'canceled' | NULL
   subscription_period_end INTEGER,         -- unix seconds (현재 결제 주기 종료)
   subscription_cancel_at_period_end INTEGER NOT NULL DEFAULT 0,  -- 1=해지 예약됨
+  subscription_tier TEXT,                  -- 'basic' | 'pro' | NULL (활성 구독 시 plan 매핑)
   daily_chat_count INTEGER NOT NULL DEFAULT 0,
   daily_reset_date TEXT NOT NULL,          -- 'YYYY-MM-DD' (QUOTA_TIMEZONE 기준)
   -- 학습 진척 (Tier 1.2): 연속 학습일(스트릭) + 누적 XP(레벨 도출)
@@ -240,6 +261,8 @@ CREATE INDEX IF NOT EXISTS corrections_user_time ON corrections(user_id, created
 """
 
 _MIGRATIONS = [
+    ('subscription_tier',
+     'ALTER TABLE users ADD COLUMN subscription_tier TEXT'),
     ('subscription_cancel_at_period_end',
      'ALTER TABLE users ADD COLUMN subscription_cancel_at_period_end INTEGER NOT NULL DEFAULT 0'),
     ('last_seen_at',
@@ -426,7 +449,7 @@ class SQLiteUserStore(UserStore):
             conn.close()
 
     def set_subscription(self, user_id, payment_provider, subscription_customer_id,
-                         subscription_id, status, period_end, cancel_at_period_end=None):
+                         subscription_id, status, period_end, cancel_at_period_end=None, tier=None):
         conn = self._connect()
         try:
             if cancel_at_period_end is None:
@@ -445,6 +468,8 @@ class SQLiteUserStore(UserStore):
                     (payment_provider, subscription_customer_id, subscription_id, status,
                      period_end, 1 if cancel_at_period_end else 0, user_id),
                 )
+            if tier is not None:
+                conn.execute('UPDATE users SET subscription_tier=? WHERE user_id=?', (tier, user_id))
             conn.commit()
         finally:
             conn.close()
