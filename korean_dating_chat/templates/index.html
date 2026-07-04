@@ -6877,6 +6877,12 @@
         async function startSubscription(tier) {
             tier = (tier === 'pro') ? 'pro' : 'basic';
             const statusEl = document.getElementById('paywall-status');
+            // 로그아웃 상태면 결제 대신 로그인 모달로 유도 (구독은 로그인 필요)
+            if (!authState || !authState.authenticated) {
+                closePaywallModal({ target: document.getElementById('paywall-modal-overlay') });
+                openLoginModal();
+                return;
+            }
             if (statusEl) statusEl.textContent = tc('pay.btn.opening');
             try {
                 const r = await fetch('/billing/checkout', {
@@ -6887,6 +6893,12 @@
                 });
                 const data = await r.json().catch(() => ({}));
                 if (!r.ok || !data.url) {
+                    // 서버가 401(로그인 필요)로 응답하면 로그인 모달로 유도 (방어)
+                    if (r.status === 401) {
+                        closePaywallModal({ target: document.getElementById('paywall-modal-overlay') });
+                        openLoginModal();
+                        return;
+                    }
                     if (statusEl) statusEl.textContent = data.error || tc('pay.err.checkout');
                     return;
                 }
