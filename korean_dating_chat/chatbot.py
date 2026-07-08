@@ -117,11 +117,18 @@ except Exception as e:
     translate_client = None
 
 # Firebase Admin SDK 초기화
+# 로컬: gcp-service-account.json 파일 사용. Cloud Run: 파일을 컨테이너에 굽지 않고
+# 서비스 계정 ADC(Application Default Credentials)로 초기화 (Datastore/Translate 와 동일 방식).
 firebase_app = None
 try:
-    firebase_cred = firebase_credentials.Certificate('gcp-service-account.json')
-    firebase_app = firebase_admin.initialize_app(firebase_cred)
-    print("[STARTUP] OK - Firebase Admin 초기화 성공")
+    if os.path.exists('gcp-service-account.json'):
+        firebase_cred = firebase_credentials.Certificate('gcp-service-account.json')
+        firebase_app = firebase_admin.initialize_app(firebase_cred)
+        print("[STARTUP] OK - Firebase Admin 초기화 성공 (service account file)")
+    else:
+        _fb_proj = os.getenv('GOOGLE_CLOUD_PROJECT') or PROJECT_ID or 'my-k-dating-app'
+        firebase_app = firebase_admin.initialize_app(options={'projectId': _fb_proj})
+        print(f"[STARTUP] OK - Firebase Admin 초기화 성공 (ADC, project={_fb_proj})")
 except Exception as e:
     print(f"[WARNING] Firebase Admin 초기화 실패: {str(e)}")
 
