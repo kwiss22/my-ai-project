@@ -461,8 +461,13 @@ def webhook():
             print('[BILLING] PAYPAL_WEBHOOK_ID 미설정 — 이벤트 무시')
             return jsonify({'error': 'webhook not configured'}), 503
         if not _verify_webhook(request.headers, payload):
-            log_event('critical', 'webhook.signature_invalid',
-                      message='PayPal webhook signature 검증 실패',
+            # 실제 PayPal 웹훅은 Paypal-Transmission-* 헤더를 보냄.
+            # 헤더가 없으면 공개 URL 을 찔러보는 봇/스캐너의 가짜 요청 → critical 아님(노이즈).
+            is_paypal = bool(request.headers.get('Paypal-Transmission-Id'))
+            log_event('critical' if is_paypal else 'warn', 'webhook.signature_invalid',
+                      message='PayPal webhook signature 검증 실패'
+                              + ('' if is_paypal else ' (봇/스캐너 추정 — transmission 헤더 없음)'),
+                      source=('paypal' if is_paypal else 'bot'),
                       remote_addr=request.remote_addr)
             return jsonify({'error': 'invalid signature'}), 400
 
