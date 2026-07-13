@@ -37,6 +37,12 @@
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-EHL89SXPSY"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-EHL89SXPSY');</script>
+    <script>
+      // GA4 이벤트 헬퍼 — gtag 차단(애드블록/지역) 시 조용히 무시.
+      window.kdateTrack = function (name, params) {
+        try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch (e) { /* noop */ }
+      };
+    </script>
 
     <style>
         * {
@@ -4090,6 +4096,7 @@
                 openPaywallModal({ paywall: 'character' });
                 return;
             }
+            if (!(opts && opts.skipGate)) { try { kdateTrack('select_character', { character: character }); } catch (e) {} }
             currentCharacter = character;
             sessionToken += 1;
             if (requestController) {
@@ -5196,6 +5203,8 @@
             const message = input.value.trim();
 
             if (!message) return;
+
+            if (!window._chatStarted) { window._chatStarted = true; try { kdateTrack('chat_start', { character: currentCharacter }); } catch (e) {} }
 
             // 중복 전송 방지: 이전 요청이 살아있으면 취소 (sessionToken 도 함께 올려 이전 핸들러 무력화)
             if (requestController) {
@@ -6883,6 +6892,7 @@
                 openLoginModal();
                 return;
             }
+            try { kdateTrack('begin_checkout', { tier: tier }); } catch (e) {}
             if (statusEl) statusEl.textContent = tc('pay.btn.opening');
             try {
                 const r = await fetch('/billing/checkout', {
@@ -6913,6 +6923,7 @@
             await refreshAuthState();
             const params = new URLSearchParams(window.location.search);
             if (params.get('billing') === 'success') {
+                try { kdateTrack('purchase', { method: 'paypal' }); } catch (e) {}
                 // PayPal 성공 콜백 후 페이지 진입 — webhook 처리 지연 대비 1초 후 다시 fetch
                 if (typeof showToast === 'function') showToast(tc('toast.subStarted'));
                 setTimeout(refreshAuthState, 1500);
@@ -6920,6 +6931,12 @@
                 try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
             } else if (params.get('billing') === 'canceled') {
                 if (typeof showToast === 'function') showToast(tc('toast.payCanceled'));
+                try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
+            }
+            // 로그인 복귀 시 GA4 이벤트 (google_callback 이 ?signin=new|return 붙여줌)
+            const signin = params.get('signin');
+            if (signin) {
+                try { kdateTrack(signin === 'new' ? 'sign_up' : 'login', { method: 'google' }); } catch (e) {}
                 try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
             }
             // 미인증이면 로그인 모달 자동 표시 (단, 온보딩이 끝난 뒤 noop — 다음 채팅 시 자연스럽게)

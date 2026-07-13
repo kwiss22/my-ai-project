@@ -14,6 +14,7 @@ Dev:
 """
 import os
 import secrets
+import time
 from urllib.parse import urlencode
 
 import requests
@@ -155,7 +156,9 @@ def google_callback():
         email=info.get('email'),
         display_name=info.get('name'),
     )
-    resp = make_response(redirect('/chat'))
+    # 신규 가입 여부 — created_at 이 방금(15초 이내)이면 새 유저 (GA4 sign_up vs login 구분용)
+    is_new = (user.get('created_at') or 0) >= int(time.time()) - 15
+    resp = make_response(redirect('/chat?signin=' + ('new' if is_new else 'return')))
     return attach_session_cookie(resp, user['user_id'])
 
 
