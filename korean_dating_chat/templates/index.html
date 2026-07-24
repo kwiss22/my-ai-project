@@ -2141,8 +2141,8 @@
 <body>
     <!-- 언어 토글 (온보딩 단계에서만 표시) -->
     <div class="lang-toggle" id="lang-toggle">
-        <button class="lang-btn active" id="lang-ko" onclick="setLang('ko')">KO</button>
-        <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+        <select id="lang-select" aria-label="Language" onchange="setLang(this.value)"
+                style="border:none; background:transparent; font-size:13px; font-weight:700; color:#3c1e1e; padding:6px 8px; cursor:pointer; outline:none;"></select>
     </div>
 
     <!-- 온보딩 Step 1: 이름 + 레벨 -->
@@ -2463,10 +2463,8 @@
                 <!-- 언어 / Language -->
                 <div style="display:flex; align-items:center; justify-content:space-between; background:#f8f8fa; border-radius:10px; padding:12px 16px; margin-bottom:16px;">
                     <span style="font-size:14px; color:#333;" data-i18n="settings.language">언어 / Language</span>
-                    <div class="lang-toggle" style="position:static; display:inline-flex; margin:0;">
-                        <button class="lang-btn" id="set-lang-ko" type="button" onclick="setLang('ko')">KO</button>
-                        <button class="lang-btn" id="set-lang-en" type="button" onclick="setLang('en')">EN</button>
-                    </div>
+                    <select id="set-lang-select" aria-label="Language" onchange="setLang(this.value)"
+                            style="border:1px solid #ddd; background:#fff; border-radius:8px; font-size:13px; padding:6px 10px; cursor:pointer;"></select>
                 </div>
 
                 <!-- 구독 카드 — 상태에 따라 본문 자동 변경 -->
@@ -3198,11 +3196,37 @@
             vocabCache = Array.isArray(list) ? list.slice() : [];
         }
 
+        // 지원 언어 레지스트리 — 여기에 추가하면 선택 UI·감지·번역 대상에 자동 반영.
+        // UI 사전(CHROME/i18n)이 아직 없는 언어는 영어로 폴백 (tc() 참고).
+        const SUPPORTED_LANGS = [
+            { code: 'ko', label: '한국어' },
+            { code: 'en', label: 'English' },
+            { code: 'ja', label: '日本語' },
+            { code: 'de', label: 'Deutsch' },
+            { code: 'fr', label: 'Français' },
+            { code: 'es', label: 'Español' },
+        ];
+        const LANG_CODES = SUPPORTED_LANGS.map(function (l) { return l.code; });
+
         // 언어 설정 (localStorage 에 지속 — 채팅 chrome 까지 적용)
+        // 첫 방문이면 브라우저 언어 자동 감지, 미지원 언어는 영어(글로벌 기본).
         let currentLang = (function () {
-            try { const v = localStorage.getItem('kdate_lang'); if (v === 'ko' || v === 'en') return v; } catch (e) {}
-            return 'ko';
+            try { const v = localStorage.getItem('kdate_lang'); if (LANG_CODES.indexOf(v) !== -1) return v; } catch (e) {}
+            try {
+                const nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+                const base = nav.split('-')[0];
+                if (LANG_CODES.indexOf(base) !== -1) return base;
+            } catch (e) {}
+            return 'en';
         })();
+
+        // AI 메시지 번역 대상 — 한국어 UI 사용자는 영어로 번역(한→한 무의미).
+        function translateTargetLang() { return currentLang === 'ko' ? 'en' : currentLang; }
+        function translateBtnLabel() {
+            const code = translateTargetLang();
+            const f = SUPPORTED_LANGS.filter(function (l) { return l.code === code; })[0];
+            return '🌐 ' + (f ? f.label : 'English');
+        }
         const i18n = {
             ko: {
                 's1-subtitle': '한국인 AI 파트너와 매일 카톡하며<br>자연스럽게 한국어를 배워보세요!',
@@ -3661,8 +3685,11 @@
             },
         };
         function tc(key, vars) {
-            const d = CHROME[currentLang] || CHROME.ko;
-            let s = (d && d[key] != null) ? d[key] : (CHROME.ko[key] != null ? CHROME.ko[key] : key);
+            // 폴백: 선택 언어 → 영어 → 한국어. (사전 미비 언어도 UI가 깨지지 않게)
+            const d = CHROME[currentLang];
+            let s = (d && d[key] != null) ? d[key]
+                  : (CHROME.en && CHROME.en[key] != null) ? CHROME.en[key]
+                  : (CHROME.ko && CHROME.ko[key] != null) ? CHROME.ko[key] : key;
             if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
             return s;
         }
@@ -3675,12 +3702,28 @@
             scope.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', tc(el.getAttribute('data-i18n-aria'))); });
         }
 
+        // 언어 선택기(온보딩·설정) 옵션 채우기 + 현재 값 반영
+        function renderLangSelectors() {
+            ['lang-select', 'set-lang-select'].forEach(function (id) {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                if (!sel.options.length) {
+                    SUPPORTED_LANGS.forEach(function (l) {
+                        const o = document.createElement('option');
+                        o.value = l.code; o.textContent = l.label;
+                        sel.appendChild(o);
+                    });
+                }
+                sel.value = currentLang;
+            });
+        }
+
         function setLang(lang) {
+            if (LANG_CODES.indexOf(lang) === -1) lang = 'en';
             currentLang = lang;
             try { localStorage.setItem('kdate_lang', lang); } catch (e) {}
             document.documentElement.lang = lang;
-            ['lang-ko', 'set-lang-ko'].forEach(id => { const b = document.getElementById(id); if (b) b.classList.toggle('active', lang === 'ko'); });
-            ['lang-en', 'set-lang-en'].forEach(id => { const b = document.getElementById(id); if (b) b.classList.toggle('active', lang === 'en'); });
+            renderLangSelectors();
 
             // 채팅 chrome(nav·설정 등 정적 HTML) 갱신 + 동적 렌더 함수 재실행
             applyChromeI18n();
@@ -3691,7 +3734,8 @@
                 if (typeof renderSettingsModal === 'function' && document.getElementById('settings-modal-overlay')?.classList.contains('show')) renderSettingsModal();
             } catch (e) {}
 
-            const t = i18n[lang];
+            // 온보딩 사전도 폴백 (사전 미비 언어 → 영어 → 한국어)
+            const t = i18n[lang] || i18n.en || i18n.ko;
             // innerHTML targets
             ['s1-subtitle', 's2-subtitle', 's3-subtitle'].forEach(id => {
                 const el = document.getElementById(id);
@@ -5369,7 +5413,7 @@
                             if (cleanText.length > 0) {
                                 const translateBtn = document.createElement('button');
                                 translateBtn.className = 'translate-btn';
-                                translateBtn.textContent = '🌐 English';
+                                translateBtn.textContent = translateBtnLabel();
                                 translateBtn.onclick = () => translateMessage(streamContent, cleanText);
                                 streamContent.appendChild(translateBtn);
                             }
@@ -5857,7 +5901,7 @@
                 if (cleanContent.length > 0) {
                     const translateBtn = document.createElement('button');
                     translateBtn.className = 'translate-btn';
-                    translateBtn.textContent = '🌐 English';
+                    translateBtn.textContent = translateBtnLabel();
                     translateBtn.onclick = () => translateMessage(contentDiv, cleanContent);
                     contentDiv.appendChild(translateBtn);
 
@@ -5932,7 +5976,7 @@
                 const response = await fetch('/translate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: koreanText }),
+                    body: JSON.stringify({ text: koreanText, target: translateTargetLang() }),
                     signal: controller.signal,
                 });
                 clearTimeout(timeoutId);

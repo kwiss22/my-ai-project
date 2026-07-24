@@ -116,6 +116,10 @@ except Exception as e:
     print(f"[WARNING] Translation 초기화 실패: {str(e)}")
     translate_client = None
 
+# AI 메시지 번역 허용 목표 언어 (프론트 SUPPORTED_LANGS 와 맞춤).
+# 'ko' 는 한→한 이라 제외 — 한국어 UI 사용자는 프론트에서 'en' 을 보냄.
+TRANSLATE_TARGETS = {'en', 'ja', 'de', 'fr', 'es'}
+
 # Firebase Admin SDK 초기화
 # 로컬: gcp-service-account.json 파일 사용. Cloud Run: 파일을 컨테이너에 굽지 않고
 # 서비스 계정 ADC(Application Default Credentials)로 초기화 (Datastore/Translate 와 동일 방식).
@@ -3206,11 +3210,17 @@ def translate_text():
         if not text:
             return jsonify({'error': 'No translatable text'}), 400
 
-        # 한국어 → 영어 번역 (transient retry 적용)
+        # 목표 언어 — 클라이언트가 보낸 UI 언어를 허용목록으로 검증 (글로벌 현지화).
+        # 미지원/미전달이면 영어 폴백. 'ko' 는 한→한 무의미하므로 영어로.
+        target = str(data.get('target', 'en')).lower()[:5].split('-')[0]
+        if target not in TRANSLATE_TARGETS:
+            target = 'en'
+
+        # 한국어 → 사용자 언어 번역 (transient retry 적용)
         result = _with_transient_retry(
             lambda: translate_client.translate(
                 text,
-                target_language='en',
+                target_language=target,
                 source_language='ko'
             ),
             attempts=3,
