@@ -1284,23 +1284,67 @@ try {
     'footer.privacy': 'プライバシーポリシー', 'footer.terms': '利用規約', 'footer.contact': 'お問い合わせ',
     'footer.disclaimer': 'ジウ・ヒョヌはAIキャラクターです。すべての会話はフィクションであり、教育目的です。'
   };
-  var TITLE_JA = 'K-Dating Chat 💕 韓国人AIパートナーとチャットして韓国語を学ぼう';
+  var ES = {
+    'nav.home': 'Inicio', 'nav.culture': 'K-Cultura', 'nav.tips': 'Consejos',
+    'nav.characters': 'Personajes', 'nav.start': 'Empezar →',
+    'hero.badge1': '✨ Coreano con IA', 'hero.badge2': 'Gratis · Sin registro',
+    'hero.h1': 'Aprende coreano chateando<br>con una <em>pareja de IA</em>',
+    'hero.p': 'Chatea a diario, estilo KakaoTalk,<br>con tu novio o novia coreano/a',
+    'hero.cta': 'Chatear gratis →',
+    'hero.sub': 'Empieza al instante, sin registro · 100% gratis',
+    'proof.worldwide': '🌍 Estudiantes de todo el mundo', 'proof.daily': '💬 Cientos de chats al día',
+    'hwarang.label': '🏹 NUEVO · GRUPO MASCULINO DE 5',
+    'hwarang.desc': 'Un grupo K-pop masculino de 5 integrantes que lleva el espíritu del <strong>Hwarangdo (화랑도)</strong> de Silla.<br>Cada integrante encarna uno de los <strong>Cinco Preceptos (세속오계)</strong> y de los <strong>Cinco Colores Cardinales (오방색)</strong>.',
+    'grp.cta': 'Conoce a los 5 →',
+    'wonhwa.label': '🌸 NUEVO · GRUPO FEMENINO DE 5',
+    'wonhwa.desc': 'Un grupo K-pop femenino de 5 integrantes que lleva el espíritu del <strong>Wonhwa (源花)</strong> de Silla.<br>El <strong>Wonhwa</strong>, origen de los Hwarang, encarna los <strong>Cinco Preceptos (세속오계)</strong> y florece de nuevo como grupo hermano de HWARANG.',
+    'char.h2': '¿Con quién quieres chatear?',
+    'char.badge.girl': 'Novia 💕', 'char.badge.boy': 'Novio 💙',
+    'char.tag.jiwoo': '22 · estudiante de Ewha · barista',
+    'char.tag.hyunwoo': '23 · estudiante de Hongik · aprendiz de K-pop',
+    'phone.input': 'Escribe un mensaje...',
+    'feat.h2': 'Qué obtienes',
+    'feat1.title': 'Chat estilo KakaoTalk',
+    'feat1.desc': 'Chatea en coreano de forma natural con la conocida interfaz de KakaoTalk. También intercambia stickers y emojis.',
+    'feat2.title': 'Temas de K-pop y K-drama',
+    'feat2.desc': 'Empieza un chat sobre tus intereses: K-pop, dramas, comida, viajes y más.',
+    'feat3.title': 'Vocabulario · Quiz · Horóscopo',
+    'feat3.desc': 'Guarda las palabras que aprendes en el chat y repásalas con quizzes. ¡Hasta un horóscopo diario en coreano!',
+    'feat4.title': 'Voz en coreano (TTS)',
+    'feat4.desc': 'Escucha los mensajes de tu pareja de IA con pronunciación coreana real.',
+    'feat5.title': 'Modo escenario <span style="font-size:11px;color:#a78bfa;font-weight:700;background:#ede9fe;padding:2px 7px;border-radius:8px;margin-left:4px;">NUEVO</span>',
+    'feat5.desc': 'Practica situaciones reales con rol de IA: confesar tus sentimientos, un primer encuentro, una cita en el río Han y más.',
+    'feat6.title': 'Crea tarjetas para compartir <span style="font-size:11px;color:#22c55e;font-weight:700;background:#dcfce7;padding:2px 7px;border-radius:8px;margin-left:4px;">NUEVO</span>',
+    'feat6.desc': 'Guarda tus chats con la IA como bonitas tarjetas para compartir en Instagram y KakaoTalk.',
+    'bottom.h2': 'Empieza ahora mismo 💕',
+    'bottom.p': '¡Chatea sin registrarte!<br>Siente cómo tu coreano mejora cada día.',
+    'bottom.sub': '✓ Gratis &nbsp;·&nbsp; ✓ Sin registro &nbsp;·&nbsp; ✓ Inicio instantáneo',
+    'footer.privacy': 'Política de privacidad', 'footer.terms': 'Términos', 'footer.contact': 'Contacto',
+    'footer.disclaimer': 'Jiwoo y Hyunwoo son personajes de IA. Todas las conversaciones son ficticias y con fines educativos.'
+  };
+  var DICTS = { ja: JA, es: ES };
+  var TITLES = {
+    ja: 'K-Dating Chat 💕 韓国人AIパートナーとチャットして韓国語を学ぼう',
+    es: 'K-Dating Chat 💕 Aprende coreano chateando con parejas de IA'
+  };
   function pick() {
     try { var q = new URLSearchParams(location.search).get('lang'); if (q) return q.toLowerCase(); } catch (e) {}
     try { var s = localStorage.getItem('kdate_lang'); if (s) return s; } catch (e) {}
     try { return (navigator.language || '').toLowerCase().split('-')[0]; } catch (e) {}
     return 'en';
   }
-  if (pick() === 'ja') {
-    document.documentElement.lang = 'ja';
-    if (TITLE_JA) document.title = TITLE_JA;
+  var lang = pick();
+  var D = DICTS[lang];
+  if (D) {
+    document.documentElement.lang = lang;
+    if (TITLES[lang]) document.title = TITLES[lang];
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
-      var k = el.getAttribute('data-i18n'); if (JA[k] != null) el.textContent = JA[k];
+      var k = el.getAttribute('data-i18n'); if (D[k] != null) el.textContent = D[k];
     });
     document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
-      var k = el.getAttribute('data-i18n-html'); if (JA[k] != null) el.innerHTML = JA[k];
+      var k = el.getAttribute('data-i18n-html'); if (D[k] != null) el.innerHTML = D[k];
     });
-    try { localStorage.setItem('kdate_lang', 'ja'); } catch (e) {}  // /chat 도 일본어로
+    try { localStorage.setItem('kdate_lang', lang); } catch (e) {}  // /chat 도 같은 언어로
   }
 })();
 </script>
