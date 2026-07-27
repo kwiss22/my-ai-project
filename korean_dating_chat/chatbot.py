@@ -118,7 +118,7 @@ except Exception as e:
 
 # AI 메시지 번역 허용 목표 언어 (프론트 SUPPORTED_LANGS 와 맞춤).
 # 'ko' 는 한→한 이라 제외 — 한국어 UI 사용자는 프론트에서 'en' 을 보냄.
-TRANSLATE_TARGETS = {'en', 'ja', 'de', 'fr', 'es'}
+TRANSLATE_TARGETS = {'en', 'ja', 'de', 'fr', 'es', 'zh-TW'}
 
 # Firebase Admin SDK 초기화
 # 로컬: gcp-service-account.json 파일 사용. Cloud Run: 파일을 컨테이너에 굽지 않고
@@ -3212,7 +3212,11 @@ def translate_text():
 
         # 목표 언어 — 클라이언트가 보낸 UI 언어를 허용목록으로 검증 (글로벌 현지화).
         # 미지원/미전달이면 영어 폴백. 'ko' 는 한→한 무의미하므로 영어로.
-        target = str(data.get('target', 'en')).lower()[:5].split('-')[0]
+        raw = str(data.get('target', 'en')).strip().lower()
+        if raw.startswith('zh'):
+            target = 'zh-TW'   # 번체 중국어 (대만/홍콩) — 인프라상 번체만 지원
+        else:
+            target = raw.split('-')[0]
         if target not in TRANSLATE_TARGETS:
             target = 'en'
 

@@ -1322,15 +1322,58 @@ try {
     'footer.privacy': 'Política de privacidad', 'footer.terms': 'Términos', 'footer.contact': 'Contacto',
     'footer.disclaimer': 'Jiwoo y Hyunwoo son personajes de IA. Todas las conversaciones son ficticias y con fines educativos.'
   };
-  var DICTS = { ja: JA, es: ES };
+  var ZH = {
+    'nav.home': '首頁', 'nav.culture': 'K-文化', 'nav.tips': '學習技巧',
+    'nav.characters': '角色', 'nav.start': '開始 →',
+    'hero.badge1': '✨ AI韓語學習', 'hero.badge2': '免費 · 免註冊',
+    'hero.h1': '和<em>AI夥伴</em>聊天<br>學韓語',
+    'hero.p': '每天用KakaoTalk風格<br>和你的韓國男友或女友聊天',
+    'hero.cta': '免費開始聊天 →',
+    'hero.sub': '免註冊即刻開始 · 100%免費',
+    'proof.worldwide': '🌍 全球學習者', 'proof.daily': '💬 每天數百則聊天',
+    'hwarang.label': '🏹 NEW · 5人男子團體',
+    'hwarang.desc': '承襲新羅<strong>花郎道（화랑도）</strong>精神的5人K-pop男子團體。<br>每位成員體現<strong>世俗五戒（세속오계）</strong>與<strong>五方色（오방색）</strong>。',
+    'grp.cta': '認識5位成員 →',
+    'wonhwa.label': '🌸 NEW · 5人女子團體',
+    'wonhwa.desc': '承襲新羅<strong>源花（源花）</strong>精神的5人K-pop女子團體。<br>作為花郎起源的<strong>源花</strong>體現<strong>世俗五戒（세속오계）</strong>，並以HWARANG的姊妹團體再度綻放。',
+    'char.h2': '想和誰聊天？',
+    'char.badge.girl': '女友 💕', 'char.badge.boy': '男友 💙',
+    'char.tag.jiwoo': '22歲・梨花大學生・咖啡廳打工',
+    'char.tag.hyunwoo': '23歲・弘益大學生・K-pop練習生',
+    'phone.input': '輸入訊息...',
+    'feat.h2': '你能獲得',
+    'feat1.title': 'KakaoTalk風格聊天',
+    'feat1.desc': '用熟悉的KakaoTalk介面自然地用韓語聊天，還能互傳貼圖和表情符號。',
+    'feat2.title': 'K-pop與韓劇話題',
+    'feat2.desc': '從你的興趣開始聊天 — K-pop、韓劇、美食、旅遊等等。',
+    'feat3.title': '單字 · 測驗 · 運勢',
+    'feat3.desc': '把聊天中學到的單字存起來用測驗複習，還有韓語的每日運勢！',
+    'feat4.title': '韓語語音（TTS）',
+    'feat4.desc': '用真實的韓語發音聽AI夥伴的訊息。',
+    'feat5.title': '情境模式 <span style="font-size:11px;color:#a78bfa;font-weight:700;background:#ede9fe;padding:2px 7px;border-radius:8px;margin-left:4px;">新</span>',
+    'feat5.desc': '用AI角色扮演練習真實情境 — 告白、初次見面、漢江約會等等。',
+    'feat6.title': '製作分享卡 <span style="font-size:11px;color:#22c55e;font-weight:700;background:#dcfce7;padding:2px 7px;border-radius:8px;margin-left:4px;">新</span>',
+    'feat6.desc': '把和AI的聊天存成漂亮的卡片，分享到Instagram和KakaoTalk。',
+    'bottom.h2': '現在就開始 💕',
+    'bottom.p': '免註冊就能聊天！<br>感受你的韓語每天都在進步。',
+    'bottom.sub': '✓ 免費 &nbsp;·&nbsp; ✓ 免註冊 &nbsp;·&nbsp; ✓ 即刻開始',
+    'footer.privacy': '隱私權政策', 'footer.terms': '服務條款', 'footer.contact': '聯絡我們',
+    'footer.disclaimer': '智友・賢宇為AI角色。所有對話皆為虛構，僅供教育用途。'
+  };
+  var DICTS = { ja: JA, es: ES, 'zh-tw': ZH };
   var TITLES = {
     ja: 'K-Dating Chat 💕 韓国人AIパートナーとチャットして韓国語を学ぼう',
-    es: 'K-Dating Chat 💕 Aprende coreano chateando con parejas de IA'
+    es: 'K-Dating Chat 💕 Aprende coreano chateando con parejas de IA',
+    'zh-tw': 'K-Dating Chat 💕 和韓國AI夥伴聊天學韓語'
   };
   function pick() {
     try { var q = new URLSearchParams(location.search).get('lang'); if (q) return q.toLowerCase(); } catch (e) {}
     try { var s = localStorage.getItem('kdate_lang'); if (s) return s; } catch (e) {}
-    try { return (navigator.language || '').toLowerCase().split('-')[0]; } catch (e) {}
+    try {
+      var n = (navigator.language || '').toLowerCase();
+      if (n.indexOf('zh') === 0) return 'zh-tw';   // 중화권 → 번체
+      return n.split('-')[0];
+    } catch (e) {}
     return 'en';
   }
   var lang = pick();
