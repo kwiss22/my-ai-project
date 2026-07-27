@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -878,22 +878,22 @@
 <nav>
     <a class="nav-logo" href="/">💕 K-Dating <span>Chat</span></a>
     <div class="nav-links">
-        <a class="nav-link active" href="/">Home</a>
-        <a class="nav-link" href="/culture">K-Culture</a>
-        <a class="nav-link" href="/tips">Learning Tips</a>
-        <a class="nav-link" href="/characters">Characters</a>
+        <a class="nav-link active" href="/" data-i18n="nav.home">Home</a>
+        <a class="nav-link" href="/culture" data-i18n="nav.culture">K-Culture</a>
+        <a class="nav-link" href="/tips" data-i18n="nav.tips">Learning Tips</a>
+        <a class="nav-link" href="/characters" data-i18n="nav.characters">Characters</a>
     </div>
-    <a class="nav-start" href="/chat">Get Started →</a>
+    <a class="nav-start" href="/chat" data-i18n="nav.start">Get Started →</a>
     <button class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
         <span></span><span></span><span></span>
     </button>
 </nav>
 <div class="nav-mobile-menu" id="nav-mobile-menu">
-    <a class="active" href="/">Home</a>
-    <a href="/culture">K-Culture</a>
-    <a href="/tips">Learning Tips</a>
-    <a href="/characters">Characters</a>
-    <a class="nav-mobile-start" href="/chat">Get Started →</a>
+    <a class="active" href="/" data-i18n="nav.home">Home</a>
+    <a href="/culture" data-i18n="nav.culture">K-Culture</a>
+    <a href="/tips" data-i18n="nav.tips">Learning Tips</a>
+    <a href="/characters" data-i18n="nav.characters">Characters</a>
+    <a class="nav-mobile-start" href="/chat" data-i18n="nav.start">Get Started →</a>
 </div>
 <script>
 function toggleMobileMenu() {
@@ -904,26 +904,26 @@ function toggleMobileMenu() {
 <!-- 히어로 -->
 <section class="hero">
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
-        <div class="hero-badge" style="margin-bottom:0;">✨ AI Korean Learning</div>
-        <div class="hero-badge" style="margin-bottom:0;background:rgba(255,255,255,0.7);color:#555;">Free · No sign-up</div>
+        <div class="hero-badge" style="margin-bottom:0;" data-i18n="hero.badge1">✨ AI Korean Learning</div>
+        <div class="hero-badge" style="margin-bottom:0;background:rgba(255,255,255,0.7);color:#555;" data-i18n="hero.badge2">Free · No sign-up</div>
     </div>
-    <h1>Learn Korean by Chatting<br>with an <em>AI Partner</em></h1>
-    <p>Chat daily, KakaoTalk-style, with your<br>Korean boyfriend or girlfriend</p>
-    <a class="hero-cta" href="/chat">Start Chatting Free →</a>
-    <div class="hero-sub">Start instantly, no sign-up · 100% free</div>
+    <h1 data-i18n-html="hero.h1">Learn Korean by Chatting<br>with an <em>AI Partner</em></h1>
+    <p data-i18n-html="hero.p">Chat daily, KakaoTalk-style, with your<br>Korean boyfriend or girlfriend</p>
+    <a class="hero-cta" href="/chat" data-i18n="hero.cta">Start Chatting Free →</a>
+    <div class="hero-sub" data-i18n="hero.sub">Start instantly, no sign-up · 100% free</div>
     <div class="social-proof">
         <div class="proof-item"><span class="stars">★★★★★</span> 4.9</div>
         <div class="proof-dot"></div>
-        <div class="proof-item">🌍 Learners worldwide</div>
+        <div class="proof-item" data-i18n="proof.worldwide">🌍 Learners worldwide</div>
         <div class="proof-dot"></div>
-        <div class="proof-item">💬 Hundreds of chats daily</div>
+        <div class="proof-item" data-i18n="proof.daily">💬 Hundreds of chats daily</div>
     </div>
 </section>
 
 <!-- ===== HWARANG 그룹 소개 ===== -->
 <section class="hwarang-section">
     <div class="hwarang-inner">
-        <div class="hwarang-label">🏹 NEW · 5-MEMBER BOY GROUP</div>
+        <div class="hwarang-label" data-i18n="hwarang.label">🏹 NEW · 5-MEMBER BOY GROUP</div>
         <h2 class="hwarang-title">HWARANG</h2>
         <div class="hwarang-subtitle">화 랑</div>
 
@@ -932,7 +932,7 @@ function toggleMobileMenu() {
              alt="HWARANG 5-member group profile photo"
              loading="lazy">
 
-        <p class="hwarang-desc">
+        <p class="hwarang-desc" data-i18n-html="hwarang.desc">
             A 5-member K-pop boy group carrying the spirit of
             Silla's <strong>Hwarangdo (화랑도)</strong>.<br>
             Each member embodies one of the <strong>Five Precepts (세속오계)</strong>
@@ -962,7 +962,7 @@ function toggleMobileMenu() {
             </div>
         </div>
 
-        <a class="hwarang-cta" href="/characters#hwarang">
+        <a class="hwarang-cta" href="/characters#hwarang" data-i18n="grp.cta">
             Meet all 5 members →
         </a>
     </div>
@@ -971,7 +971,7 @@ function toggleMobileMenu() {
 <!-- ===== WONHWA 그룹 소개 ===== -->
 <section class="wonhwa-section">
     <div class="wonhwa-inner">
-        <div class="wonhwa-label">🌸 NEW · 5-MEMBER GIRL GROUP</div>
+        <div class="wonhwa-label" data-i18n="wonhwa.label">🌸 NEW · 5-MEMBER GIRL GROUP</div>
         <h2 class="wonhwa-title">WONHWA</h2>
         <div class="wonhwa-subtitle">원 화</div>
 
@@ -981,7 +981,7 @@ function toggleMobileMenu() {
              loading="lazy"
              onerror="this.style.display='none'">
 
-        <p class="wonhwa-desc">
+        <p class="wonhwa-desc" data-i18n-html="wonhwa.desc">
             A 5-member K-pop girl group carrying the spirit of
             Silla's <strong>Wonhwa (源花)</strong>.<br>
             The <strong>Wonhwa</strong>, the origin of the Hwarang, embodies
@@ -1012,7 +1012,7 @@ function toggleMobileMenu() {
             </div>
         </div>
 
-        <a class="wonhwa-cta" href="/characters#wonhwa">
+        <a class="wonhwa-cta" href="/characters#wonhwa" data-i18n="grp.cta">
             Meet all 5 members →
         </a>
     </div>
@@ -1061,7 +1061,7 @@ function toggleMobileMenu() {
                 </div>
             </div>
             <div class="ph-input">
-                <div class="ph-input-bar">Type a message...</div>
+                <div class="ph-input-bar" data-i18n="phone.input">Type a message...</div>
                 <div class="ph-send">→</div>
             </div>
         </div>
@@ -1108,7 +1108,7 @@ function toggleMobileMenu() {
                 </div>
             </div>
             <div class="ph-input">
-                <div class="ph-input-bar">Type a message...</div>
+                <div class="ph-input-bar" data-i18n="phone.input">Type a message...</div>
                 <div class="ph-send">→</div>
             </div>
         </div>
@@ -1117,20 +1117,20 @@ function toggleMobileMenu() {
 
 <!-- 캐릭터 소개 -->
 <section class="characters">
-    <h2>Who will you chat with?</h2>
+    <h2 data-i18n="char.h2">Who will you chat with?</h2>
     <div class="char-cards">
         <a class="char-card" href="/chat?char=jiwoo">
             <img class="char-avatar" src="/static/jiwoo_profile.png" alt="Jiwoo">
-            <div class="char-badge girl">Girlfriend 💕</div>
+            <div class="char-badge girl" data-i18n="char.badge.girl">Girlfriend 💕</div>
             <div class="char-name">지우 Jiwoo</div>
-            <div class="char-tag">22 · Ewha student · café part-timer</div>
+            <div class="char-tag" data-i18n="char.tag.jiwoo">22 · Ewha student · café part-timer</div>
             <div class="char-quote">"오빠 오늘 뭐 했어요? 저 너무 보고싶었어요 🥺"</div>
         </a>
         <a class="char-card" href="/chat?char=hyunwoo">
             <img class="char-avatar" src="/static/hyunwoo_profile.png" alt="Hyunwoo">
-            <div class="char-badge boy">Boyfriend 💙</div>
+            <div class="char-badge boy" data-i18n="char.badge.boy">Boyfriend 💙</div>
             <div class="char-name">현우 Hyunwoo</div>
-            <div class="char-tag">23 · Hongik student · K-pop trainee</div>
+            <div class="char-tag" data-i18n="char.tag.hyunwoo">23 · Hongik student · K-pop trainee</div>
             <div class="char-quote">"야 나 연습 끝났어. 자기 생각하면서 버텼지 😎"</div>
         </a>
     </div>
@@ -1147,63 +1147,63 @@ function toggleMobileMenu() {
 
 <!-- 특징 -->
 <section class="features">
-    <h2>What you get</h2>
+    <h2 data-i18n="feat.h2">What you get</h2>
 
     <div class="feature-card">
         <div class="feature-icon" style="background:#fff0f3;">💬</div>
         <div>
-            <div class="feature-title">KakaoTalk-style chat</div>
-            <div class="feature-desc">Chat in Korean naturally with the familiar KakaoTalk UI. Trade stickers and emoji too.</div>
+            <div class="feature-title" data-i18n="feat1.title">KakaoTalk-style chat</div>
+            <div class="feature-desc" data-i18n="feat1.desc">Chat in Korean naturally with the familiar KakaoTalk UI. Trade stickers and emoji too.</div>
         </div>
     </div>
 
     <div class="feature-card">
         <div class="feature-icon" style="background:#f0f7ff;">🎵</div>
         <div>
-            <div class="feature-title">K-pop & K-drama topics</div>
-            <div class="feature-desc">Start a chat around your interests — K-pop, dramas, food, travel, and more.</div>
+            <div class="feature-title" data-i18n="feat2.title">K-pop & K-drama topics</div>
+            <div class="feature-desc" data-i18n="feat2.desc">Start a chat around your interests — K-pop, dramas, food, travel, and more.</div>
         </div>
     </div>
 
     <div class="feature-card">
         <div class="feature-icon" style="background:#f0fff4;">📚</div>
         <div>
-            <div class="feature-title">Vocab · Quiz · Fortune</div>
-            <div class="feature-desc">Save words you learn mid-chat and review them with quizzes. Even a daily fortune in Korean!</div>
+            <div class="feature-title" data-i18n="feat3.title">Vocab · Quiz · Fortune</div>
+            <div class="feature-desc" data-i18n="feat3.desc">Save words you learn mid-chat and review them with quizzes. Even a daily fortune in Korean!</div>
         </div>
     </div>
 
     <div class="feature-card">
         <div class="feature-icon" style="background:#fff8e1;">🔊</div>
         <div>
-            <div class="feature-title">Korean voice (TTS)</div>
-            <div class="feature-desc">Hear your AI partner's messages in real Korean pronunciation.</div>
+            <div class="feature-title" data-i18n="feat4.title">Korean voice (TTS)</div>
+            <div class="feature-desc" data-i18n="feat4.desc">Hear your AI partner's messages in real Korean pronunciation.</div>
         </div>
     </div>
 
     <div class="feature-card">
         <div class="feature-icon" style="background:#f3f0ff;">🎭</div>
         <div>
-            <div class="feature-title">Scenario mode <span style="font-size:11px;color:#a78bfa;font-weight:700;background:#ede9fe;padding:2px 7px;border-radius:8px;margin-left:4px;">NEW</span></div>
-            <div class="feature-desc">Practice real situations with AI roleplay — confessing your feelings, a first meeting, a Han River date, and more.</div>
+            <div class="feature-title" data-i18n-html="feat5.title">Scenario mode <span style="font-size:11px;color:#a78bfa;font-weight:700;background:#ede9fe;padding:2px 7px;border-radius:8px;margin-left:4px;">NEW</span></div>
+            <div class="feature-desc" data-i18n="feat5.desc">Practice real situations with AI roleplay — confessing your feelings, a first meeting, a Han River date, and more.</div>
         </div>
     </div>
 
     <div class="feature-card">
         <div class="feature-icon" style="background:#f0fdf4;">📸</div>
         <div>
-            <div class="feature-title">Make shareable cards <span style="font-size:11px;color:#22c55e;font-weight:700;background:#dcfce7;padding:2px 7px;border-radius:8px;margin-left:4px;">NEW</span></div>
-            <div class="feature-desc">Save your AI chats as pretty cards to share on Instagram and KakaoTalk.</div>
+            <div class="feature-title" data-i18n-html="feat6.title">Make shareable cards <span style="font-size:11px;color:#22c55e;font-weight:700;background:#dcfce7;padding:2px 7px;border-radius:8px;margin-left:4px;">NEW</span></div>
+            <div class="feature-desc" data-i18n="feat6.desc">Save your AI chats as pretty cards to share on Instagram and KakaoTalk.</div>
         </div>
     </div>
 </section>
 
 <!-- 하단 CTA -->
 <section class="bottom-cta">
-    <h2>Start right now 💕</h2>
-    <p>Start chatting with no sign-up!<br>Feel your Korean get better every day.</p>
-    <a class="hero-cta" href="/chat">Start Chatting Free →</a>
-    <div class="hero-sub" style="margin-top:14px;">✓ Free &nbsp;·&nbsp; ✓ No sign-up &nbsp;·&nbsp; ✓ Instant start</div>
+    <h2 data-i18n="bottom.h2">Start right now 💕</h2>
+    <p data-i18n-html="bottom.p">Start chatting with no sign-up!<br>Feel your Korean get better every day.</p>
+    <a class="hero-cta" href="/chat" data-i18n="hero.cta">Start Chatting Free →</a>
+    <div class="hero-sub" style="margin-top:14px;" data-i18n-html="bottom.sub">✓ Free &nbsp;·&nbsp; ✓ No sign-up &nbsp;·&nbsp; ✓ Instant start</div>
 </section>
 
 <script>
@@ -1235,12 +1235,74 @@ try {
 <footer>
     <p>© 2026 K-Dating Chat</p>
     <p style="margin-top:8px;">
-        <a href="/privacy">개인정보처리방침</a>
-        <a href="/terms">이용약관</a>
-        <a href="mailto:fassionmap@gmail.com">문의</a>
+        <a href="/privacy" data-i18n="footer.privacy">개인정보처리방침</a>
+        <a href="/terms" data-i18n="footer.terms">이용약관</a>
+        <a href="mailto:fassionmap@gmail.com" data-i18n="footer.contact">문의</a>
     </p>
-    <p style="margin-top:8px;">지우·현우는 AI 캐릭터입니다. 모든 대화는 허구이며 교육 목적입니다.</p>
+    <p style="margin-top:8px;" data-i18n="footer.disclaimer">지우·현우는 AI 캐릭터입니다. 모든 대화는 허구이며 교육 목적입니다.</p>
 </footer>
 
+
+<script>
+// 랜딩 다국어: 영어 기본, 일본 브라우저/?lang=ja 면 일본어로 교체 (앱과 동일 감지).
+(function () {
+  var JA = {
+    'nav.home': 'ホーム', 'nav.culture': 'K-カルチャー', 'nav.tips': '学習のコツ',
+    'nav.characters': 'キャラクター', 'nav.start': '始める →',
+    'hero.badge1': '✨ AI韓国語学習', 'hero.badge2': '無料 · 登録不要',
+    'hero.h1': '韓国語をチャットで学ぼう<br><em>AIパートナー</em>と',
+    'hero.p': '韓国人の彼氏・彼女と<br>毎日カカオトーク風にチャット',
+    'hero.cta': '無料でチャットを始める →',
+    'hero.sub': '登録不要ですぐ開始 · 100%無料',
+    'proof.worldwide': '🌍 世界中の学習者', 'proof.daily': '💬 毎日数百件のチャット',
+    'hwarang.label': '🏹 NEW · 5人組ボーイグループ',
+    'hwarang.desc': '新羅の<strong>花郎道（화랑도）</strong>の精神を受け継ぐ5人組K-POPボーイグループ。<br>各メンバーが<strong>世俗五戒（세속오계）</strong>と<strong>五方色（오방색）</strong>を体現します。',
+    'grp.cta': '5人のメンバーに会う →',
+    'wonhwa.label': '🌸 NEW · 5人組ガールグループ',
+    'wonhwa.desc': '新羅の<strong>源花（源花）</strong>の精神を受け継ぐ5人組K-POPガールグループ。<br>花郎の起源である<strong>源花</strong>が<strong>世俗五戒（세속오계）</strong>を体現し、HWARANGの姉妹グループとして再び花開きます。',
+    'char.h2': '誰とチャットする？',
+    'char.badge.girl': '彼女 💕', 'char.badge.boy': '彼氏 💙',
+    'char.tag.jiwoo': '22歳・梨花女子大生・カフェバイト',
+    'char.tag.hyunwoo': '23歳・弘益大生・K-POP練習生',
+    'phone.input': 'メッセージを入力...',
+    'feat.h2': 'できること',
+    'feat1.title': 'カカオトーク風チャット',
+    'feat1.desc': '慣れ親しんだカカオトーク風UIで、自然に韓国語でチャット。スタンプや絵文字のやり取りも。',
+    'feat2.title': 'K-POP・K-ドラマの話題',
+    'feat2.desc': 'K-POP、ドラマ、グルメ、旅行など、興味のあるテーマから会話をスタート。',
+    'feat3.title': '単語 · クイズ · 運勢',
+    'feat3.desc': 'チャット中に覚えた単語を保存してクイズで復習。韓国語で今日の運勢まで！',
+    'feat4.title': '韓国語の音声（TTS）',
+    'feat4.desc': 'AIパートナーのメッセージを本場の韓国語の発音で聞けます。',
+    'feat5.title': 'シナリオモード <span style="font-size:11px;color:#a78bfa;font-weight:700;background:#ede9fe;padding:2px 7px;border-radius:8px;margin-left:4px;">NEW</span>',
+    'feat5.desc': '告白、初対面、漢江デートなど、リアルな場面をAIとロールプレイで練習。',
+    'feat6.title': 'シェアカードを作成 <span style="font-size:11px;color:#22c55e;font-weight:700;background:#dcfce7;padding:2px 7px;border-radius:8px;margin-left:4px;">NEW</span>',
+    'feat6.desc': 'AIとのチャットをおしゃれなカードで保存して、インスタやカカオトークでシェア。',
+    'bottom.h2': '今すぐ始めよう 💕',
+    'bottom.p': '登録不要でチャット開始！<br>毎日、韓国語が上達していくのを実感。',
+    'bottom.sub': '✓ 無料 &nbsp;·&nbsp; ✓ 登録不要 &nbsp;·&nbsp; ✓ すぐ開始',
+    'footer.privacy': 'プライバシーポリシー', 'footer.terms': '利用規約', 'footer.contact': 'お問い合わせ',
+    'footer.disclaimer': 'ジウ・ヒョヌはAIキャラクターです。すべての会話はフィクションであり、教育目的です。'
+  };
+  var TITLE_JA = 'K-Dating Chat 💕 韓国人AIパートナーとチャットして韓国語を学ぼう';
+  function pick() {
+    try { var q = new URLSearchParams(location.search).get('lang'); if (q) return q.toLowerCase(); } catch (e) {}
+    try { var s = localStorage.getItem('kdate_lang'); if (s) return s; } catch (e) {}
+    try { return (navigator.language || '').toLowerCase().split('-')[0]; } catch (e) {}
+    return 'en';
+  }
+  if (pick() === 'ja') {
+    document.documentElement.lang = 'ja';
+    if (TITLE_JA) document.title = TITLE_JA;
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n'); if (JA[k] != null) el.textContent = JA[k];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n-html'); if (JA[k] != null) el.innerHTML = JA[k];
+    });
+    try { localStorage.setItem('kdate_lang', 'ja'); } catch (e) {}  // /chat 도 일본어로
+  }
+})();
+</script>
 </body>
 </html>
