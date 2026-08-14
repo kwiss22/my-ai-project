@@ -11,7 +11,9 @@ function check(name, cond, detail) {
 // canonical env 가 이미 떠있다고 가정 (tests/run.sh KEEP_SERVER=1 또는 별도 서버)
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 420, height: 820 } });
+// 언어 고정 — 이 테스트는 한국어 UI 카피를 단언한다. i18n 자동감지가 도입되어
+// 로케일 미지정 시 CI(en-US)에서 영어로 렌더되므로 ko-KR 로 명시.
+const ctx = await browser.newContext({ viewport: { width: 420, height: 820 }, locale: 'ko-KR' });
 const page = await ctx.newPage();
 page.on('pageerror', (e) => failures.push('pageerror: ' + e.message));
 
