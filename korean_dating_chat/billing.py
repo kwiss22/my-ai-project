@@ -279,15 +279,32 @@ def _verify_webhook(headers, body):
 
     PayPal 의 서명 검증은 API roundtrip 방식 — 헤더 + 페이로드 + WEBHOOK_ID 를
     PayPal 에 보내 'SUCCESS' / 'FAILURE' 응답 받음. Stripe 의 HMAC 보다 약간 무거움.
+
+    반환: (ok, reason). reason 은 실패 원인 식별자 — 호출측이 로그에 남긴다.
+    이전엔 모든 실패를 False 로 뭉개서, 운영 로그만으로는 webhook_id 불일치인지
+    토큰 발급 실패인지 네트워크 문제인지 구분할 수 없었다 (5개월간 원인 미확정).
     """
     if not PAYPAL_WEBHOOK_ID:
-        return False
+        return False, 'webhook_id_unset'
     try:
         event = json.loads(body)
     except (ValueError, TypeError):
-        return False
+        return False, 'payload_not_json'
+
+    # 1) 액세스 토큰 — CLIENT_ID/SECRET 문제는 여기서 드러난다
     try:
         token = _get_access_token()
+    except RuntimeError:
+        return False, 'credentials_unset'
+    except requests.HTTPError as e:
+        code = getattr(e.response, 'status_code', '?')
+        # 401/403 = CLIENT_ID/SECRET 가 틀렸거나 live/sandbox 가 엇갈린 경우
+        return False, f'token_http_{code}'
+    except (requests.RequestException, ValueError, KeyError) as e:
+        return False, f'token_error_{type(e).__name__}'
+
+    # 2) 서명 검증 roundtrip
+    try:
         r = requests.post(
             f'{PAYPAL_API_BASE}/v1/notifications/verify-webhook-signature',
             headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
@@ -302,9 +319,20 @@ def _verify_webhook(headers, body):
             },
             timeout=10,
         )
-        return r.status_code == 200 and r.json().get('verification_status') == 'SUCCESS'
-    except (requests.RequestException, RuntimeError, ValueError, KeyError):
-        return False
+    except requests.RequestException as e:
+        return False, f'verify_request_{type(e).__name__}'
+
+    if r.status_code != 200:
+        # 400 대 401/403 구분이 중요 — 400 은 보통 webhook_id 가 이 앱 소유가 아님
+        return False, f'verify_http_{r.status_code}'
+    try:
+        status = r.json().get('verification_status')
+    except ValueError:
+        return False, 'verify_body_not_json'
+    if status != 'SUCCESS':
+        # PayPal 이 FAILURE 를 주는 가장 흔한 원인: webhook_id 가 실제 webhook 과 불일치
+        return False, f'verify_status_{status or "missing"}'
+    return True, 'ok'
 
 
 def _handle_subscription_activated(resource):
@@ -460,14 +488,23 @@ def webhook():
         if not PAYPAL_WEBHOOK_ID:
             print('[BILLING] PAYPAL_WEBHOOK_ID 미설정 — 이벤트 무시')
             return jsonify({'error': 'webhook not configured'}), 503
-        if not _verify_webhook(request.headers, payload):
+        ok, reason = _verify_webhook(request.headers, payload)
+        if not ok:
             # 실제 PayPal 웹훅은 Paypal-Transmission-* 헤더를 보냄.
             # 헤더가 없으면 공개 URL 을 찔러보는 봇/스캐너의 가짜 요청 → critical 아님(노이즈).
             is_paypal = bool(request.headers.get('Paypal-Transmission-Id'))
+            # event_type 은 서명 미검증 입력이라 신뢰할 수 없지만, 어느 이벤트가
+            # 막히고 있는지 운영자가 알아야 해서 진단 목적으로만 남긴다.
+            try:
+                untrusted_type = (json.loads(payload) or {}).get('event_type', '')[:60]
+            except (ValueError, TypeError, AttributeError):
+                untrusted_type = ''
             log_event('critical' if is_paypal else 'warn', 'webhook.signature_invalid',
-                      message='PayPal webhook signature 검증 실패'
+                      message=f'PayPal webhook signature 검증 실패 (reason={reason})'
                               + ('' if is_paypal else ' (봇/스캐너 추정 — transmission 헤더 없음)'),
                       source=('paypal' if is_paypal else 'bot'),
+                      reason=reason,
+                      event_type_unverified=untrusted_type,
                       remote_addr=request.remote_addr)
             return jsonify({'error': 'invalid signature'}), 400
 
