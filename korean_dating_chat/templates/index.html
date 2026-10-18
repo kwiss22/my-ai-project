@@ -118,6 +118,40 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             text-align: center;
             max-width: 500px;
+            position: relative;
+        }
+
+        /* 맞춤 설정 진입 — 온보딩을 강제하지 않고 원하는 유저만 열도록 */
+        .personalize-entry {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .personalize-entry:hover {
+            background: rgba(0,0,0,0.09);
+            color: #333;
+        }
+
+        @media (max-width: 480px) {
+            .personalize-entry {
+                top: 10px;
+                right: 10px;
+                padding: 5px 10px;
+                font-size: 11px;
+            }
         }
 
         .character-selection h1 {
@@ -968,6 +1002,22 @@
         .onboarding-next-btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
+        }
+
+        /* 온보딩은 선택 사항 — 빠져나갈 출구를 항상 제공 */
+        .onboarding-skip-btn {
+            display: block;
+            margin: 12px auto 0;
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 13px;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .onboarding-skip-btn:hover {
+            color: #666;
         }
 
         /* 언어 토글 버튼 */
@@ -2146,7 +2196,8 @@
     </div>
 
     <!-- 온보딩 Step 1: 이름 + 레벨 -->
-    <div class="onboarding-screen" id="onboarding-step1">
+    <!-- 온보딩은 선택 사항 — 기본 진입은 캐릭터 선택 화면. 여기는 '맞춤 설정' 으로만 진입. -->
+    <div class="onboarding-screen" id="onboarding-step1" style="display:none">
         <div class="onboarding-step-indicator">
             <div class="step-dot active"></div>
             <div class="step-dot"></div>
@@ -2167,6 +2218,9 @@
         </div>
 
         <button class="onboarding-next-btn" id="step1-next-btn" onclick="goToStep2()" disabled><span class="t-next">다음</span> →</button>
+        <!-- 선택 사항이므로 언제든 캐릭터 선택으로 되돌아갈 수 있어야 함 -->
+        <button type="button" class="onboarding-skip-btn" onclick="closeOnboarding()"
+                data-i18n="onb.skip">나중에 할게요</button>
     </div>
 
     <!-- 온보딩 Step 2: 관심사 -->
@@ -2192,12 +2246,14 @@
     </div>
 
     <!-- 캐릭터 선택 -->
-    <div class="character-selection" id="character-selection" style="display:none">
-        <div class="onboarding-step-indicator">
-            <div class="step-dot"></div>
-            <div class="step-dot"></div>
-            <div class="step-dot active"></div>
-        </div>
+    <div class="character-selection" id="character-selection">
+        <!-- 맞춤 설정 진입 — 온보딩(닉네임·레벨·관심사)은 강제하지 않고 여기서 선택적으로 -->
+        <button type="button" class="personalize-entry" id="personalize-entry"
+                onclick="openOnboarding()" title="맞춤 설정"
+                aria-label="맞춤 설정 열기" data-i18n-aria="aria.personalize">
+            <span aria-hidden="true">✨</span>
+            <span id="personalize-label" data-i18n="onb.personalize">맞춤 설정</span>
+        </button>
         <h1>💕 K-Dating Chat</h1>
         <p id="s3-subtitle">누구와 대화할까요?</p>
 
@@ -3503,6 +3559,9 @@
                 // 채팅 헤더 / 배너 / 메시지 버튼
                 'chat.online': '온라인',
                 'chip.signIn': '로그인',
+                'onb.personalize': '맞춤 설정',
+                'onb.skip': '나중에 할게요',
+                'aria.personalize': '맞춤 설정 열기',
                 'chip.unlimited': '✨ 무제한',
                 'chip.trial': '✨ 체험 중',
                 'chip.cancelEnd': '✨ 해지 예정',
@@ -3704,6 +3763,9 @@
                 // Chat header / banner / message buttons
                 'chat.online': 'Online',
                 'chip.signIn': 'Sign in',
+                'onb.personalize': 'Personalize',
+                'onb.skip': 'Maybe later',
+                'aria.personalize': 'Open personalization settings',
                 'chip.unlimited': '✨ Unlimited',
                 'chip.trial': '✨ Trial',
                 'chip.cancelEnd': '✨ Ending',
@@ -3905,6 +3967,9 @@
                 // Chat header / banner / message buttons
                 'chat.online': 'オンライン',
                 'chip.signIn': 'ログイン',
+                'onb.personalize': 'カスタマイズ',
+                'onb.skip': 'あとで',
+                'aria.personalize': 'カスタマイズ設定を開く',
                 'chip.unlimited': '✨ 無制限',
                 'chip.trial': '✨ トライアル',
                 'chip.cancelEnd': '✨ 終了予定',
@@ -4100,6 +4165,9 @@
                 'chat.err.generic': 'Lo sentimos, algo salió mal. Inténtalo de nuevo.',
                 'chat.online': 'En línea',
                 'chip.signIn': 'Iniciar sesión',
+                'onb.personalize': 'Personalizar',
+                'onb.skip': 'Quizá más tarde',
+                'aria.personalize': 'Abrir ajustes de personalización',
                 'chip.unlimited': '✨ Ilimitado',
                 'chip.trial': '✨ Prueba',
                 'chip.cancelEnd': '✨ Finaliza',
@@ -4290,6 +4358,9 @@
                 'chat.err.generic': '抱歉，出了點問題，請再試一次。',
                 'chat.online': '在線',
                 'chip.signIn': '登入',
+                'onb.personalize': '個人化設定',
+                'onb.skip': '稍後再說',
+                'aria.personalize': '開啟個人化設定',
                 'chip.unlimited': '✨ 無限',
                 'chip.trial': '✨ 試用',
                 'chip.cancelEnd': '✨ 即將結束',
@@ -4480,6 +4551,9 @@
                 'chat.err.generic': 'Entschuldigung, etwas ist schiefgelaufen. Bitte versuche es noch einmal.',
                 'chat.online': 'Online',
                 'chip.signIn': 'Anmelden',
+                'onb.personalize': 'Anpassen',
+                'onb.skip': 'Später',
+                'aria.personalize': 'Personalisierung öffnen',
                 'chip.unlimited': '✨ Unbegrenzt',
                 'chip.trial': '✨ Test',
                 'chip.cancelEnd': '✨ Endet',
@@ -4670,6 +4744,9 @@
                 'chat.err.generic': 'Désolé, un problème est survenu. Réessaie.',
                 'chat.online': 'En ligne',
                 'chip.signIn': 'Se connecter',
+                'onb.personalize': 'Personnaliser',
+                'onb.skip': 'Plus tard',
+                'aria.personalize': 'Ouvrir la personnalisation',
                 'chip.unlimited': '✨ Illimité',
                 'chip.trial': '✨ Essai',
                 'chip.cancelEnd': '✨ Se termine',
@@ -4861,6 +4938,22 @@
             } else {
                 userProfile.interests = userProfile.interests.filter(i => i !== interest);
             }
+        }
+
+        // 맞춤 설정 진입 — 캐릭터 선택 화면에서 온보딩을 선택적으로 연다.
+        // (온보딩을 강제 관문으로 두면 첫 진입에서 이탈하므로 기본 경로에서 제외)
+        function openOnboarding() {
+            document.getElementById('character-selection').style.display = 'none';
+            document.getElementById('onboarding-step2').style.display = 'none';
+            document.getElementById('onboarding-step1').style.display = 'block';
+        }
+
+        // 온보딩 중단 → 캐릭터 선택으로 복귀 (입력한 값은 그대로 유지)
+        function closeOnboarding() {
+            document.getElementById('onboarding-step1').style.display = 'none';
+            document.getElementById('onboarding-step2').style.display = 'none';
+            document.getElementById('character-selection').style.display = 'block';
+            renderCharacterCards();
         }
 
         // 온보딩 Step1 → Step2
@@ -8673,15 +8766,15 @@
                 // UI 반영
                 initHeartDisplay();
 
-                // 복귀 유저: 온보딩을 이미 완료했고 캐릭터도 선택한 적이 있으면
-                // 자동으로 해당 캐릭터 채팅 화면으로 진입
-                const onboardingDone = !!(userProfile.level && Array.isArray(userProfile.interests) && userProfile.interests.length > 0);
-                if (onboardingDone && p.currentCharacter) {
-                    // 온보딩 화면 숨김
-                    const s1 = document.getElementById('onboarding-step1');
-                    const s2 = document.getElementById('onboarding-step2');
-                    if (s1) s1.style.display = 'none';
-                    if (s2) s2.style.display = 'none';
+                // 복귀 유저: 이전에 고른 캐릭터가 있으면 바로 그 채팅으로 진입.
+                // 온보딩은 선택 사항이므로 완료 여부는 조건에 넣지 않는다
+                // (넣으면 온보딩을 건너뛴 유저가 매번 캐릭터 선택으로 되돌아감).
+                if (p.currentCharacter) {
+                    // 진입 전 화면 모두 숨김
+                    ['onboarding-step1', 'onboarding-step2', 'character-selection'].forEach((id) => {
+                        const el = document.getElementById(id);
+                        if (el) el.style.display = 'none';
+                    });
                     // 바로 해당 캐릭터 선택 (대화 복원 포함)
                     selectCharacter(p.currentCharacter, { skipGate: true });
                 }
