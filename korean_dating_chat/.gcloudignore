@@ -30,3 +30,17 @@ NUL
 *.zip
 deploy_temp/
 .streamlit/
+
+# 로컬 가상환경 / 의존성 — Dockerfile 이 `COPY . .` 라 업로드되면 그대로 이미지에
+# 들어간다. .gcloudignore 가 존재하면 gcloud 는 .gitignore 를 참조하지 않으므로
+# (gitignore 에 있어도) 여기에 따로 적어야 제외된다.
+# 합쳐서 ~250MB — 빌드 업로드와 이미지 크기를 그만큼 불린다.
+venv/
+.venv/
+.venv-localtest/
+tests/node_modules/
+node_modules/
+
+# 로컬 테스트 산출물
+tests/test-results/
+tests/playwright-report/
