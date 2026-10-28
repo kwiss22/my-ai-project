@@ -11,5 +11,4 @@ oauth2client
 azure-cognitiveservices-speech
 firebase-admin
 requests
-stripe
 itsdangerous
