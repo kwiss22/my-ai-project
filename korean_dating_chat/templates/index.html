@@ -8798,10 +8798,19 @@
                 // 저장된 과거 선택보다 분명한 의도다.
                 if (urlCharacter) {
                     enterCharacterFromUrl(urlCharacter);
-                } else if (p.currentCharacter) {
+                } else if (p.updatedAt && p.currentCharacter) {
                     // 복귀 유저: 이전에 고른 캐릭터가 있으면 바로 그 채팅으로 진입.
-                    // 온보딩은 선택 사항이므로 완료 여부는 조건에 넣지 않는다
-                    // (넣으면 온보딩을 건너뛴 유저가 매번 캐릭터 선택으로 되돌아감).
+                    //
+                    // 온보딩 완료 여부는 조건에 넣지 않는다 — 넣으면 온보딩을 건너뛴
+                    // 유저가 매번 캐릭터 선택으로 되돌아간다.
+                    //
+                    // 대신 updatedAt 으로 '실제로 저장된 프로필' 인지 판별한다.
+                    // getProfile() 은 프로필이 없을 때 currentCharacter:'jiwoo' 가 박힌
+                    // 기본 객체를 합성해 주므로(static/js/storage.js), currentCharacter
+                    // 만 보면 신규 방문자도 참이 되어 캐릭터 선택을 건너뛰고 지우 대화로
+                    // 직행한다. updatedAt 은 saveProfile() 이 쓴 행에만 있고, saveProfile
+                    // 은 selectCharacter 안에서만 호출되므로 '한 번이라도 직접 고른 적
+                    // 있음' 과 정확히 일치한다.
                     ['onboarding-step1', 'onboarding-step2', 'character-selection'].forEach((id) => {
                         const el = document.getElementById(id);
                         if (el) el.style.display = 'none';
