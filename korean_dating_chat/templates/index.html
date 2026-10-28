@@ -8738,7 +8738,35 @@
         try { setLang(currentLang); } catch (e) { console.warn('[i18n] init setLang failed', e); }
 
         // IndexedDB 초기화 + 마이그레이션 + 캐시 로드
+        // /chat?character=leo — 마케팅 페이지(/characters)의 "Chat with Leo" 버튼이
+        // 넘기는 파라미터. 이전에는 아무도 읽지 않아서, 캐릭터를 직접 고르고 들어온
+        // 사람이 선택을 잃고 처음부터 다시 골라야 했다.
+        // CHARACTERS 레지스트리로 검증 — URL 입력은 신뢰하지 않는다.
+        function requestedCharacterFromUrl() {
+            try {
+                const c = new URLSearchParams(window.location.search).get('character');
+                return (c && Object.prototype.hasOwnProperty.call(CHARACTERS, c)) ? c : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // 지정된 캐릭터로 곧장 진입. 유료 게이트는 skipGate 로 건너뛴다 —
+        // authState 로드와 경쟁 상태라 여기서 판정하면 유료 사용자에게도 페이월이
+        // 뜰 수 있다. 서버가 첫 메시지에서 402(paywall:'character')로 enforce 하고,
+        // 프론트는 그 응답으로 페이월 모달을 띄운다. 무료 사용자는 해당 캐릭터
+        // 화면과 인사말까지는 보고, 대화를 시도할 때 구독 안내를 받는다.
+        function enterCharacterFromUrl(character) {
+            ['onboarding-step1', 'onboarding-step2', 'character-selection'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            selectCharacter(character, { skipGate: true });
+        }
+
         (async function initStorage() {
+            // Storage 초기화가 실패해도 URL 지정 캐릭터는 지켜져야 하므로 바깥에서 읽는다.
+            const urlCharacter = requestedCharacterFromUrl();
             try {
                 await Storage.init();
                 await Storage.migrateFromLocalStorage(currentCharacter);
@@ -8766,11 +8794,14 @@
                 // UI 반영
                 initHeartDisplay();
 
-                // 복귀 유저: 이전에 고른 캐릭터가 있으면 바로 그 채팅으로 진입.
-                // 온보딩은 선택 사항이므로 완료 여부는 조건에 넣지 않는다
-                // (넣으면 온보딩을 건너뛴 유저가 매번 캐릭터 선택으로 되돌아감).
-                if (p.currentCharacter) {
-                    // 진입 전 화면 모두 숨김
+                // URL 로 캐릭터를 지정해 들어온 경우가 최우선 — 방금 누른 선택이
+                // 저장된 과거 선택보다 분명한 의도다.
+                if (urlCharacter) {
+                    enterCharacterFromUrl(urlCharacter);
+                } else if (p.currentCharacter) {
+                    // 복귀 유저: 이전에 고른 캐릭터가 있으면 바로 그 채팅으로 진입.
+                    // 온보딩은 선택 사항이므로 완료 여부는 조건에 넣지 않는다
+                    // (넣으면 온보딩을 건너뛴 유저가 매번 캐릭터 선택으로 되돌아감).
                     ['onboarding-step1', 'onboarding-step2', 'character-selection'].forEach((id) => {
                         const el = document.getElementById(id);
                         if (el) el.style.display = 'none';
@@ -8780,6 +8811,10 @@
                 }
             } catch (e) {
                 console.error('[KDateStorage] init failed — falling back to in-memory only', e);
+                // Storage 없이도 URL 지정 캐릭터는 지킨다 (대화 복원만 불가).
+                if (urlCharacter) {
+                    try { enterCharacterFromUrl(urlCharacter); } catch (e2) {}
+                }
             }
         })();
     </script>
