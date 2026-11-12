@@ -11,8 +11,6 @@ from google.cloud import translate_v2 as translate
 import json
 import base64
 import re
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import azure.cognitiveservices.speech as speechsdk
 import random
 import firebase_admin
@@ -148,61 +146,53 @@ print("[STARTUP] 초기화 완료!")
 print("=" * 60)
 
 # ==========================================
-# [Google Sheets] 채팅 로그 기록용
+# [대화 로그] 서버 측 기록 — 보관 기간 제한
 # ==========================================
-GOOGLE_SHEETS_CREDENTIALS = os.getenv('GOOGLE_SHEETS_CREDENTIALS', 'gcp-service-account.json')
-GOOGLE_SHEET_NAME = os.getenv('GOOGLE_SHEET_NAME', 'Kdate_Chat_Log')
+# 종전에는 Google Sheets 에 대화를 적었다. Cloud Run 이전(2026-05-26) 이후
+# 서비스 계정 키가 컨테이너에 없어 조용히 죽어 있었고, 무엇보다
+# 개인정보처리방침이 "대화는 브라우저에 로컬 저장" 이라고만 고지해 운영자
+# 스프레드시트 보관과 어긋났다. 그래서 외부 시트가 아니라 우리 DB 에,
+# 보관 기간을 걸고, 방침에 고지한 상태로 기록한다.
+#
+#   - 로그인 사용자만 (user_id 없는 요청은 기록하지 않는다)
+#   - 본문은 저장 시 길이 절단 (users.py 의 _LOG_* 상한)
+#   - CHAT_LOG_RETENTION_DAYS 지나면 자동 삭제
+#   - 계정 삭제 시 함께 삭제, 데이터 내보내기에 포함
+CHAT_LOG_ENABLED = os.getenv('CHAT_LOG_ENABLED', 'true').lower() != 'false'
+CHAT_LOG_RETENTION_DAYS = int(os.getenv('CHAT_LOG_RETENTION_DAYS', '30'))
 
-gs_client = None
-try:
-    scope = [
-        'https://spreadsheets.google.com/feeds',
-        'https://www.googleapis.com/auth/drive'
-    ]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_SHEETS_CREDENTIALS, scope)
-    gs_client = gspread.authorize(creds)
-    print(f"[STARTUP] OK - Google Sheets 초기화 성공 (시트: {GOOGLE_SHEET_NAME})")
-except Exception as e:
-    print(f"[WARNING] Google Sheets 초기화 실패: {str(e)}")
-    gs_client = None
+# 보관 기간 정리는 cron 에 의존하지 않는다 — cron 이 안 걸려 있어도 기간이
+# 지켜져야 방침과 어긋나지 않는다. 기록 시점에 시간당 1회만 수행한다.
+_last_log_purge_ts = 0.0
+_PURGE_INTERVAL_SEC = 3600
 
-# Sheets 로깅은 외부 API(약 200–2000ms, 가끔 30s+ 타임아웃)다.
-# /chat 응답 사이클에서 직접 호출하면 SSE 'done' 이벤트가 지연되므로
-# 작은 백그라운드 스레드 풀에 떠넘긴다.  실패해도 사용자 경로엔 영향 없음.
-import concurrent.futures as _futures
-_sheets_executor = _futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix='sheets-log')
 
-def _do_save_to_google_sheet(user_text, bot_text, character_name):
-    if not gs_client:
+def _maybe_purge_chat_logs():
+    global _last_log_purge_ts
+    import time as _time
+    now = _time.time()
+    if now - _last_log_purge_ts < _PURGE_INTERVAL_SEC:
         return
+    _last_log_purge_ts = now
     try:
-        sheet = gs_client.open(GOOGLE_SHEET_NAME).sheet1
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        # 시트에 들어가는 텍스트 길이 cap — gspread는 큰 셀에서 잦은 timeout
-        sheet.append_row([
-            timestamp,
-            character_name[:50],
-            user_text[:1000],
-            bot_text[:2000],
-        ])
-        print(f"[Google Sheets] OK - 로그 저장 완료")
+        cutoff = int(now) - CHAT_LOG_RETENTION_DAYS * 86400
+        n = users_purge_chat_logs(cutoff)
+        if n:
+            print(f"[CHAT LOG] 보관 기간 경과 {n}건 삭제 (>{CHAT_LOG_RETENTION_DAYS}일)")
     except Exception as e:
-        # 절대 raise 하지 않음 — caller(/chat)와 끊긴 백그라운드 스레드
-        print(f"[Google Sheets] ERROR - 로그 저장 실패: {str(e)[:200]}")
+        print(f"[CHAT LOG] purge 실패(무시): {str(e)[:120]}")
 
-def save_to_google_sheet(user_text, bot_text, character_name):
-    """사용자 입력과 AI 응답을 Google Sheets에 기록 (비차단).
 
-    /chat 응답 경로에서 호출하므로 절대 동기적으로 외부 호출을 하면 안 됨.
-    풀이 가득 차면 조용히 드롭(과부하 보호).
-    """
-    if not gs_client:
+def save_chat_log(user_id, user_text, bot_text, character_name):
+    """대화 1턴 기록. 채팅 경로에서 호출되므로 절대 예외를 올리지 않는다."""
+    if not (CHAT_LOG_ENABLED and user_id):
         return
     try:
-        _sheets_executor.submit(_do_save_to_google_sheet, user_text, bot_text, character_name)
-    except RuntimeError:
-        # executor shutdown 중이거나 큐 가득 — 사용자 경로엔 무영향이므로 드롭
-        pass
+        users_add_chat_log(user_id, character_name, user_text, bot_text)
+        _maybe_purge_chat_logs()
+    except Exception as e:
+        print(f"[CHAT LOG] 기록 실패(무시): {str(e)[:120]}")
+
 
 # ==========================================
 # [캐릭터 페르소나] 시스템 프롬프트
@@ -1730,6 +1720,10 @@ from users import (
     add_correction,
     list_corrections,
     correction_count,
+    add_chat_log as users_add_chat_log,
+    purge_chat_logs as users_purge_chat_logs,
+    list_chat_logs as users_list_chat_logs,
+    chat_log_stats as users_chat_log_stats,
     DAILY_FREE_QUOTA,
     QUOTA_TIMEZONE,
 )
@@ -1821,6 +1815,38 @@ def admin_prompt_cache():
     if not ok:
         return err
     return jsonify(prompt_cache.stats())
+
+
+@app.route('/admin/chat-logs')
+def admin_chat_logs():
+    """대화 로그 열람. ADMIN_EMAILS 화이트리스트만.
+
+    쿼리: days(기본 7) · limit(기본 200, 최대 1000) · user_id(선택)
+    보관 기간(CHAT_LOG_RETENTION_DAYS)이 지난 건은 이미 삭제돼 조회되지 않는다.
+    """
+    from admin import _require_admin
+    import time as _time
+    ok, err = _require_admin()
+    if not ok:
+        return err
+    try:
+        days = max(1, min(int(request.args.get('days', 7)), CHAT_LOG_RETENTION_DAYS))
+    except (TypeError, ValueError):
+        days = 7
+    try:
+        limit = max(1, min(int(request.args.get('limit', 200)), 1000))
+    except (TypeError, ValueError):
+        limit = 200
+    since = int(_time.time()) - days * 86400
+    rows = users_list_chat_logs(limit=limit, since_ts=since,
+                                user_id=request.args.get('user_id') or None)
+    return jsonify({
+        'enabled': CHAT_LOG_ENABLED,
+        'retention_days': CHAT_LOG_RETENTION_DAYS,
+        'window_days': days,
+        'stats': users_chat_log_stats(),
+        'logs': rows,
+    })
 
 
 @app.route('/admin')
@@ -1999,11 +2025,18 @@ def export_data():
             'daily_reset_date': user.get('daily_reset_date'),
             'timezone': QUOTA_TIMEZONE,
         },
+        # 서버에 보관 중인 대화 로그 — 보관 기간 내 본인 것만. 서버에 들고 있는
+        # 이상 이식권(GDPR Art.20) 대상이라 내보내기에 반드시 포함돼야 한다.
+        'chat_logs': users_list_chat_logs(limit=1000, user_id=user['user_id']),
         'notes': {
-            'chat_history': '대화 기록은 본인 브라우저(IndexedDB)에 저장돼 있어요. '
+            'chat_history': '전체 대화 기록은 본인 브라우저(IndexedDB)에 저장돼 있어요. '
                             '설정 → 대화 기록에서 직접 백업 가능합니다. '
-                            'Chat history is stored locally in your browser (IndexedDB); '
-                            'export it from Settings → History.',
+                            f'서비스 품질 점검용 사본은 서버에 {CHAT_LOG_RETENTION_DAYS}일간 '
+                            '보관되며 위 chat_logs 항목에 포함돼 있어요. '
+                            'Full chat history is stored locally in your browser (IndexedDB); '
+                            'export it from Settings → History. A copy is kept on our server '
+                            f'for {CHAT_LOG_RETENTION_DAYS} days for quality review and is '
+                            'included above under chat_logs.',
             'payment_card': '결제 정보는 저희 서버에 저장되지 않고 PayPal 이 직접 처리합니다. '
                             'We never store your payment details; PayPal handles them directly. '
                             '결제 영수증은 PayPal 계정 페이지(설정 → 구독 관리)에서 다운로드 가능.',
@@ -2766,11 +2799,9 @@ def chat():
             scenario_done = True
             full_response = full_response.replace('(시나리오완료)', '').strip()
 
-        # 분석용 Google Sheets 로깅만 유지 (stateless — 서버에 대화 저장 X)
-        try:
-            save_to_google_sheet(user_message, full_response, get_character_name(character))
-        except Exception as save_err:
-            print(f"[CHAT] Sheets log error (non-fatal): {save_err}")
+        # 대화 로그 — 로그인 사용자만, 보관 기간 제한. 방침에 고지된 범위.
+        save_chat_log(user['user_id'] if user else None,
+                      user_message, full_response, get_character_name(character))
 
         vocab = []
         if extract_vocab_flag:

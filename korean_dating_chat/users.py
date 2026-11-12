@@ -277,6 +277,20 @@ CREATE TABLE IF NOT EXISTS human_sessions (
 );
 CREATE INDEX IF NOT EXISTS human_sessions_user ON human_sessions(user_id, created_at);
 CREATE INDEX IF NOT EXISTS human_sessions_pending ON human_sessions(status, slot_start);
+
+-- 대화 로그. 서비스 품질 점검용이며 보관 기간이 지나면 자동 삭제된다.
+-- 개인정보처리방침에 수집 사실과 보관 기간을 고지해야 한다 — 고지 없이 켜면 안 된다.
+-- 본문은 저장 시 길이를 자르고(과도 수집 방지), 계정 삭제 시 함께 지운다.
+CREATE TABLE IF NOT EXISTS chat_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  character TEXT,
+  user_text TEXT NOT NULL,
+  bot_text TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS chat_logs_time ON chat_logs(created_at);
+CREATE INDEX IF NOT EXISTS chat_logs_user ON chat_logs(user_id, created_at);
 """
 
 _MIGRATIONS = [
@@ -506,10 +520,26 @@ class SQLiteUserStore(UserStore):
             conn.close()
 
     def delete_user(self, user_id):
+        """users 행 + 그 사용자에게 종속된 모든 데이터 삭제.
+
+        종전에는 users 행만 지워 vocab·corrections 가 user_id 만 남긴 채 고아로
+        남았다. 대화 로그까지 쌓이는 지금은 더 샐 수 없다 — 삭제 요청은 보유한
+        개인정보 전부에 대한 것이므로 종속 테이블을 전부 함께 지운다.
+        예약(human_sessions)은 운영자가 이미 잡은 일정이라 취소로 표시만 하고
+        본문(note)은 비운다.
+        """
         if not user_id:
             return False
         conn = self._connect()
         try:
+            conn.execute('DELETE FROM chat_logs   WHERE user_id=?', (user_id,))
+            conn.execute('DELETE FROM vocab       WHERE user_id=?', (user_id,))
+            conn.execute('DELETE FROM corrections WHERE user_id=?', (user_id,))
+            conn.execute(
+                "UPDATE human_sessions SET status='cancelled', note=NULL, updated_at=? "
+                "WHERE user_id=? AND status IN ('requested','confirmed')",
+                (int(time.time()), user_id),
+            )
             cur = conn.execute('DELETE FROM users WHERE user_id=?', (user_id,))
             conn.commit()
             return cur.rowcount > 0
@@ -1044,6 +1074,73 @@ class SQLiteUserStore(UserStore):
             conn.close()
 
 
+    # ---- 대화 로그 (보관 기간 제한) -----------------------------------------
+    # 저장 본문 상한. 과도 수집을 막고 DB 증가를 묶어둔다.
+    _LOG_USER_MAX = 1000
+    _LOG_BOT_MAX = 2000
+
+    def add_chat_log(self, user_id, character, user_text, bot_text, now_ts=None):
+        """대화 1턴 기록. 실패해도 예외를 올리지 않는다 — 채팅 경로에서 호출된다."""
+        if not user_id:
+            return False
+        now = int(time.time()) if now_ts is None else now_ts
+        conn = self._connect()
+        try:
+            conn.execute(
+                'INSERT INTO chat_logs (user_id, character, user_text, bot_text, created_at) '
+                'VALUES (?,?,?,?,?)',
+                (user_id, (character or '')[:50],
+                 (user_text or '')[:self._LOG_USER_MAX],
+                 (bot_text or '')[:self._LOG_BOT_MAX], now),
+            )
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+
+    def purge_chat_logs(self, older_than_ts):
+        """보관 기간이 지난 행 삭제. 반환: 지운 행 수."""
+        conn = self._connect()
+        try:
+            cur = conn.execute('DELETE FROM chat_logs WHERE created_at < ?', (older_than_ts,))
+            conn.commit()
+            return cur.rowcount
+        finally:
+            conn.close()
+
+    def list_chat_logs(self, limit=200, since_ts=None, user_id=None):
+        """운영자 열람용. 최신순."""
+        where, args = [], []
+        if since_ts is not None:
+            where.append('created_at >= ?'); args.append(since_ts)
+        if user_id:
+            where.append('user_id = ?'); args.append(user_id)
+        sql = 'SELECT * FROM chat_logs'
+        if where:
+            sql += ' WHERE ' + ' AND '.join(where)
+        sql += ' ORDER BY created_at DESC LIMIT ?'
+        args.append(limit)
+        conn = self._connect()
+        try:
+            return [dict(r) for r in conn.execute(sql, args).fetchall()]
+        finally:
+            conn.close()
+
+    def chat_log_stats(self, now_ts=None):
+        now = int(time.time()) if now_ts is None else now_ts
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                'SELECT COUNT(*) AS n, MIN(created_at) AS oldest, MAX(created_at) AS newest, '
+                '       COUNT(DISTINCT user_id) AS users FROM chat_logs').fetchone()
+            d1 = conn.execute('SELECT COUNT(*) AS n FROM chat_logs WHERE created_at >= ?',
+                              (now - 86400,)).fetchone()['n']
+            return {'total': row['n'], 'users': row['users'], 'last_24h': d1,
+                    'oldest': row['oldest'], 'newest': row['newest']}
+        finally:
+            conn.close()
+
+
 # =============================================================================
 # 백엔드 인스턴스 선택 + 모듈 레벨 thin wrapper
 # =============================================================================
@@ -1178,6 +1275,23 @@ def stats_snapshot(today, now_ts, free_quota_cap=None):
     if free_quota_cap is None:
         free_quota_cap = DAILY_FREE_QUOTA
     return _store.stats_snapshot(today, now_ts, free_quota_cap)
+
+
+# ---- 대화 로그 ----------------------------------------------------------------
+def add_chat_log(user_id, character, user_text, bot_text):
+    return _store.add_chat_log(user_id, character, user_text, bot_text)
+
+
+def purge_chat_logs(older_than_ts):
+    return _store.purge_chat_logs(older_than_ts)
+
+
+def list_chat_logs(limit=200, since_ts=None, user_id=None):
+    return _store.list_chat_logs(limit=limit, since_ts=since_ts, user_id=user_id)
+
+
+def chat_log_stats(now_ts=None):
+    return _store.chat_log_stats(now_ts)
 
 
 # ---- 실제 한국인 회화 세션 예약 ----------------------------------------------

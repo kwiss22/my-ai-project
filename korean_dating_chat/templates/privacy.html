@@ -129,12 +129,14 @@
     <h3 class="ko">다. 서비스 이용 정보</h3>
     <ul class="en">
         <li>Chat messages you exchange with AI characters (used to generate responses; stored locally in your browser's IndexedDB, and sent to AI providers for processing).</li>
+        <li><strong>A server-side copy of your conversations with AI characters</strong>, kept for <strong>30 days</strong> so we can review service quality and fix problems. Logged only while you are signed in, truncated in length, included in your data export, and deleted when you delete your account.</li>
         <li>Your selected character, optional nickname, Korean proficiency level, and interests.</li>
         <li>Daily message count and quota reset date.</li>
         <li>FCM token (only if you opt in to push notifications).</li>
     </ul>
     <ul class="ko">
         <li>AI 캐릭터와 주고받은 대화 메시지 (응답 생성 목적; 브라우저 IndexedDB 에 로컬 저장 + AI 제공자에 전송하여 처리).</li>
+        <li><strong>AI 캐릭터와의 대화 내용 서버 사본</strong> — 서비스 품질 점검 및 오류 수정 목적으로 <strong>30일간</strong> 보관합니다. 로그인 상태에서만 기록되고, 길이를 잘라 저장하며, 데이터 내보내기에 포함되고, 계정 삭제 시 함께 파기됩니다.</li>
         <li>선택한 캐릭터, 닉네임(선택), 한국어 수준, 관심사.</li>
         <li>일일 메시지 카운트 및 quota 리셋 날짜.</li>
         <li>FCM 토큰 (푸시 알림 동의 시에만).</li>
@@ -195,6 +197,7 @@
     <ul class="en">
         <li><strong>Account &amp; subscription data:</strong> kept while your account is active. Deleted within 30 days after account deletion, except where retention is legally required (e.g., tax records related to payments).</li>
         <li><strong>Chat history (browser-side, IndexedDB):</strong> stored locally in your browser until you clear browser data or delete your account.</li>
+        <li><strong>Conversation log (server-side):</strong> <strong>30 days</strong>, then automatically deleted. Deleted immediately if you delete your account.</li>
         <li><strong>Chat content sent to AI providers:</strong> retention governed by the provider's terms (Google Gemini's default at the time of writing).</li>
         <li><strong>Server logs:</strong> typically 30–90 days.</li>
         <li><strong>Payment records:</strong> retained for the period required by applicable tax law (typically 5–7 years).</li>
@@ -202,6 +205,7 @@
     <ul class="ko">
         <li><strong>계정 및 구독 정보:</strong> 계정이 활성인 동안 보관. 계정 삭제 후 30일 이내 파기 (단, 결제 관련 세무 기록 등 법령상 보관 의무가 있는 정보 제외).</li>
         <li><strong>대화 기록(브라우저 IndexedDB):</strong> 브라우저 데이터를 지우거나 계정을 삭제할 때까지 로컬 보관.</li>
+        <li><strong>대화 로그(서버 보관):</strong> <strong>30일</strong> 경과 시 자동 파기. 계정 삭제 시 즉시 파기.</li>
         <li><strong>AI 제공자 전송 내용:</strong> 해당 제공자 약관 (작성일 기준 Google Gemini 기본 정책)에 따름.</li>
         <li><strong>서버 로그:</strong> 통상 30–90일.</li>
         <li><strong>결제 기록:</strong> 적용되는 세법상 보관 기간 (통상 5–7년).</li>
