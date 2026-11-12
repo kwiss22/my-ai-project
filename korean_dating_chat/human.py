@@ -175,10 +175,15 @@ def _session_view(row):
 # ---- 공개: 파트너 목록 -------------------------------------------------------
 
 def partners():
-    """로그인 없이 볼 수 있다 — 가입 전에 뭘 제공하는지 보여줘야 전환이 생긴다."""
+    """로그인 없이 볼 수 있다 — 가입 전에 뭘 제공하는지 보여줘야 전환이 생긴다.
+
+    기능이 off 면 명단을 비워서 내보낸다. 꺼진 서비스의 파트너를 공개 API 가
+    광고하면 안 되고, off 일 때 코드에 남는 건 자리표시자뿐이다.
+    """
+    on = human_sessions_enabled()
     return jsonify({
-        'enabled': human_sessions_enabled(),
-        'partners': [_public_partner(p) for p in HUMAN_PARTNERS.values()],
+        'enabled': on,
+        'partners': [_public_partner(p) for p in HUMAN_PARTNERS.values()] if on else [],
         'duration_min': HUMAN_SESSION_DURATION_MIN,
         'price_usd': HUMAN_SESSION_PRICE_USD,
         'requires_paid': HUMAN_SESSION_REQUIRES_PAID,
