@@ -258,6 +258,25 @@ CREATE TABLE IF NOT EXISTS corrections (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS corrections_user_time ON corrections(user_id, created_at);
+
+-- 실제 한국인 회화 세션 예약. AI 캐릭터 대화와 완전히 별개 기능.
+-- 실시간 매칭이 아니라 예약제 — 접속을 붙잡는 양방향 채팅은 max-instances=1 +
+-- gunicorn 워커 1개 환경에서 한 명이 전원을 큐에 세우므로 쓸 수 없다.
+CREATE TABLE IF NOT EXISTS human_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  partner_id TEXT NOT NULL,                 -- human.HUMAN_PARTNERS 의 키
+  slot_start INTEGER NOT NULL,              -- 희망 시작 시각 (unix sec, UTC)
+  duration_min INTEGER NOT NULL DEFAULT 25,
+  status TEXT NOT NULL,                     -- 'requested'|'confirmed'|'done'|'cancelled'
+  adult_confirmed INTEGER NOT NULL DEFAULT 0,  -- 성인 자기확인. 0 이면 예약을 만들지 않는다.
+  note TEXT,                                -- 학습자 요청사항 (관심 주제 등)
+  meeting_url TEXT,                         -- 확정 시 운영자가 채움. 그전엔 NULL.
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS human_sessions_user ON human_sessions(user_id, created_at);
+CREATE INDEX IF NOT EXISTS human_sessions_pending ON human_sessions(status, slot_start);
 """
 
 _MIGRATIONS = [
@@ -903,6 +922,128 @@ class SQLiteUserStore(UserStore):
             conn.close()
 
 
+    # ---- 실제 한국인 회화 세션 예약 -----------------------------------------
+    # 열린 예약 = 아직 끝나지도 취소되지도 않은 것. 중복 검사·목록에서 공통 사용.
+    _HUMAN_OPEN = ('requested', 'confirmed')
+
+    def _human_by_id(self, conn, session_id):
+        row = conn.execute('SELECT * FROM human_sessions WHERE id=?', (session_id,)).fetchone()
+        return dict(row) if row else None
+
+    def create_human_session(self, user_id, partner_id, slot_start, duration_min=25,
+                             note=None, adult_confirmed=False, now_ts=None):
+        """예약 요청 1건 생성. returns (session, None) 또는 (None, 사유).
+
+        adult_confirmed 가 거짓이면 행을 만들지 않는다 — 성인 확인은 UI 체크박스가
+        아니라 저장 조건이어야 사후에 '확인받았다' 고 말할 수 있다.
+        """
+        if not adult_confirmed:
+            return None, 'adult_required'
+        now = int(time.time()) if now_ts is None else now_ts
+        conn = self._connect()
+        try:
+            dup = conn.execute(
+                'SELECT 1 FROM human_sessions '
+                'WHERE user_id=? AND slot_start=? AND status IN (?,?)',
+                (user_id, slot_start) + self._HUMAN_OPEN,
+            ).fetchone()
+            if dup:
+                return None, 'duplicate'
+            cur = conn.execute(
+                'INSERT INTO human_sessions (user_id, partner_id, slot_start, duration_min, '
+                '  status, adult_confirmed, note, created_at, updated_at) '
+                "VALUES (?,?,?,?,'requested',1,?,?,?)",
+                (user_id, partner_id, slot_start, duration_min, note, now, now),
+            )
+            conn.commit()
+            return self._human_by_id(conn, cur.lastrowid), None
+        finally:
+            conn.close()
+
+    def list_human_sessions(self, user_id, limit=50):
+        conn = self._connect()
+        try:
+            rows = conn.execute(
+                'SELECT * FROM human_sessions WHERE user_id=? '
+                'ORDER BY slot_start DESC LIMIT ?',
+                (user_id, limit),
+            ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def cancel_human_session(self, user_id, session_id, now_ts=None):
+        """본인 예약만 취소. 이미 끝났거나 취소된 건은 건드리지 않는다."""
+        now = int(time.time()) if now_ts is None else now_ts
+        conn = self._connect()
+        try:
+            cur = conn.execute(
+                'UPDATE human_sessions SET status=\'cancelled\', updated_at=? '
+                'WHERE id=? AND user_id=? AND status IN (?,?)',
+                (now, session_id, user_id) + self._HUMAN_OPEN,
+            )
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            conn.close()
+
+    def pending_human_sessions(self, limit=100):
+        """운영자용 — 확정 대기 + 확정된 예약을 시간순으로."""
+        conn = self._connect()
+        try:
+            rows = conn.execute(
+                'SELECT * FROM human_sessions WHERE status IN (?,?) '
+                'ORDER BY slot_start ASC LIMIT ?',
+                self._HUMAN_OPEN + (limit,),
+            ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def update_human_session(self, session_id, status=None, meeting_url=None, now_ts=None):
+        """운영자용 — 확정/완료 처리 + 통화 링크 기입."""
+        now = int(time.time()) if now_ts is None else now_ts
+        sets, args = ['updated_at=?'], [now]
+        if status is not None:
+            sets.append('status=?')
+            args.append(status)
+        if meeting_url is not None:
+            sets.append('meeting_url=?')
+            args.append(meeting_url)
+        args.append(session_id)
+        conn = self._connect()
+        try:
+            cur = conn.execute(
+                'UPDATE human_sessions SET ' + ', '.join(sets) + ' WHERE id=?', args)
+            conn.commit()
+            if cur.rowcount == 0:
+                return None
+            return self._human_by_id(conn, session_id)
+        finally:
+            conn.close()
+
+    def human_session_stats(self, now_ts=None):
+        """admin 대시보드용 집계."""
+        now = int(time.time()) if now_ts is None else now_ts
+        conn = self._connect()
+        try:
+            rows = conn.execute(
+                'SELECT status, COUNT(*) AS n FROM human_sessions GROUP BY status').fetchall()
+            by_status = {r['status']: r['n'] for r in rows}
+            upcoming = conn.execute(
+                'SELECT COUNT(*) AS n FROM human_sessions '
+                'WHERE status IN (?,?) AND slot_start >= ?',
+                self._HUMAN_OPEN + (now,),
+            ).fetchone()['n']
+            return {
+                'total': sum(by_status.values()),
+                'by_status': by_status,
+                'upcoming': upcoming,
+            }
+        finally:
+            conn.close()
+
+
 # =============================================================================
 # 백엔드 인스턴스 선택 + 모듈 레벨 thin wrapper
 # =============================================================================
@@ -1037,6 +1178,33 @@ def stats_snapshot(today, now_ts, free_quota_cap=None):
     if free_quota_cap is None:
         free_quota_cap = DAILY_FREE_QUOTA
     return _store.stats_snapshot(today, now_ts, free_quota_cap)
+
+
+# ---- 실제 한국인 회화 세션 예약 ----------------------------------------------
+def create_human_session(user_id, partner_id, slot_start, duration_min=25,
+                         note=None, adult_confirmed=False):
+    return _store.create_human_session(user_id, partner_id, slot_start, duration_min,
+                                       note=note, adult_confirmed=adult_confirmed)
+
+
+def list_human_sessions(user_id, limit=50):
+    return _store.list_human_sessions(user_id, limit)
+
+
+def cancel_human_session(user_id, session_id):
+    return _store.cancel_human_session(user_id, session_id)
+
+
+def pending_human_sessions(limit=100):
+    return _store.pending_human_sessions(limit)
+
+
+def update_human_session(session_id, status=None, meeting_url=None):
+    return _store.update_human_session(session_id, status=status, meeting_url=meeting_url)
+
+
+def human_session_stats(now_ts=None):
+    return _store.human_session_stats(now_ts)
 
 
 def reset_all():

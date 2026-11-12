@@ -37,6 +37,13 @@ VOCAB_MIN_CHARS = int(os.getenv('VOCAB_MIN_CHARS', '12'))
 # 일반 사용자(하루 10-50개)는 절대 안 닿는 고한도. 자정 리셋.
 SUBSCRIBER_DAILY_CAP = int(os.getenv('SUBSCRIBER_DAILY_CAP', '200'))
 
+# 무료 사용자의 캐릭터 접근 범위.
+#   on  (기본) — 전 캐릭터 허용. 한도는 DAILY_FREE_QUOTA(일일 메시지 수)가 담당.
+#   off        — 지우만 허용, 나머지는 구독 유도 (종전 동작).
+# 랜딩이 화랑(HWARANG) 남성 캐릭터를 전면에 내세우는데 무료는 지우(여성) 하나뿐이어서
+# 광고와 실제가 어긋났다. 유입의 핵심 동기를 입구에서 막지 않도록 기본값을 on 으로 둔다.
+FREE_ALL_CHARACTERS = os.getenv('FREE_ALL_CHARACTERS', 'true').lower() != 'false'
+
 # ==========================================
 # [인증 체크] API 키 검증
 # ==========================================
@@ -1755,6 +1762,8 @@ from admin import (
     is_admin as _is_admin,
     admin_enabled as _admin_enabled,
 )
+import human
+from human import human_sessions_enabled
 from events import log_event
 
 # 사용자 DB 초기화 (SQLite 파일 + 테이블).
@@ -1773,6 +1782,8 @@ _rl_dev_login  = rate_limit('devlogin', per_minute=10, scope='ip')
 _rl_oauth_cb   = rate_limit('oauth_cb', per_minute=20, scope='ip')
 _rl_transcribe = rate_limit('stt',      per_minute=20, scope='user_or_ip')
 _rl_tts        = rate_limit('tts',      per_minute=30, scope='user_or_ip')
+# 실사람 세션 — 사람 일정을 잡는 요청이라 분당이 아니라 시간당으로 조인다.
+_rl_human_book = rate_limit('human_book', per_hour=10, scope='user_or_ip')
 
 app.add_url_rule('/auth/google/start',    'auth_google_start',    google_start)
 app.add_url_rule('/auth/google/callback', 'auth_google_callback', _rl_oauth_cb(google_callback))
@@ -1792,6 +1803,14 @@ app.add_url_rule('/cron/daily-snapshot',  'cron_daily_snapshot',  admin_cron_sna
 app.add_url_rule('/admin/alerts-health',  'admin_alerts_health',  admin_alerts_health)
 app.add_url_rule('/admin/alerts-test',    'admin_alerts_test',    admin_alerts_test_sink)
 app.add_url_rule('/admin/test-reset',     'admin_test_reset',     admin_test_reset, methods=['POST'])
+
+# 실제 한국인 회화 세션 (예약제) — AI 캐릭터 대화와 별개 서비스. human.py 참조.
+app.add_url_rule('/human/partners',       'human_partners',       human.partners)
+app.add_url_rule('/human/book',           'human_book',           _rl_human_book(human.book),  methods=['POST'])
+app.add_url_rule('/human/bookings',       'human_bookings',       human.bookings)
+app.add_url_rule('/human/cancel',         'human_cancel',         human.cancel, methods=['POST'])
+app.add_url_rule('/admin/human-sessions', 'admin_human_sessions', human.admin_sessions)
+app.add_url_rule('/admin/human-session',  'admin_human_update',   human.admin_update, methods=['POST'])
 
 
 @app.route('/admin/prompt-cache')
@@ -2031,6 +2050,8 @@ def me():
             'login_methods': methods,
             'billing_enabled': billing_enabled(),
             'trial_days': TRIAL_DAYS,
+            'free_all_characters': FREE_ALL_CHARACTERS,
+            'human_sessions': human_sessions_enabled(),
         })
     active = has_active_subscription(user)
     used, cap, remaining, reset_date = peek_quota(user['user_id'])
@@ -2062,6 +2083,8 @@ def me():
         'login_methods': methods,
         'billing_enabled': billing_enabled(),
         'trial_days': TRIAL_DAYS,
+        'free_all_characters': FREE_ALL_CHARACTERS,
+        'human_sessions': human_sessions_enabled(),
     })
 
 
@@ -2508,9 +2531,11 @@ def chat():
     user = current_user()
     if not user:
         return jsonify({'error': '로그인이 필요해요.', 'paywall': 'login'}), 401
-    # 캐릭터 게이트 — 무료(Basic 미만)는 지우만. 다른 캐릭터는 유료(Basic+).
+    # 캐릭터 게이트 — FREE_ALL_CHARACTERS 가 off 일 때만 무료 사용자를 지우로 제한.
+    # on(기본)이면 전 캐릭터 허용하고 일일 quota 가 유일한 한도가 된다.
     _char_req = request.form.get('character', 'jiwoo')
-    if _char_req and _char_req != 'jiwoo' and _char_req in VALID_CHARACTERS and not is_paid(user):
+    if (not FREE_ALL_CHARACTERS) and _char_req and _char_req != 'jiwoo' \
+            and _char_req in VALID_CHARACTERS and not is_paid(user):
         return jsonify({'error': '다른 캐릭터는 구독하면 만날 수 있어요.', 'paywall': 'character'}), 402
     if is_paid(user):
         # 유료 구독자도 fair-use cap 적용 (와일 사용자에 의한 토큰 비용 폭주 방지).

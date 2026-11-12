@@ -154,6 +154,170 @@
             }
         }
 
+        /* 실제 한국인 회화 세션 진입 — AI 캐릭터 카드와 시각적으로 명확히 구분한다.
+           옆에 "모두 AI 캐릭터입니다" 고지가 있어서 섞이면 고지가 거짓이 된다. */
+        .human-entry {
+            display: block;
+            width: 100%;
+            margin-top: 22px;
+            padding: 16px 18px;
+            text-align: left;
+            background: #fff;
+            border: 1.5px solid var(--kakao-yellow, #fee500);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: box-shadow 0.15s, transform 0.1s;
+        }
+
+        .human-entry:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+        .human-entry:active { transform: scale(0.99); }
+
+        .human-entry-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .human-entry-title { font-size: 15px; font-weight: 700; color: #333; }
+
+        .human-entry-badge {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            color: #8a6d00;
+            background: var(--kakao-yellow, #fee500);
+            border-radius: 9px;
+            padding: 2px 7px;
+        }
+
+        .human-entry-desc { font-size: 12.5px; color: #777; line-height: 1.55; margin: 0; }
+
+        /* 모달 내부 */
+        .hs-partner {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            width: 100%;
+            text-align: left;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #fafafa;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .hs-partner.selected { border-color: var(--kakao-yellow, #fee500); background: #fffdf0; }
+
+        .hs-avatar {
+            flex: 0 0 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #e9e9e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #888;
+            font-size: 16px;
+            overflow: hidden;
+        }
+
+        .hs-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .hs-name { font-weight: 700; font-size: 14px; color: #333; }
+        .hs-meta { font-size: 11.5px; color: #999; margin-top: 1px; }
+        .hs-intro { font-size: 12px; color: #666; line-height: 1.5; margin-top: 5px; }
+
+        .hs-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #555;
+            margin: 16px 0 6px;
+        }
+
+        .hs-input, .hs-textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            font-size: 14px;
+            font-family: inherit;
+            border: 1px solid #ddd;
+            border-radius: 9px;
+        }
+
+        .hs-textarea { resize: vertical; min-height: 60px; }
+
+        .hs-rules {
+            margin: 14px 0 0;
+            padding: 12px 14px;
+            background: rgba(0,0,0,0.04);
+            border-radius: 9px;
+            font-size: 11.5px;
+            color: #666;
+            line-height: 1.65;
+        }
+
+        .hs-rules ul { margin: 6px 0 0; padding-left: 18px; }
+
+        .hs-adult {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin: 14px 0 0;
+            font-size: 12.5px;
+            color: #444;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        .hs-adult input { margin-top: 2px; flex: 0 0 auto; }
+
+        .hs-submit {
+            width: 100%;
+            margin-top: 16px;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: inherit;
+            color: #3c1e1e;
+            background: var(--kakao-yellow, #fee500);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .hs-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .hs-booking {
+            padding: 11px 13px;
+            margin-bottom: 8px;
+            background: #fafafa;
+            border-radius: 10px;
+            font-size: 12.5px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .hs-status {
+            display: inline-block;
+            font-size: 10.5px;
+            font-weight: 800;
+            border-radius: 8px;
+            padding: 2px 7px;
+            margin-left: 6px;
+        }
+
+        .hs-status.requested { background: #fff3cd; color: #856404; }
+        .hs-status.confirmed { background: #d4edda; color: #1b5e20; }
+        .hs-status.done      { background: #e2e3e5; color: #555; }
+        .hs-status.cancelled { background: #f8d7da; color: #721c24; }
+
+        .hs-msg { margin: 12px 0 0; font-size: 12.5px; line-height: 1.6; min-height: 18px; }
+        .hs-msg.ok  { color: #1b5e20; }
+        .hs-msg.err { color: #c0392b; }
+
         .character-selection h1 {
             font-size: 28px;
             margin-bottom: 10px;
@@ -2260,6 +2424,18 @@
         <div class="character-cards" id="character-cards">
             <!-- Character cards are rendered dynamically from CHARACTERS registry (see renderCharacterCards()) -->
         </div>
+        <!-- 실제 한국인 회화 세션 — AI 캐릭터와 별개 서비스. 기본 숨김,
+             /me 의 human_sessions 플래그가 true 일 때만 노출. -->
+        <button type="button" class="human-entry" id="human-entry" style="display:none"
+                onclick="openHumanModal()" data-i18n-aria="aria.humanSessions">
+            <span class="human-entry-top">
+                <span aria-hidden="true">🇰🇷</span>
+                <span class="human-entry-title" data-i18n="hs.entry">진짜 한국인과 대화하기</span>
+                <span class="human-entry-badge" data-i18n="hs.badge">NEW</span>
+            </span>
+            <p class="human-entry-desc" data-i18n="hs.entryDesc">AI가 아닌 실제 한국인과 1:1 회화 세션을 예약해보세요.</p>
+        </button>
+
         <p style="margin-top: 28px; margin-bottom: 0; font-size: 13px; color: #555; line-height: 1.7; background: rgba(0,0,0,0.05); padding: 12px 16px; border-radius: 8px;" id="s3-disclaimer">
             지우, 화랑(HWARANG), 원화(WONHWA) 멤버들은 모두 AI 캐릭터입니다. 모든 대화는 허구이며, 실제 만남은 이루어지지 않습니다.<br>
             Jiwoo and the members of HWARANG and WONHWA are AI characters. All conversations are fictional role-play.
@@ -2595,6 +2771,50 @@
                 <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close" onclick="closeProgressModal()">&times;</button>
             </div>
             <div class="modal-body" id="progress-body" style="padding:18px 20px 24px;"></div>
+        </div>
+    </div>
+
+    <!-- 실제 한국인 회화 세션 예약 모달 — human.py / POST /human/book -->
+    <div class="modal-overlay" id="human-modal-overlay" role="dialog" aria-modal="true"
+         aria-labelledby="human-modal-title" aria-hidden="true" onclick="closeHumanModal(event)">
+        <div class="modal-sheet" style="max-width:460px;">
+            <div class="modal-header">
+                <h3 id="human-modal-title" data-i18n="hs.title">🇰🇷 진짜 한국인과 대화하기</h3>
+                <button class="modal-close" aria-label="닫기" data-i18n-aria="aria.close"
+                        onclick="closeHumanModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:4px 20px 24px;">
+                <p style="font-size:13px; color:#666; line-height:1.65; margin:0 0 4px;"
+                   data-i18n="hs.intro">AI 캐릭터가 아니라 실제 한국인과 화상으로 대화하는 서비스예요. 희망 시간을 보내면 확정 후 참여 링크를 보내드려요.</p>
+
+                <span class="hs-label" data-i18n="hs.partners">대화 상대</span>
+                <div id="hs-partner-list"></div>
+
+                <label class="hs-label" for="hs-when" data-i18n="hs.when">희망 시간</label>
+                <input type="datetime-local" class="hs-input" id="hs-when">
+                <p style="font-size:11px; color:#999; margin:5px 0 0;" id="hs-when-hint"></p>
+
+                <label class="hs-label" for="hs-note" data-i18n="hs.note">하고 싶은 얘기 (선택)</label>
+                <textarea class="hs-textarea" id="hs-note" maxlength="500"
+                          data-i18n-ph="hs.notePh" placeholder="어떤 주제로 대화하고 싶은지 적어주세요."></textarea>
+
+                <div class="hs-rules">
+                    <strong data-i18n="hs.rulesTitle">대화 규칙</strong>
+                    <ul id="hs-rules-list"></ul>
+                </div>
+
+                <label class="hs-adult">
+                    <input type="checkbox" id="hs-adult">
+                    <span id="hs-adult-label" data-i18n="hs.adult">만 18세 이상이며, 위 규칙에 동의합니다.</span>
+                </label>
+
+                <button type="button" class="hs-submit" id="hs-submit" onclick="submitHumanBooking()"
+                        data-i18n="hs.book">예약 요청 보내기</button>
+                <p class="hs-msg" id="hs-msg"></p>
+
+                <span class="hs-label" data-i18n="hs.mine">내 예약</span>
+                <div id="hs-booking-list"></div>
+            </div>
         </div>
     </div>
 
@@ -3460,6 +3680,39 @@
         // 정적 HTML 은 data-i18n="key", 동적 JS 는 tc('key') 로 번역.
         const CHROME = {
             ko: {
+                // 실제 한국인 회화 세션 (예약제) — human.py
+                'hs.entry': '진짜 한국인과 대화하기',
+                'hs.badge': 'NEW',
+                'hs.entryDesc': 'AI가 아닌 실제 한국인과 1:1 회화 세션을 예약해보세요.',
+                'hs.title': '🇰🇷 진짜 한국인과 대화하기',
+                'hs.intro': 'AI 캐릭터가 아니라 실제 한국인과 화상으로 대화하는 서비스예요. 희망 시간을 보내면 확정 후 참여 링크를 보내드려요.',
+                'hs.partners': '대화 상대',
+                'hs.when': '희망 시간',
+                'hs.note': '하고 싶은 얘기 (선택)',
+                'hs.notePh': '어떤 주제로 대화하고 싶은지 적어주세요.',
+                'hs.rulesTitle': '대화 규칙',
+                'hs.adult': '만 18세 이상이며, 위 규칙에 동의합니다.',
+                'hs.book': '예약 요청 보내기',
+                'hs.mine': '내 예약',
+                'hs.noPartners': '지금은 예약 가능한 상대가 없어요. 곧 열립니다.',
+                'hs.whenHint': '지금부터 {hours}시간 이후 ~ {days}일 이내 · 세션 {min}분',
+                'hs.errPartner': '대화 상대를 골라주세요.',
+                'hs.errWhen': '희망 시간을 입력해주세요.',
+                'hs.errAdult': '연령 확인에 동의해야 예약할 수 있어요.',
+                'hs.sending': '요청 중...',
+                'hs.ok': '예약 요청이 접수됐어요. 확정되면 참여 링크가 여기에 표시됩니다.',
+                'hs.errGeneric': '처리하지 못했어요. 잠시 후 다시 시도해주세요.',
+                'hs.loginForMine': '로그인하면 내 예약을 볼 수 있어요.',
+                'hs.none': '아직 예약이 없어요.',
+                'hs.st.requested': '확정 대기',
+                'hs.st.confirmed': '확정됨',
+                'hs.st.done': '완료',
+                'hs.st.cancelled': '취소됨',
+                'hs.min': '분',
+                'hs.join': '참여 링크 열기',
+                'hs.cancelBtn': '예약 취소',
+                'hs.cancelled': '예약을 취소했어요.',
+                'aria.humanSessions': '실제 한국인 회화 세션 예약 열기',
                 'nav.share': '공유 카드 만들기', 'nav.share.d': '대화를 예쁜 카드로 저장·공유',
                 'nav.scenario': '시나리오 모드', 'nav.scenario.d': '고백·화해·소개팅 롤플레이',
                 'nav.fortune': '오늘의 운세', 'nav.fortune.d': '별자리·띠·MBTI 기반 운세',
@@ -3664,6 +3917,39 @@
                 'aria.trialRegion': '체험 안내',
             },
             en: {
+                // 실제 한국인 회화 세션 (예약제) — human.py
+                'hs.entry': 'Talk with a real Korean',
+                'hs.badge': 'NEW',
+                'hs.entryDesc': 'Book a 1-on-1 conversation with a real Korean person, not an AI.',
+                'hs.title': '🇰🇷 Talk with a real Korean',
+                'hs.intro': 'This is a video conversation with a real Korean person, not an AI character. Send a preferred time and we will send a join link once it is confirmed.',
+                'hs.partners': 'Conversation partner',
+                'hs.when': 'Preferred time',
+                'hs.note': 'What would you like to talk about? (optional)',
+                'hs.notePh': 'Tell us the topics you would like to cover.',
+                'hs.rulesTitle': 'Conversation rules',
+                'hs.adult': 'I am 18 or older and I agree to the rules above.',
+                'hs.book': 'Send booking request',
+                'hs.mine': 'My bookings',
+                'hs.noPartners': 'No partners are available right now. Opening soon.',
+                'hs.whenHint': 'From {hours} hours up to {days} days ahead · {min} min session',
+                'hs.errPartner': 'Please pick a conversation partner.',
+                'hs.errWhen': 'Please enter a preferred time.',
+                'hs.errAdult': 'You need to confirm your age to book.',
+                'hs.sending': 'Sending...',
+                'hs.ok': 'Your request is in. The join link will appear here once confirmed.',
+                'hs.errGeneric': 'Something went wrong. Please try again shortly.',
+                'hs.loginForMine': 'Sign in to see your bookings.',
+                'hs.none': 'No bookings yet.',
+                'hs.st.requested': 'Pending',
+                'hs.st.confirmed': 'Confirmed',
+                'hs.st.done': 'Done',
+                'hs.st.cancelled': 'Cancelled',
+                'hs.min': ' min',
+                'hs.join': 'Open join link',
+                'hs.cancelBtn': 'Cancel booking',
+                'hs.cancelled': 'Booking cancelled.',
+                'aria.humanSessions': 'Open real Korean conversation booking',
                 'nav.share': 'Make a share card', 'nav.share.d': 'Save & share your chat as a card',
                 'nav.scenario': 'Scenario mode', 'nav.scenario.d': 'Confession, makeup, blind-date roleplay',
                 'nav.fortune': "Today's fortune", 'nav.fortune.d': 'Based on zodiac, sign & MBTI',
@@ -3868,6 +4154,39 @@
                 'aria.trialRegion': 'Trial notice',
             },
             ja: {
+                // 실제 한국인 회화 세션 (예약제) — human.py
+                'hs.entry': '本物の韓国人と話す',
+                'hs.badge': 'NEW',
+                'hs.entryDesc': 'AIではなく、実際の韓国人との1対1会話セッションを予約できます。',
+                'hs.title': '🇰🇷 本物の韓国人と話す',
+                'hs.intro': 'AIキャラクターではなく、実際の韓国人とビデオで会話するサービスです。希望時間を送ると、確定後に参加リンクをお送りします。',
+                'hs.partners': '会話パートナー',
+                'hs.when': '希望時間',
+                'hs.note': '話したいこと（任意）',
+                'hs.notePh': 'どんなテーマで話したいか書いてください。',
+                'hs.rulesTitle': '会話のルール',
+                'hs.adult': '18歳以上であり、上記のルールに同意します。',
+                'hs.book': '予約をリクエスト',
+                'hs.mine': '自分の予約',
+                'hs.noPartners': '現在、予約できるパートナーがいません。近日公開します。',
+                'hs.whenHint': '今から{hours}時間後〜{days}日以内 · セッション{min}分',
+                'hs.errPartner': '会話パートナーを選んでください。',
+                'hs.errWhen': '希望時間を入力してください。',
+                'hs.errAdult': '年齢確認に同意すると予約できます。',
+                'hs.sending': '送信中...',
+                'hs.ok': 'リクエストを受け付けました。確定すると参加リンクがここに表示されます。',
+                'hs.errGeneric': '処理できませんでした。しばらくしてからもう一度お試しください。',
+                'hs.loginForMine': 'ログインすると予約を確認できます。',
+                'hs.none': 'まだ予約はありません。',
+                'hs.st.requested': '確定待ち',
+                'hs.st.confirmed': '確定',
+                'hs.st.done': '完了',
+                'hs.st.cancelled': 'キャンセル',
+                'hs.min': '分',
+                'hs.join': '参加リンクを開く',
+                'hs.cancelBtn': '予約をキャンセル',
+                'hs.cancelled': '予約をキャンセルしました。',
+                'aria.humanSessions': '実際の韓国人との会話セッション予約を開く',
                 'nav.share': 'シェアカードを作成', 'nav.share.d': '会話をおしゃれなカードで保存・シェア',
                 'nav.scenario': 'シナリオモード', 'nav.scenario.d': '告白・仲直り・合コンのロールプレイ',
                 'nav.fortune': '今日の運勢', 'nav.fortune.d': '星座・干支・MBTIをもとに',
@@ -4072,6 +4391,39 @@
                 'aria.trialRegion': 'トライアル案内',
             },
             es: {
+                // 실제 한국인 회화 세션 (예약제) — human.py
+                'hs.entry': 'Habla con un coreano real',
+                'hs.badge': 'NUEVO',
+                'hs.entryDesc': 'Reserva una conversación 1 a 1 con una persona coreana real, no con una IA.',
+                'hs.title': '🇰🇷 Habla con un coreano real',
+                'hs.intro': 'Es una conversación por video con una persona coreana real, no un personaje de IA. Envía un horario y te enviaremos el enlace cuando se confirme.',
+                'hs.partners': 'Compañero de conversación',
+                'hs.when': 'Horario preferido',
+                'hs.note': '¿De qué te gustaría hablar? (opcional)',
+                'hs.notePh': 'Cuéntanos los temas que te gustaría tratar.',
+                'hs.rulesTitle': 'Reglas de la conversación',
+                'hs.adult': 'Tengo 18 años o más y acepto las reglas anteriores.',
+                'hs.book': 'Enviar solicitud',
+                'hs.mine': 'Mis reservas',
+                'hs.noPartners': 'No hay compañeros disponibles ahora. Muy pronto.',
+                'hs.whenHint': 'Desde {hours} horas hasta {days} días · sesión de {min} min',
+                'hs.errPartner': 'Elige un compañero de conversación.',
+                'hs.errWhen': 'Introduce un horario preferido.',
+                'hs.errAdult': 'Debes confirmar tu edad para reservar.',
+                'hs.sending': 'Enviando...',
+                'hs.ok': 'Solicitud recibida. El enlace aparecerá aquí cuando se confirme.',
+                'hs.errGeneric': 'Algo salió mal. Inténtalo de nuevo en un momento.',
+                'hs.loginForMine': 'Inicia sesión para ver tus reservas.',
+                'hs.none': 'Aún no tienes reservas.',
+                'hs.st.requested': 'Pendiente',
+                'hs.st.confirmed': 'Confirmada',
+                'hs.st.done': 'Terminada',
+                'hs.st.cancelled': 'Cancelada',
+                'hs.min': ' min',
+                'hs.join': 'Abrir enlace',
+                'hs.cancelBtn': 'Cancelar reserva',
+                'hs.cancelled': 'Reserva cancelada.',
+                'aria.humanSessions': 'Abrir reserva de conversación con coreano real',
                 'nav.share': 'Crear tarjeta', 'nav.share.d': 'Guarda y comparte tu chat como tarjeta',
                 'nav.scenario': 'Modo escenario', 'nav.scenario.d': 'Rol: confesión, reconciliación, cita a ciegas',
                 'nav.fortune': 'Horóscopo de hoy', 'nav.fortune.d': 'Según zodíaco, signo y MBTI',
@@ -4265,6 +4617,39 @@
                 'aria.trialRegion': 'Aviso de prueba',
             },
             'zh-tw': {
+                // 실제 한국인 회화 세션 (예약제) — human.py
+                'hs.entry': '和真正的韓國人聊天',
+                'hs.badge': '新',
+                'hs.entryDesc': '預約與真實韓國人的一對一會話，不是 AI。',
+                'hs.title': '🇰🇷 和真正的韓國人聊天',
+                'hs.intro': '這是與真實韓國人的視訊會話，不是 AI 角色。送出希望時段後，確認後我們會給你參加連結。',
+                'hs.partners': '會話夥伴',
+                'hs.when': '希望時段',
+                'hs.note': '想聊什麼？（選填）',
+                'hs.notePh': '請告訴我們你想聊的主題。',
+                'hs.rulesTitle': '會話規則',
+                'hs.adult': '我已滿 18 歲，並同意以上規則。',
+                'hs.book': '送出預約申請',
+                'hs.mine': '我的預約',
+                'hs.noPartners': '目前沒有可預約的夥伴，即將開放。',
+                'hs.whenHint': '從現在起 {hours} 小時後至 {days} 天內 · 每次 {min} 分鐘',
+                'hs.errPartner': '請選擇會話夥伴。',
+                'hs.errWhen': '請輸入希望時段。',
+                'hs.errAdult': '需要確認年齡才能預約。',
+                'hs.sending': '傳送中...',
+                'hs.ok': '已收到你的申請。確認後參加連結會顯示在這裡。',
+                'hs.errGeneric': '處理失敗，請稍後再試。',
+                'hs.loginForMine': '登入後可查看你的預約。',
+                'hs.none': '還沒有預約。',
+                'hs.st.requested': '待確認',
+                'hs.st.confirmed': '已確認',
+                'hs.st.done': '已完成',
+                'hs.st.cancelled': '已取消',
+                'hs.min': '分鐘',
+                'hs.join': '開啟參加連結',
+                'hs.cancelBtn': '取消預約',
+                'hs.cancelled': '已取消預約。',
+                'aria.humanSessions': '開啟真實韓國人會話預約',
                 'nav.share': '製作分享卡', 'nav.share.d': '把對話存成漂亮的卡片分享',
                 'nav.scenario': '情境模式', 'nav.scenario.d': '告白・和好・相親角色扮演',
                 'nav.fortune': '今日運勢', 'nav.fortune.d': '依星座・生肖・MBTI',
@@ -4458,6 +4843,39 @@
                 'aria.trialRegion': '試用提示',
             },
             de: {
+                // 실제 한국인 회화 세션 (예약제) — human.py
+                'hs.entry': 'Mit einem echten Koreaner sprechen',
+                'hs.badge': 'NEU',
+                'hs.entryDesc': 'Buche ein 1-zu-1-Gespräch mit einer echten koreanischen Person, keine KI.',
+                'hs.title': '🇰🇷 Mit einem echten Koreaner sprechen',
+                'hs.intro': 'Das ist ein Videogespräch mit einer echten koreanischen Person, keine KI-Figur. Sende einen Wunschtermin, und wir schicken dir den Link nach der Bestätigung.',
+                'hs.partners': 'Gesprächspartner',
+                'hs.when': 'Wunschtermin',
+                'hs.note': 'Worüber möchtest du sprechen? (optional)',
+                'hs.notePh': 'Nenne uns die Themen, die dich interessieren.',
+                'hs.rulesTitle': 'Gesprächsregeln',
+                'hs.adult': 'Ich bin 18 oder älter und stimme den Regeln oben zu.',
+                'hs.book': 'Anfrage senden',
+                'hs.mine': 'Meine Buchungen',
+                'hs.noPartners': 'Derzeit sind keine Partner verfügbar. Bald verfügbar.',
+                'hs.whenHint': 'Ab {hours} Stunden bis {days} Tage im Voraus · {min} Min. pro Sitzung',
+                'hs.errPartner': 'Bitte wähle einen Gesprächspartner.',
+                'hs.errWhen': 'Bitte gib einen Wunschtermin ein.',
+                'hs.errAdult': 'Du musst dein Alter bestätigen, um zu buchen.',
+                'hs.sending': 'Senden...',
+                'hs.ok': 'Anfrage eingegangen. Der Link erscheint hier nach der Bestätigung.',
+                'hs.errGeneric': 'Etwas ist schiefgelaufen. Bitte versuche es gleich noch einmal.',
+                'hs.loginForMine': 'Melde dich an, um deine Buchungen zu sehen.',
+                'hs.none': 'Noch keine Buchungen.',
+                'hs.st.requested': 'Offen',
+                'hs.st.confirmed': 'Bestätigt',
+                'hs.st.done': 'Erledigt',
+                'hs.st.cancelled': 'Storniert',
+                'hs.min': ' Min.',
+                'hs.join': 'Link öffnen',
+                'hs.cancelBtn': 'Buchung stornieren',
+                'hs.cancelled': 'Buchung storniert.',
+                'aria.humanSessions': 'Buchung für Gespräch mit echtem Koreaner öffnen',
                 'nav.share': 'Share-Karte erstellen', 'nav.share.d': 'Speichere & teile deinen Chat als Karte',
                 'nav.scenario': 'Szenario-Modus', 'nav.scenario.d': 'Rollenspiel: Geständnis, Versöhnung, Blind Date',
                 'nav.fortune': 'Tageshoroskop', 'nav.fortune.d': 'Nach Sternzeichen, Tierkreis & MBTI',
@@ -4651,6 +5069,39 @@
                 'aria.trialRegion': 'Testhinweis',
             },
             fr: {
+                // 실제 한국인 회화 세션 (예약제) — human.py
+                'hs.entry': 'Parler avec un vrai Coréen',
+                'hs.badge': 'NOUVEAU',
+                'hs.entryDesc': 'Réservez une conversation en tête-à-tête avec une vraie personne coréenne, pas une IA.',
+                'hs.title': '🇰🇷 Parler avec un vrai Coréen',
+                'hs.intro': 'Il s’agit d’une conversation vidéo avec une vraie personne coréenne, pas un personnage IA. Envoyez un créneau souhaité et nous vous enverrons le lien après confirmation.',
+                'hs.partners': 'Partenaire de conversation',
+                'hs.when': 'Créneau souhaité',
+                'hs.note': 'De quoi aimeriez-vous parler ? (facultatif)',
+                'hs.notePh': 'Indiquez les sujets qui vous intéressent.',
+                'hs.rulesTitle': 'Règles de la conversation',
+                'hs.adult': 'J’ai 18 ans ou plus et j’accepte les règles ci-dessus.',
+                'hs.book': 'Envoyer la demande',
+                'hs.mine': 'Mes réservations',
+                'hs.noPartners': 'Aucun partenaire disponible pour le moment. Bientôt.',
+                'hs.whenHint': 'À partir de {hours} heures et jusqu’à {days} jours · séance de {min} min',
+                'hs.errPartner': 'Choisissez un partenaire de conversation.',
+                'hs.errWhen': 'Indiquez un créneau souhaité.',
+                'hs.errAdult': 'Vous devez confirmer votre âge pour réserver.',
+                'hs.sending': 'Envoi...',
+                'hs.ok': 'Demande reçue. Le lien apparaîtra ici après confirmation.',
+                'hs.errGeneric': 'Une erreur est survenue. Réessayez dans un instant.',
+                'hs.loginForMine': 'Connectez-vous pour voir vos réservations.',
+                'hs.none': 'Aucune réservation pour le moment.',
+                'hs.st.requested': 'En attente',
+                'hs.st.confirmed': 'Confirmée',
+                'hs.st.done': 'Terminée',
+                'hs.st.cancelled': 'Annulée',
+                'hs.min': ' min',
+                'hs.join': 'Ouvrir le lien',
+                'hs.cancelBtn': 'Annuler la réservation',
+                'hs.cancelled': 'Réservation annulée.',
+                'aria.humanSessions': 'Ouvrir la réservation de conversation avec un vrai Coréen',
                 'nav.share': 'Créer une carte', 'nav.share.d': 'Enregistre et partage ton chat sous forme de carte',
                 'nav.scenario': 'Mode scénario', 'nav.scenario.d': 'Jeu de rôle : déclaration, réconciliation, rencard',
                 'nav.fortune': 'Horoscope du jour', 'nav.fortune.d': 'Selon le zodiaque, le signe et le MBTI',
@@ -5310,9 +5761,10 @@
 
         // 캐릭터 선택
         async function selectCharacter(character, opts) {
-            // 무료(Basic 미만)는 지우만 — 다른 캐릭터는 구독 유도.
+            // 캐릭터 게이트 — 서버 FREE_ALL_CHARACTERS 가 off 일 때만 무료 사용자를 지우로 제한.
             // 자동진입(재방문 복원)은 게이트 스킵 — authState 로드 전 race 방지(백엔드가 enforce).
-            if (!(opts && opts.skipGate) && character && character !== 'jiwoo' && !isPaidUser()) {
+            if (!(opts && opts.skipGate) && authState.free_all_characters === false
+                    && character && character !== 'jiwoo' && !isPaidUser()) {
                 openPaywallModal({ paywall: 'character' });
                 return;
             }
@@ -7343,6 +7795,9 @@
             quota: { used: 0, cap: 25, remaining: 0, reset_date: null, unlimited: false },
             login_methods: { google: false, kakao: false, dev: false },
             billing_enabled: false,
+            // 무료 사용자도 전 캐릭터 이용 가능 여부 — 서버 FREE_ALL_CHARACTERS 가 source of truth.
+            // /me 응답 전에는 허용으로 가정한다(막는 쪽으로 틀리면 입구가 닫히므로).
+            free_all_characters: true,
         };
 
         async function refreshAuthState(opts = {}) {
@@ -7356,6 +7811,7 @@
                 renderAuthBanner();
                 renderTrialBanner();
                 renderStreakChip();
+                renderHumanEntry();
                 maybeClaimReferral();
                 if (opts.warnLowQuota) maybeWarnLowQuota();
                 return data;
@@ -8826,6 +9282,269 @@
                 }
             }
         })();
+
+        // ============================================================
+        // 실제 한국인 회화 세션 (예약제) — human.py
+        // AI 캐릭터 대화와 공유하는 상태가 없다. authState.human_sessions 플래그로만
+        // 노출 여부를 판단하고, 서버가 source of truth 다.
+        // ============================================================
+        let hsConfig = null;        // GET /human/partners 응답 캐시
+        let hsSelectedPartner = null;
+
+        // 기존 escapeHtml 은 & < > 만 치환하고 따옴표를 남긴다. HTML *속성값* 에
+        // 그대로 넣으면 속성을 탈출할 수 있어서, 속성에 들어가는 값은 이걸 쓴다.
+        function hsAttr(v) {
+            return String(v == null ? '' : v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // meeting_url 은 POST /admin/human-session 으로 들어오는 값이라 href 로
+        // 내보내기 전에 스킴을 확인한다. javascript: 같은 건 링크로 만들지 않는다.
+        function hsSafeUrl(u) {
+            try {
+                const parsed = new URL(String(u), window.location.origin);
+                return (parsed.protocol === 'https:' || parsed.protocol === 'http:')
+                    ? parsed.href : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function renderHumanEntry() {
+            const el = document.getElementById('human-entry');
+            if (!el) return;
+            // /me 응답 전에는 숨긴다 — 없는 기능을 보여주는 쪽이 더 나쁘다.
+            el.style.display = (authState && authState.human_sessions) ? 'block' : 'none';
+        }
+
+        async function openHumanModal() {
+            document.getElementById('human-modal-overlay').classList.add('show');
+            setHsMessage('', null);
+            if (!hsConfig) await loadHumanConfig();
+            renderHumanPartners();
+            renderHumanRules();
+            renderHumanWhenHint();
+            renderHumanBookings();
+        }
+
+        function closeHumanModal(e) {
+            if (!e || e.target === document.getElementById('human-modal-overlay')) {
+                document.getElementById('human-modal-overlay').classList.remove('show');
+            }
+        }
+
+        async function loadHumanConfig() {
+            try {
+                const r = await fetch('/human/partners', { credentials: 'same-origin' });
+                if (r.ok) hsConfig = await r.json();
+            } catch (err) {
+                console.warn('[human] partners 조회 실패:', err);
+            }
+        }
+
+        function hsInitials(name) {
+            return (name || '?').trim().slice(0, 1).toUpperCase();
+        }
+
+        function renderHumanPartners() {
+            const el = document.getElementById('hs-partner-list');
+            if (!el) return;
+            const list = (hsConfig && hsConfig.partners) || [];
+            if (!list.length) {
+                el.innerHTML = '<p style="font-size:12.5px;color:#999;margin:0;">'
+                    + tc('hs.noPartners') + '</p>';
+                return;
+            }
+            // 첫 파트너를 기본 선택 — 선택 단계를 하나 줄인다.
+            if (!hsSelectedPartner || !list.some(p => p.id === hsSelectedPartner)) {
+                hsSelectedPartner = list[0].id;
+            }
+            const lang = (typeof currentLang !== 'undefined' && currentLang) ? currentLang : 'en';
+            el.innerHTML = list.map(p => {
+                const intro = (lang === 'ko' ? p.intro_ko : p.intro_en) || p.intro_en || '';
+                const meta = [p.city, p.age_band].filter(Boolean).join(' · ');
+                const topics = (p.topics || []).join(' · ');
+                const photo = p.photo ? hsSafeUrl(p.photo) : null;
+                const avatar = photo
+                    ? '<img src="' + hsAttr(photo) + '" alt="">'
+                    : escapeHtml(hsInitials(p.name));
+                // onclick 안에 id 를 문자열로 끼우면 따옴표 하나로 깨진다.
+                // data 속성에 담고 아래에서 위임 바인딩한다.
+                return '<button type="button" data-hs-partner="' + hsAttr(p.id)
+                    + '" class="hs-partner' + (p.id === hsSelectedPartner ? ' selected' : '') + '">'
+                    + '<span class="hs-avatar">' + avatar + '</span>'
+                    + '<span style="flex:1;">'
+                    +   '<span class="hs-name">' + escapeHtml(p.name || p.id) + '</span>'
+                    +   (meta ? '<span class="hs-meta">' + escapeHtml(meta) + '</span>' : '')
+                    +   (intro ? '<span class="hs-intro">' + escapeHtml(intro) + '</span>' : '')
+                    +   (topics ? '<span class="hs-meta">' + escapeHtml(topics) + '</span>' : '')
+                    + '</span></button>';
+            }).join('');
+            el.querySelectorAll('[data-hs-partner]').forEach((btn) => {
+                btn.addEventListener('click', () => selectHumanPartner(btn.dataset.hsPartner));
+            });
+        }
+
+        function selectHumanPartner(id) {
+            hsSelectedPartner = id;
+            renderHumanPartners();
+        }
+
+        function renderHumanRules() {
+            const el = document.getElementById('hs-rules-list');
+            if (!el) return;
+            const scope = (hsConfig && hsConfig.policy && hsConfig.policy.scope) || [];
+            el.innerHTML = scope.map(line => '<li>' + escapeHtml(line) + '</li>').join('');
+            const minAge = (hsConfig && hsConfig.policy && hsConfig.policy.min_age) || 18;
+            const lbl = document.getElementById('hs-adult-label');
+            if (lbl) lbl.textContent = tc('hs.adult').replace('18', String(minAge));
+        }
+
+        function renderHumanWhenHint() {
+            const el = document.getElementById('hs-when-hint');
+            if (!el || !hsConfig) return;
+            const lt = hsConfig.lead_time || {};
+            el.textContent = tc('hs.whenHint')
+                .replace('{hours}', String(lt.min_hours != null ? lt.min_hours : 2))
+                .replace('{days}', String(lt.max_days != null ? lt.max_days : 30))
+                .replace('{min}', String(hsConfig.duration_min || 25));
+        }
+
+        function setHsMessage(text, kind) {
+            const el = document.getElementById('hs-msg');
+            if (!el) return;
+            el.textContent = text || '';
+            el.className = 'hs-msg' + (kind ? ' ' + kind : '');
+        }
+
+        async function submitHumanBooking() {
+            if (!authState || !authState.authenticated) {
+                closeHumanModal();
+                if (window.openLoginModal) openLoginModal();
+                return;
+            }
+            const whenEl = document.getElementById('hs-when');
+            const adultEl = document.getElementById('hs-adult');
+            const noteEl = document.getElementById('hs-note');
+            if (!hsSelectedPartner) { setHsMessage(tc('hs.errPartner'), 'err'); return; }
+            if (!whenEl.value)      { setHsMessage(tc('hs.errWhen'), 'err'); return; }
+            if (!adultEl.checked)   { setHsMessage(tc('hs.errAdult'), 'err'); return; }
+
+            // datetime-local 은 타임존이 없는 로컬 시각 → UTC ISO 로 변환해서 보낸다.
+            const slotIso = new Date(whenEl.value).toISOString();
+            const btn = document.getElementById('hs-submit');
+            btn.disabled = true;
+            setHsMessage(tc('hs.sending'), null);
+            try {
+                const r = await fetch('/human/book', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        partner_id: hsSelectedPartner,
+                        slot_start: slotIso,
+                        note: noteEl.value || null,
+                        adult_confirmed: true,
+                    }),
+                });
+                const data = await r.json().catch(() => ({}));
+                if (r.ok) {
+                    setHsMessage(tc('hs.ok'), 'ok');
+                    noteEl.value = '';
+                    whenEl.value = '';
+                    adultEl.checked = false;
+                    renderHumanBookings();
+                    if (window.kdateTrack) kdateTrack('human_session_requested', { partner: hsSelectedPartner });
+                } else if (r.status === 401) {
+                    closeHumanModal();
+                    if (window.openLoginModal) openLoginModal();
+                } else if (r.status === 402) {
+                    closeHumanModal();
+                    if (window.openPaywallModal) openPaywallModal({ paywall: 'human_session' });
+                } else {
+                    setHsMessage(data.error || tc('hs.errGeneric'), 'err');
+                }
+            } catch (err) {
+                setHsMessage(tc('hs.errGeneric'), 'err');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function hsFormatSlot(unixSec) {
+            try {
+                return new Date(unixSec * 1000).toLocaleString();
+            } catch (e) {
+                return String(unixSec);
+            }
+        }
+
+        async function renderHumanBookings() {
+            const el = document.getElementById('hs-booking-list');
+            if (!el) return;
+            if (!authState || !authState.authenticated) {
+                el.innerHTML = '<p style="font-size:12.5px;color:#999;margin:0;">'
+                    + tc('hs.loginForMine') + '</p>';
+                return;
+            }
+            try {
+                const r = await fetch('/human/bookings', { credentials: 'same-origin' });
+                if (!r.ok) throw new Error('bookings ' + r.status);
+                const data = await r.json();
+                const list = data.sessions || [];
+                if (!list.length) {
+                    el.innerHTML = '<p style="font-size:12.5px;color:#999;margin:0;">'
+                        + tc('hs.none') + '</p>';
+                    return;
+                }
+                el.innerHTML = list.map(sess => {
+                    const name = (sess.partner && sess.partner.name) || '';
+                    const open = sess.status === 'requested' || sess.status === 'confirmed';
+                    const joinUrl = sess.meeting_url ? hsSafeUrl(sess.meeting_url) : null;
+                    return '<div class="hs-booking">'
+                        + '<strong>' + escapeHtml(name) + '</strong>'
+                        + '<span class="hs-status ' + hsAttr(sess.status) + '">'
+                        +   escapeHtml(tc('hs.st.' + sess.status)) + '</span><br>'
+                        + escapeHtml(hsFormatSlot(sess.slot_start))
+                        + ' · ' + escapeHtml(String(sess.duration_min)) + escapeHtml(tc('hs.min'))
+                        + (joinUrl
+                            ? '<br><a href="' + hsAttr(joinUrl) + '" target="_blank" rel="noopener">'
+                              + escapeHtml(tc('hs.join')) + '</a>'
+                            : '')
+                        + (open
+                            ? '<br><button type="button" data-hs-cancel="' + Number(sess.id) + '" '
+                              + 'style="margin-top:6px;font-size:11.5px;color:#c0392b;'
+                              + 'background:none;border:none;padding:0;cursor:pointer;text-decoration:underline;">'
+                              + escapeHtml(tc('hs.cancelBtn')) + '</button>'
+                            : '')
+                        + '</div>';
+                }).join('');
+                el.querySelectorAll('[data-hs-cancel]').forEach((btn) => {
+                    btn.addEventListener('click',
+                        () => cancelHumanBooking(Number(btn.dataset.hsCancel)));
+                });
+            } catch (err) {
+                el.innerHTML = '<p style="font-size:12.5px;color:#999;margin:0;">'
+                    + tc('hs.errGeneric') + '</p>';
+            }
+        }
+
+        async function cancelHumanBooking(id) {
+            try {
+                const r = await fetch('/human/cancel', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: id }),
+                });
+                const data = await r.json().catch(() => ({}));
+                setHsMessage(data.ok ? tc('hs.cancelled') : tc('hs.errGeneric'), data.ok ? 'ok' : 'err');
+            } catch (err) {
+                setHsMessage(tc('hs.errGeneric'), 'err');
+            }
+            renderHumanBookings();
+        }
     </script>
 </body>
 </html>
